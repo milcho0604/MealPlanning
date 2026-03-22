@@ -14,6 +14,14 @@ import type { SignInRequest, SignUpRequest } from '@mealplan/shared';
 import { authService } from '../services/auth.service';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
+/** 순환 참조 방지를 위해 useGroupStore를 지연 import합니다. */
+const resetGroupStore = () => {
+  // 런타임에 동적 import하여 순환 의존성 회피
+  import('./group.store').then(({ useGroupStore }) => {
+    useGroupStore.getState().reset();
+  });
+};
+
 /** 스토어 상태 타입 */
 interface AuthState {
   /** 현재 로그인된 사용자 정보 (비로그인 시 null) */
@@ -100,6 +108,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
       await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+      // 그룹 스토어도 초기화
+      resetGroupStore();
       set({ user: null, isAuthenticated: false });
     }
   },

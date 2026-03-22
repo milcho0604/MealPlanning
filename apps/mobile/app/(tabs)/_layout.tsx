@@ -4,16 +4,28 @@
  * 로그인 후 보이는 하단 탭 바를 정의합니다.
  * 탭 순서: 홈 → 캘린더 → 냉장고 → 쇼핑 → 설정
  *
- * 비로그인 상태라면 로그인 화면으로 리다이렉트합니다.
+ * 동작:
+ * - 비로그인 상태이면 로그인 화면으로 리다이렉트
+ * - 최초 진입 시 그룹 목록 자동 로드
  */
 
+import { useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
+import { useGroupStore } from '../../src/stores/group.store';
 import { colors } from '../../src/constants/colors';
 
 export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
+  const { loadGroups } = useGroupStore();
+
+  // 로그인 상태가 확인되면 그룹 목록 로드
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadGroups();
+    }
+  }, [isAuthenticated, loadGroups]);
 
   // 비로그인 상태이면 인증 화면으로 이동
   if (!isAuthenticated) {
