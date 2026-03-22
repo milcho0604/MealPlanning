@@ -23,7 +23,9 @@ import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
 import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
+import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useMealPlanMutation } from '../../src/hooks/meal-plan/use-meal-plan-mutation.hook';
+import { useGroupStore } from '../../src/stores/group.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 
@@ -42,6 +44,10 @@ const TODAY = new Date().toISOString().split('T')[0];
 
 export default function CalendarScreen() {
   const now = new Date();
+  const { currentGroupId } = useGroupStore();
+
+  // 그룹이 없으면 안내 화면 표시
+  if (!currentGroupId) return <NoGroupView />;
 
   // ── 현재 보여주는 연/월 상태 ───────────────────────────
   const [year, setYear] = useState(now.getFullYear());

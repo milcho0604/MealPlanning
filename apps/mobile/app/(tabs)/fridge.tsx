@@ -27,6 +27,8 @@ import { IngredientCard } from '../../src/components/ingredient/IngredientCard';
 import { IngredientFormModal } from '../../src/components/ingredient/IngredientFormModal';
 import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
 import { EmptyState } from '../../src/components/common/EmptyState';
+import { NoGroupView } from '../../src/components/group/NoGroupView';
+import { useGroupStore } from '../../src/stores/group.store';
 import { colors } from '../../src/constants/colors';
 
 /** 필터 탭 타입: 'all' 또는 카테고리 */
@@ -53,6 +55,11 @@ function isExpiringSoon(expiryDate: string | null): boolean {
 }
 
 export default function FridgeScreen() {
+  const { currentGroupId } = useGroupStore();
+
+  // 그룹이 없으면 안내 화면 표시
+  if (!currentGroupId) return <NoGroupView />;
+
   // ── 필터 탭 상태 ──────────────────────────────────────
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 

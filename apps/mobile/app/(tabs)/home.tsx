@@ -22,7 +22,9 @@ import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
 import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
 import { EmptyState } from '../../src/components/common/EmptyState';
+import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useMealPlanMutation } from '../../src/hooks/meal-plan/use-meal-plan-mutation.hook';
+import { useGroupStore } from '../../src/stores/group.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 
@@ -44,6 +46,10 @@ function formatDateHeader(dateStr: string): string {
 export default function HomeScreen() {
   const today = getTodayString();
   const now = new Date();
+  const { currentGroupId } = useGroupStore();
+
+  // 그룹이 없으면 안내 화면 표시
+  if (!currentGroupId) return <NoGroupView />;
 
   // 오늘 날짜 기준으로 해당 월의 식단을 모두 가져온 후 오늘 것만 필터링
   const { data: allMealPlans, isLoading } = useMealPlans(
