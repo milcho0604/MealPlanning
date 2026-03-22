@@ -1,0 +1,160 @@
+// =====================================================================
+// MealPlan Prisma 스키마
+//
+// DB: PostgreSQL (Supabase)
+// ORM: Prisma
+//
+// 테이블 구조:
+//   users ─┬─< group_members >─ groups
+//          ├─< meal_plans
+//          ├─< ingredients
+//          └─< shopping_items
+//
+// 변경 후 반드시 아래 명령 실행:
+//   npx prisma migrate dev --name <변경내용>
+//   npx prisma generate
+// =====================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // DATABASE_URL: Supabase > Settings > Database > Connection String
+  url       = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 사용자 (Users)
+// Supabase Auth와 1:1 연동 - id는 Supabase auth.users의 UUID와 동일
+// ─────────────────────────────────────────────────────────────────────
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 연관 관계
+  ownedGroups  Group[]       @relation("GroupOwner")   // 내가 만든 그룹
+  groupMembers GroupMember[]                           // 참여 중인 그룹
+  mealPlans    MealPlan[]                              // 내가 등록한 식단
+  ingredients  Ingredient[]                            // 내가 추가한 재료
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 그룹 (Groups)
+// 가족/친구 단위의 식단 공유 단위
+// ─────────────────────────────────────────────────────────────────────
+model Group {
+  id         String   @id @default(uuid())
+  name       String
+  ownerId    String   @map("owner_id")
+  inviteCode String   @unique @map("invite_code") // 초대용 6자리 코드
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // 연관 관계
+  owner         User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members       GroupMember[]
+  mealPlans     MealPlan[]
+  ingredients   Ingredient[]
+  shoppingItems ShoppingItem[]
+
+  @@map("groups")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 그룹 멤버 (Group Members)
+// 그룹과 사용자의 다대다 관계 + 역할(권한) 정보
+// ─────────────────────────────────────────────────────────────────────
+model GroupMember {
+  groupId  String   @map("group_id")
+  userId   String   @map("user_id")
+  /// 역할: owner(생성자) | editor(편집 가능) | viewer(읽기 전용)
+  role     String   @default("editor")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  // 연관 관계
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 복합 기본키 - 한 사용자는 같은 그룹에 한 번만 속할 수 있음
+  @@id([groupId, userId])
+  @@map("group_members")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 식단 계획 (Meal Plans)
+// 날짜 × 식사 유형 단위로 메뉴를 기록
+// ─────────────────────────────────────────────────────────────────────
+model MealPlan {
+  id          String    @id @default(uuid())
+  groupId     String    @map("group_id")
+  createdBy   String    @map("created_by")
+  date        DateTime  @db.Date           // 식단 날짜 (시간 없이 날짜만 저장)
+  /// 식사 유형: breakfast | lunch | dinner | snack
+  mealType    String    @map("meal_type")
+  menuName    String    @map("menu_name")
+  memo        String?
+  recipeUrl   String?   @map("recipe_url")
+  isRecurring Boolean   @default(false) @map("is_recurring")
+  /// 반복 규칙: weekly | monthly
+  recurRule   String?   @map("recur_rule")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  // 연관 관계
+  group     Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdByUser User  @relation(fields: [createdBy], references: [id])
+
+  // 같은 그룹의 같은 날짜/식사 유형 조회가 빈번하므로 인덱스 추가
+  @@index([groupId, date])
+  @@map("meal_plans")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 냉장고 재료 (Ingredients)
+// ─────────────────────────────────────────────────────────────────────
+model Ingredient {
+  id         String    @id @default(uuid())
+  groupId    String    @map("group_id")
+  addedBy    String    @map("added_by")
+  name       String
+  quantity   Decimal?  @db.Decimal(10, 2)
+  unit       String?                          // g | kg | 개 | 봉 | 팩 등
+  /// 카테고리: meat | vegetable | dairy | seafood | grain | sauce | frozen | other
+  category   String?
+  expiryDate DateTime? @db.Date @map("expiry_date")
+  isConsumed Boolean   @default(false) @map("is_consumed")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // 연관 관계
+  group    Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  addedByUser User  @relation(fields: [addedBy], references: [id])
+
+  // 유통기한 임박 조회가 빈번하므로 인덱스 추가
+  @@index([groupId, expiryDate])
+  @@map("ingredients")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 쇼핑 리스트 (Shopping Items)
+// ─────────────────────────────────────────────────────────────────────
+model ShoppingItem {
+  id        String   @id @default(uuid())
+  groupId   String   @map("group_id")
+  name      String
+  quantity  Decimal? @db.Decimal(10, 2)
+  unit      String?
+  isChecked Boolean  @default(false) @map("is_checked")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 연관 관계
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@map("shopping_items")
+}
