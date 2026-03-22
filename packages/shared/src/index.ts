@@ -5,8 +5,14 @@
  * 모바일 앱(apps/mobile)과 API 서버(packages/api) 양쪽에서 사용합니다.
  */
 
-// 타입 정의
-export * from './types';
+// 타입 정의 - 각 파일을 직접 임포트 (Node.js ESM 디렉토리 임포트 미지원 대응)
+export * from './types/api.types';
+export * from './types/auth.types';
+export * from './types/group.types';
+export * from './types/ingredient.types';
+export * from './types/meal-plan.types';
+export * from './types/shopping.types';
+export * from './types/user.types';
 
 // ─── 공통 상수 ────────────────────────────────────────────────────────────────
 

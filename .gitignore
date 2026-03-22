@@ -10,6 +10,8 @@ node_modules/
 # ========================
 dist/
 build/
+# shared 패키지 dist는 내부 패키지로 커밋 (NestJS가 컴파일된 JS를 필요로 함)
+!packages/shared/dist/
 .next/
 out/
 

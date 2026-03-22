@@ -1,8 +1,11 @@
 {
+  "ts-node": {
+    "esm": false,
+    "transpileOnly": true
+  },
   "compilerOptions": {
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "resolvePackageJsonExports": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
     "esModuleInterop": true,
     "isolatedModules": true,
     "declaration": true,
