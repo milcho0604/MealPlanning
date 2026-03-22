@@ -9,7 +9,7 @@
 
 import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
-import type { User } from '@mealplan/shared';
+import type { AuthTokens, User } from '@mealplan/shared';
 import type { SignInRequest, SignUpRequest } from '@mealplan/shared';
 import { authService } from '../services/auth.service';
 import { STORAGE_KEYS } from '../constants/storage-keys';
@@ -38,6 +38,8 @@ interface AuthState {
   signUp: (body: SignUpRequest) => Promise<void>;
   /** 로그인 */
   signIn: (body: SignInRequest) => Promise<void>;
+  /** 소셜 로그인 완료 후 토큰/사용자 직접 저장 */
+  setAuth: (tokens: AuthTokens, user: User) => Promise<void>;
   /** 로그아웃 */
   signOut: () => Promise<void>;
 }
@@ -93,6 +95,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
     await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
 
+    set({ user, isAuthenticated: true });
+  },
+
+  /**
+   * 소셜 로그인 후 토큰 + 사용자 정보 직접 저장
+   * (Google / Kakao / Apple 로그인 완료 후 호출)
+   */
+  setAuth: async (tokens, user) => {
+    await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
     set({ user, isAuthenticated: true });
   },
 

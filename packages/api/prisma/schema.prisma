@@ -35,8 +35,14 @@ model User {
   name      String
   avatarUrl String?  @map("avatar_url")
   /// Expo 푸시 알림 토큰 (앱 실행 시 등록)
-  pushToken String?  @map("push_token")
-  createdAt DateTime @default(now()) @map("created_at")
+  pushToken  String?  @map("push_token")
+  /// 소셜 로그인 제공자: google | kakao | apple (이메일 가입은 null)
+  provider   String?
+  /// 소셜 제공자의 사용자 고유 ID
+  providerId String?  @map("provider_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([provider, providerId])
 
   // 연관 관계
   ownedGroups  Group[]       @relation("GroupOwner")   // 내가 만든 그룹

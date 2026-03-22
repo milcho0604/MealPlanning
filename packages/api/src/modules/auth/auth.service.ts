@@ -16,10 +16,24 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { OAuth2Client } from 'google-auth-library';
+import appleSignin from 'apple-signin-auth';
+import axios from 'axios';
 import { PrismaService } from '../../prisma/prisma.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import type { AuthTokens, User } from '@mealplan/shared';
+
+/** 소셜 제공자 종류 */
+export type SocialProvider = 'google' | 'kakao' | 'apple';
+
+/** 소셜 로그인 후 정규화된 사용자 정보 */
+interface SocialUserInfo {
+  providerId: string;
+  email: string | null;
+  name: string;
+  avatarUrl: string | null;
+}
 
 /** 인증 성공 응답 타입 (사용자 정보 + 토큰) */
 export interface AuthResponse {
@@ -159,6 +173,133 @@ export class AuthService {
       return this.generateTokens(user.id, user.email);
     } catch {
       throw new UnauthorizedException('만료되거나 유효하지 않은 토큰입니다.');
+    }
+  }
+
+  /**
+   * 소셜 로그인 (Google / Kakao / Apple 공통 진입점)
+   *
+   * 1. 제공자 토큰 검증 → 사용자 정보 획득
+   * 2. providerId로 기존 사용자 조회
+   * 3. 없으면 이메일로 조회 (기존 이메일 계정에 소셜 연동)
+   * 4. 그것도 없으면 신규 사용자 생성
+   * 5. JWT 발급 후 반환
+   */
+  async socialSignIn(
+    provider: SocialProvider,
+    token: string,
+    name?: string,
+  ): Promise<AuthResponse> {
+    // 1. 제공자 토큰 검증
+    const providerUser = await this.verifyProviderToken(provider, token, name);
+
+    // 2. providerId로 기존 사용자 조회
+    let user = await this.prisma.user.findFirst({
+      where: { provider, providerId: providerUser.providerId },
+    });
+
+    // 3. 이메일로 기존 사용자 조회 (이메일 가입 계정과 연동)
+    if (!user && providerUser.email) {
+      const emailUser = await this.prisma.user.findUnique({
+        where: { email: providerUser.email },
+      });
+      if (emailUser) {
+        // 소셜 계정 정보 연동
+        user = await this.prisma.user.update({
+          where: { id: emailUser.id },
+          data: { provider, providerId: providerUser.providerId },
+        });
+      }
+    }
+
+    // 4. 신규 사용자 생성
+    if (!user) {
+      // 이메일이 없는 경우(Apple 이메일 숨기기) 고유 이메일 생성
+      const email =
+        providerUser.email ?? `${provider}_${providerUser.providerId}@social.mealplan`;
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          name: providerUser.name,
+          avatarUrl: providerUser.avatarUrl,
+          provider,
+          providerId: providerUser.providerId,
+        },
+      });
+    }
+
+    const tokens = this.generateTokens(user.id, user.email);
+    return { user: this.toUserResponse(user), tokens };
+  }
+
+  /**
+   * 소셜 제공자 토큰 검증 및 사용자 정보 추출
+   */
+  private async verifyProviderToken(
+    provider: SocialProvider,
+    token: string,
+    displayName?: string,
+  ): Promise<SocialUserInfo> {
+    if (provider === 'google') return this.verifyGoogleToken(token);
+    if (provider === 'kakao') return this.verifyKakaoToken(token);
+    if (provider === 'apple') return this.verifyAppleToken(token, displayName);
+    throw new UnauthorizedException('지원하지 않는 소셜 제공자입니다.');
+  }
+
+  /** Google ID 토큰 검증 */
+  private async verifyGoogleToken(idToken: string): Promise<SocialUserInfo> {
+    try {
+      const clientId = this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
+      const client = new OAuth2Client(clientId);
+      const ticket = await client.verifyIdToken({ idToken, audience: clientId });
+      const payload = ticket.getPayload()!;
+      return {
+        providerId: payload.sub,
+        email: payload.email ?? null,
+        name: payload.name ?? '구글 사용자',
+        avatarUrl: payload.picture ?? null,
+      };
+    } catch {
+      throw new UnauthorizedException('유효하지 않은 Google 토큰입니다.');
+    }
+  }
+
+  /** Kakao 액세스 토큰으로 사용자 정보 조회 */
+  private async verifyKakaoToken(accessToken: string): Promise<SocialUserInfo> {
+    try {
+      const { data } = await axios.get('https://kapi.kakao.com/v2/user/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const account = data.kakao_account ?? {};
+      return {
+        providerId: String(data.id),
+        email: account.email ?? null,
+        name: account.profile?.nickname ?? '카카오 사용자',
+        avatarUrl: account.profile?.profile_image_url ?? null,
+      };
+    } catch {
+      throw new UnauthorizedException('유효하지 않은 Kakao 토큰입니다.');
+    }
+  }
+
+  /** Apple Identity 토큰 검증 */
+  private async verifyAppleToken(
+    identityToken: string,
+    displayName?: string,
+  ): Promise<SocialUserInfo> {
+    try {
+      const payload = await appleSignin.verifyIdToken(identityToken, {
+        audience: 'com.mealplan.app', // app.json bundleIdentifier
+        ignoreExpiration: false,
+      });
+      return {
+        providerId: payload.sub,
+        email: payload.email ?? null,
+        name: displayName ?? 'Apple 사용자',
+        avatarUrl: null,
+      };
+    } catch {
+      throw new UnauthorizedException('유효하지 않은 Apple 토큰입니다.');
     }
   }
 

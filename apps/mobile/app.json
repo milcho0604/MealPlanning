@@ -14,19 +14,35 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.mealplan.app"
+      "bundleIdentifier": "com.mealplan.app",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.mealplan.app"
+      "package": "com.mealplan.app",
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      "expo-apple-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID"
+        }
+      ],
+      [
+        "@react-native-kakao/core",
+        {
+          "nativeAppKey": "REPLACE_WITH_KAKAO_NATIVE_APP_KEY",
+          "kotlinVersion": "1.9.0"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

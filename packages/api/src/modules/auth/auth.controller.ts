@@ -21,13 +21,14 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
-import { AuthResponse, AuthService } from './auth.service';
+import { IsOptional, IsString } from 'class-validator';
+import { AuthResponse, AuthService, SocialProvider } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
@@ -39,6 +40,17 @@ import type { RequestUser } from './strategies/jwt.strategy';
 class SavePushTokenDto {
   @IsString()
   pushToken: string;
+}
+
+class SocialSignInDto {
+  /** Google ID 토큰 / Kakao 액세스 토큰 / Apple Identity 토큰 */
+  @IsString()
+  token: string;
+
+  /** Apple 전용: 사용자 이름 (최초 로그인 시에만 제공됨) */
+  @IsString()
+  @IsOptional()
+  name?: string;
 }
 
 @ApiTags('Auth') // Swagger UI에서 "Auth" 섹션으로 그룹화
@@ -118,6 +130,22 @@ export class AuthController {
   @ApiOperation({ summary: 'Expo 푸시 토큰 등록/갱신' })
   savePushToken(@CurrentUser() user: RequestUser, @Body() dto: SavePushTokenDto) {
     return this.notificationsService.savePushToken(user.id, dto.pushToken);
+  }
+
+  /**
+   * 소셜 로그인 (Google / Kakao / Apple)
+   *
+   * :provider = google | kakao | apple
+   * 클라이언트에서 받은 토큰을 검증하고 JWT를 발급합니다.
+   */
+  @Post('social/:provider')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '소셜 로그인 (google | kakao | apple)' })
+  socialSignIn(
+    @Param('provider') provider: SocialProvider,
+    @Body() dto: SocialSignInDto,
+  ): Promise<AuthResponse> {
+    return this.authService.socialSignIn(provider, dto.token, dto.name);
   }
 
   /**
