@@ -1,19 +1,22 @@
 {
-  // Expo 공식 TypeScript 기본 설정을 상속
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    // 절대 경로 import 설정 (예: import from '@/stores/auth.store')
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.d.ts",
-    "expo-env.d.ts"
+    "expo-env.d.ts",
+    ".expo/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

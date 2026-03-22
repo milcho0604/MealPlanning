@@ -28,6 +28,7 @@ import { ShoppingService } from './shopping.service';
 import { CreateShoppingItemDto } from './dto/create-shopping-item.dto';
 import { UpdateShoppingItemDto } from './dto/update-shopping-item.dto';
 import { GetShoppingItemsDto } from './dto/get-shopping-items.dto';
+import { GenerateShoppingDto } from './dto/generate-shopping.dto';
 import type { RequestUser } from '../../modules/auth/strategies/jwt.strategy';
 
 @Controller('shopping')
@@ -45,6 +46,12 @@ export class ShoppingController {
   @Post()
   create(@Body() dto: CreateShoppingItemDto, @CurrentUser() user: RequestUser) {
     return this.shoppingService.create(user.id, dto);
+  }
+
+  /** 주간 식단 기반 쇼핑 목록 자동 생성 */
+  @Post('generate')
+  generate(@Body() dto: GenerateShoppingDto, @CurrentUser() user: RequestUser) {
+    return this.shoppingService.generateFromMealPlan(user.id, dto);
   }
 
   /** 완료 항목 일괄 삭제 - /shopping/:id 보다 먼저 선언해야 라우팅 충돌 없음 */

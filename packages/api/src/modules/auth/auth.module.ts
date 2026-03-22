@@ -14,9 +14,11 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
+    NotificationsModule,
     // Passport 기본 전략을 jwt로 설정
     PassportModule.register({ defaultStrategy: 'jwt' }),
 

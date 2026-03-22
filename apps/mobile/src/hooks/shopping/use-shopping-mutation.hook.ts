@@ -48,12 +48,21 @@ export function useShoppingMutation() {
     onSuccess: invalidate,
   });
 
+  /** 주간 식단 기반 자동 생성 */
+  const generateMutation = useMutation({
+    mutationFn: ({ groupId, weekStartDate }: { groupId: string; weekStartDate: string }) =>
+      shoppingService.generate(groupId, weekStartDate),
+    onSuccess: invalidate,
+  });
+
   return {
     createShoppingItem: createMutation.mutateAsync,
     updateShoppingItem: updateMutation.mutateAsync,
     toggleShoppingItem: toggleMutation.mutateAsync,
     removeShoppingItem: removeMutation.mutateAsync,
     clearCheckedItems: clearCheckedMutation.mutateAsync,
+    generateShoppingItems: generateMutation.mutateAsync,
     isCreating: createMutation.isPending,
+    isGenerating: generateMutation.isPending,
   };
 }

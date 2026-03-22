@@ -7,10 +7,12 @@
  * - 스와이프 대신 롱프레스 → 삭제 컨텍스트 메뉴
  * - 하단 입력바: 항목명 입력 후 즉시 추가
  * - "완료 항목 지우기" 버튼으로 체크된 항목 일괄 삭제
+ * - "이번 주 식단으로 생성" 버튼으로 주간 식단 기반 자동 생성
  */
 
 import { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   KeyboardAvoidingView,
@@ -40,11 +42,52 @@ export default function ShoppingScreen() {
     toggleShoppingItem,
     removeShoppingItem,
     clearCheckedItems,
+    generateShoppingItems,
     isCreating,
+    isGenerating,
   } = useShoppingMutation();
 
   // ── 입력바 상태 ──────────────────────────────────────────
   const [inputText, setInputText] = useState('');
+
+  /** 이번 주 월요일 날짜를 YYYY-MM-DD 형식으로 반환 */
+  function getWeekStartDate(): string {
+    const now = new Date();
+    const day = now.getDay(); // 0=일, 1=월, ..., 6=토
+    const diff = day === 0 ? -6 : 1 - day; // 일요일이면 -6, 아니면 이번 주 월요일로
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diff);
+    return monday.toISOString().split('T')[0];
+  }
+
+  /** 이번 주 식단 기반 자동 생성 */
+  const handleGenerate = async () => {
+    Alert.alert(
+      '이번 주 식단으로 생성',
+      '이번 주 식단(월~일)의 메뉴를 쇼핑 목록에 추가합니다.\n냉장고에 이미 있는 재료는 제외됩니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '생성',
+          onPress: async () => {
+            try {
+              const result = await generateShoppingItems({
+                groupId: currentGroupId!,
+                weekStartDate: getWeekStartDate(),
+              });
+              if (result.created === 0) {
+                Alert.alert('알림', result.message ?? '추가할 항목이 없습니다.');
+              } else {
+                Alert.alert('완료', `${result.created}개 항목이 추가되었습니다.`);
+              }
+            } catch {
+              Alert.alert('오류', '자동 생성에 실패했습니다.');
+            }
+          },
+        },
+      ],
+    );
+  };
 
   // 그룹이 없으면 안내 화면 표시
   if (!currentGroupId) return <NoGroupView />;
@@ -139,12 +182,31 @@ export default function ShoppingScreen() {
         {/* 헤더 */}
         <View style={styles.header}>
           <Text style={styles.headerTitle}>쇼핑 리스트</Text>
-          {checkedItems.length > 0 && (
-            <TouchableOpacity onPress={handleClearChecked}>
-              <Text style={styles.clearBtn}>완료 지우기 ({checkedItems.length})</Text>
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerActions}>
+            {checkedItems.length > 0 && (
+              <TouchableOpacity onPress={handleClearChecked} style={styles.headerActionBtn}>
+                <Text style={styles.clearBtn}>완료 지우기 ({checkedItems.length})</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
+
+        {/* 이번 주 식단으로 자동 생성 배너 */}
+        <TouchableOpacity
+          style={[styles.generateBanner, isGenerating && styles.generateBannerDisabled]}
+          onPress={handleGenerate}
+          disabled={isGenerating}
+          activeOpacity={0.8}
+        >
+          {isGenerating ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="sparkles-outline" size={16} color="#fff" />
+          )}
+          <Text style={styles.generateBannerText}>
+            {isGenerating ? '생성 중...' : '이번 주 식단으로 쇼핑 목록 자동 생성'}
+          </Text>
+        </TouchableOpacity>
 
         {/* 항목 목록 */}
         {allItems.length === 0 ? (
@@ -213,10 +275,36 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.text,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerActionBtn: {},
   clearBtn: {
     fontSize: 14,
     color: colors.error,
     fontWeight: '600',
+  },
+  // ── 자동 생성 배너 ────────────────────────────────────────
+  generateBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    backgroundColor: colors.secondary,
+    borderRadius: 10,
+  },
+  generateBannerDisabled: {
+    opacity: 0.6,
+  },
+  generateBannerText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
   },
   // ── 항목 목록 ────────────────────────────────────────────
   listContent: {

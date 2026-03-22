@@ -5,12 +5,9 @@
  * - 추가 모드: mealPlan props 없이 날짜(date)와 초기 식사 유형(initialMealType)만 전달
  * - 수정 모드: mealPlan props에 기존 식단 데이터를 전달
  *
- * Props:
- * - visible: 모달 표시 여부
- * - onClose: 닫기 콜백
- * - date: 식단 날짜 (YYYY-MM-DD)
- * - initialMealType: 초기 식사 유형 (추가 모드에서 선택된 탭 등)
- * - mealPlan: 수정할 기존 식단 (없으면 추가 모드)
+ * Phase 2 추가:
+ * - 반복 설정: 매주 / 매월 반복 토글
+ * - 레시피 URL 입력 필드
  */
 
 import { useEffect, useState } from 'react';
@@ -21,29 +18,30 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
-import type { MealType } from '@mealplan/shared';
+import type { MealType, RecurRule } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
 import { useMealPlanMutation } from '../../hooks/meal-plan/use-meal-plan-mutation.hook';
 import { useGroupStore } from '../../stores/group.store';
 import { colors } from '../../constants/colors';
 
-/** 선택 가능한 식사 유형 목록 (순서 고정) */
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+const RECUR_OPTIONS: { value: RecurRule; label: string }[] = [
+  { value: 'weekly', label: '매주' },
+  { value: 'monthly', label: '매월' },
+];
 
 interface MealPlanFormModalProps {
   visible: boolean;
   onClose: () => void;
-  /** 식단 날짜 (YYYY-MM-DD) */
   date: string;
-  /** 추가 모드에서 기본 선택될 식사 유형 */
   initialMealType?: MealType;
-  /** 수정 모드일 때 기존 식단 데이터 */
   mealPlan?: MealPlanWithUser;
 }
 
@@ -57,29 +55,33 @@ export function MealPlanFormModal({
   const { currentGroupId } = useGroupStore();
   const { createMealPlan, updateMealPlan, isCreating, isUpdating } = useMealPlanMutation();
 
-  // ── 폼 상태 ────────────────────────────────────────────
   const [mealType, setMealType] = useState<MealType>(initialMealType);
   const [menuName, setMenuName] = useState('');
   const [memo, setMemo] = useState('');
+  const [recipeUrl, setRecipeUrl] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurRule, setRecurRule] = useState<RecurRule>('weekly');
 
-  /** 모달이 열릴 때마다 폼을 초기화 (수정 모드면 기존 데이터로 채움) */
   useEffect(() => {
     if (visible) {
       if (mealPlan) {
-        // 수정 모드
         setMealType(mealPlan.mealType);
         setMenuName(mealPlan.menuName);
         setMemo(mealPlan.memo ?? '');
+        setRecipeUrl(mealPlan.recipeUrl ?? '');
+        setIsRecurring(mealPlan.isRecurring);
+        setRecurRule((mealPlan.recurRule as RecurRule) ?? 'weekly');
       } else {
-        // 추가 모드
         setMealType(initialMealType);
         setMenuName('');
         setMemo('');
+        setRecipeUrl('');
+        setIsRecurring(false);
+        setRecurRule('weekly');
       }
     }
   }, [visible, mealPlan, initialMealType]);
 
-  /** 저장 처리 */
   const handleSubmit = async () => {
     if (!menuName.trim()) {
       Alert.alert('입력 오류', '메뉴 이름을 입력해주세요.');
@@ -92,19 +94,26 @@ export function MealPlanFormModal({
 
     try {
       if (mealPlan) {
-        // 수정 모드
         await updateMealPlan({
           id: mealPlan.id,
-          body: { menuName: menuName.trim(), memo: memo.trim() || undefined },
+          body: {
+            menuName: menuName.trim(),
+            memo: memo.trim() || undefined,
+            recipeUrl: recipeUrl.trim() || undefined,
+            isRecurring,
+            recurRule: isRecurring ? recurRule : undefined,
+          },
         });
       } else {
-        // 추가 모드
         await createMealPlan({
           groupId: currentGroupId,
           date,
           mealType,
           menuName: menuName.trim(),
           memo: memo.trim() || undefined,
+          recipeUrl: recipeUrl.trim() || undefined,
+          isRecurring,
+          recurRule: isRecurring ? recurRule : undefined,
         });
       }
       onClose();
@@ -132,14 +141,8 @@ export function MealPlanFormModal({
           <TouchableOpacity onPress={onClose} style={styles.headerBtn}>
             <Text style={styles.cancelText}>취소</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
-            {isEditMode ? '식단 수정' : '식단 추가'}
-          </Text>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={styles.headerBtn}
-            disabled={isLoading}
-          >
+          <Text style={styles.headerTitle}>{isEditMode ? '식단 수정' : '식단 추가'}</Text>
+          <TouchableOpacity onPress={handleSubmit} style={styles.headerBtn} disabled={isLoading}>
             <Text style={[styles.saveText, isLoading && styles.disabledText]}>
               {isLoading ? '저장 중...' : '저장'}
             </Text>
@@ -147,7 +150,7 @@ export function MealPlanFormModal({
         </View>
 
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-          {/* 식사 유형 선택 (추가 모드에서만 변경 가능) */}
+          {/* 식사 유형 선택 */}
           <Text style={styles.label}>식사 유형</Text>
           <View style={styles.mealTypeRow}>
             {MEAL_TYPES.map((type) => (
@@ -161,19 +164,14 @@ export function MealPlanFormModal({
                 onPress={() => !isEditMode && setMealType(type)}
                 disabled={isEditMode}
               >
-                <Text
-                  style={[
-                    styles.mealTypeBtnText,
-                    mealType === type && styles.mealTypeBtnTextActive,
-                  ]}
-                >
+                <Text style={[styles.mealTypeBtnText, mealType === type && styles.mealTypeBtnTextActive]}>
                   {MEAL_TYPE_LABELS[type]}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* 메뉴 이름 입력 */}
+          {/* 메뉴 이름 */}
           <Text style={styles.label}>메뉴 이름 *</Text>
           <TextInput
             style={styles.input}
@@ -185,7 +183,7 @@ export function MealPlanFormModal({
             returnKeyType="next"
           />
 
-          {/* 메모 입력 */}
+          {/* 메모 */}
           <Text style={styles.label}>메모 (선택)</Text>
           <TextInput
             style={[styles.input, styles.memoInput]}
@@ -197,6 +195,52 @@ export function MealPlanFormModal({
             maxLength={200}
             textAlignVertical="top"
           />
+
+          {/* 레시피 URL */}
+          <Text style={styles.label}>레시피 URL (선택)</Text>
+          <TextInput
+            style={styles.input}
+            value={recipeUrl}
+            onChangeText={setRecipeUrl}
+            placeholder="https://..."
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="url"
+            autoCapitalize="none"
+            maxLength={500}
+          />
+
+          {/* 반복 설정 */}
+          <View style={styles.recurRow}>
+            <View>
+              <Text style={styles.recurTitle}>반복 식단</Text>
+              <Text style={styles.recurSub}>매주 또는 매월 자동으로 반복됩니다</Text>
+            </View>
+            <Switch
+              value={isRecurring}
+              onValueChange={setIsRecurring}
+              trackColor={{ false: colors.border, true: colors.secondary }}
+              thumbColor={isRecurring ? colors.primary : '#fff'}
+            />
+          </View>
+
+          {/* 반복 규칙 선택 (반복 ON일 때만 표시) */}
+          {isRecurring && (
+            <View style={styles.recurRuleRow}>
+              {RECUR_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[styles.recurRuleBtn, recurRule === opt.value && styles.recurRuleBtnActive]}
+                  onPress={() => setRecurRule(opt.value)}
+                >
+                  <Text style={[styles.recurRuleBtnText, recurRule === opt.value && styles.recurRuleBtnTextActive]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
@@ -204,11 +248,7 @@ export function MealPlanFormModal({
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  // ── 헤더 ────────────────────────────────────────────────
+  flex: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -219,32 +259,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  headerBtn: {
-    minWidth: 60,
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  cancelText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  saveText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-    textAlign: 'right',
-  },
-  disabledText: {
-    opacity: 0.4,
-  },
-  // ── 폼 본문 ─────────────────────────────────────────────
-  body: {
-    flex: 1,
-    padding: 20,
-  },
+  headerBtn: { minWidth: 60 },
+  headerTitle: { fontSize: 17, fontWeight: '600', color: colors.text },
+  cancelText: { fontSize: 16, color: colors.textSecondary },
+  saveText: { fontSize: 16, fontWeight: '600', color: colors.primary, textAlign: 'right' },
+  disabledText: { opacity: 0.4 },
+  body: { flex: 1, padding: 20 },
   label: {
     fontSize: 13,
     fontWeight: '600',
@@ -254,11 +274,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  // ── 식사 유형 선택 버튼 ──────────────────────────────────
-  mealTypeRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
+  mealTypeRow: { flexDirection: 'row', gap: 8 },
   mealTypeBtn: {
     flex: 1,
     paddingVertical: 10,
@@ -268,23 +284,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignItems: 'center',
   },
-  mealTypeBtnActive: {
-    borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
-  },
-  mealTypeBtnDisabled: {
-    opacity: 0.6,
-  },
-  mealTypeBtnText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  mealTypeBtnTextActive: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  // ── 텍스트 입력 ─────────────────────────────────────────
+  mealTypeBtnActive: { borderColor: colors.primary, backgroundColor: '#E8F5E9' },
+  mealTypeBtnDisabled: { opacity: 0.6 },
+  mealTypeBtnText: { fontSize: 13, fontWeight: '500', color: colors.textSecondary },
+  mealTypeBtnTextActive: { color: colors.primary, fontWeight: '700' },
   input: {
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -295,8 +298,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
   },
-  memoInput: {
-    height: 100,
-    paddingTop: 12,
+  memoInput: { height: 100, paddingTop: 12 },
+  // ── 반복 설정 ─────────────────────────────────────────────
+  recurRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
+  recurTitle: { fontSize: 15, fontWeight: '600', color: colors.text },
+  recurSub: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  recurRuleRow: { flexDirection: 'row', gap: 10, marginTop: 10 },
+  recurRuleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  recurRuleBtnActive: { borderColor: colors.primary, backgroundColor: '#E8F5E9' },
+  recurRuleBtnText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
+  recurRuleBtnTextActive: { color: colors.primary, fontWeight: '700' },
 });

@@ -16,12 +16,14 @@
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { MealPlansModule } from './modules/meal-plans/meal-plans.module';
 import { GroupsModule } from './modules/groups/groups.module';
 import { IngredientsModule } from './modules/ingredients/ingredients.module';
 import { ShoppingModule } from './modules/shopping/shopping.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -34,12 +36,16 @@ import { ShoppingModule } from './modules/shopping/shopping.module';
     // DB 연결 - 전역 모듈로 등록하여 모든 서비스에서 PrismaService 주입 가능
     PrismaModule,
 
+    // Cron 작업 활성화 (푸시 알림 자동 발송 등)
+    ScheduleModule.forRoot(),
+
     // 기능 모듈
     AuthModule,
     MealPlansModule,
     GroupsModule,
     IngredientsModule,
     ShoppingModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}

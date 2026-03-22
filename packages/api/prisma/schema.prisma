@@ -34,6 +34,8 @@ model User {
   email     String   @unique
   name      String
   avatarUrl String?  @map("avatar_url")
+  /// Expo 푸시 알림 토큰 (앱 실행 시 등록)
+  pushToken String?  @map("push_token")
   createdAt DateTime @default(now()) @map("created_at")
 
   // 연관 관계

@@ -21,22 +21,33 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 import { AuthResponse, AuthService } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { NotificationsService } from '../notifications/notifications.service';
 import type { RequestUser } from './strategies/jwt.strategy';
+
+class SavePushTokenDto {
+  @IsString()
+  pushToken: string;
+}
 
 @ApiTags('Auth') // Swagger UI에서 "Auth" 섹션으로 그룹화
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /**
    * 회원가입
@@ -94,6 +105,19 @@ export class AuthController {
   @ApiOperation({ summary: '내 프로필 조회' })
   getMe(@CurrentUser() user: RequestUser) {
     return this.authService.getMe(user.id);
+  }
+
+  /**
+   * 푸시 토큰 등록 (인증 필요)
+   * 앱 실행 시 Expo 푸시 토큰을 서버에 저장하여 알림 수신을 활성화합니다.
+   */
+  @Patch('push-token')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Expo 푸시 토큰 등록/갱신' })
+  savePushToken(@CurrentUser() user: RequestUser, @Body() dto: SavePushTokenDto) {
+    return this.notificationsService.savePushToken(user.id, dto.pushToken);
   }
 
   /**

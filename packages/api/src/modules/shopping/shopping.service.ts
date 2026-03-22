@@ -13,6 +13,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateShoppingItemDto } from './dto/create-shopping-item.dto';
 import { UpdateShoppingItemDto } from './dto/update-shopping-item.dto';
+import { GenerateShoppingDto } from './dto/generate-shopping.dto';
 
 @Injectable()
 export class ShoppingService {
@@ -97,6 +98,65 @@ export class ShoppingService {
     });
 
     return { deletedCount: count };
+  }
+
+  /**
+   * 주간 식단 기반 쇼핑 항목 자동 생성
+   *
+   * weekStartDate 기준 7일간의 식단 menuName을 수집하여
+   * 중복 제거 후 쇼핑 목록에 추가합니다.
+   * 냉장고에 이미 있는 재료(소진 안 된 것)는 제외합니다.
+   */
+  async generateFromMealPlan(userId: string, dto: GenerateShoppingDto) {
+    await this.assertMember(dto.groupId, userId);
+
+    const start = new Date(dto.weekStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+
+    // 해당 주간의 식단 menuName 목록 수집
+    const mealPlans = await this.prisma.mealPlan.findMany({
+      where: {
+        groupId: dto.groupId,
+        date: { gte: start, lte: end },
+      },
+      select: { menuName: true },
+    });
+
+    if (mealPlans.length === 0) {
+      return { created: 0, message: '해당 주간에 등록된 식단이 없습니다.' };
+    }
+
+    // 냉장고에 이미 있는 재료명 수집 (소진 안 된 것)
+    const existingIngredients = await this.prisma.ingredient.findMany({
+      where: { groupId: dto.groupId, isConsumed: false },
+      select: { name: true },
+    });
+    const existingNames = new Set(
+      existingIngredients.map((i) => i.name.trim().toLowerCase()),
+    );
+
+    // 중복 제거 + 냉장고에 없는 항목만 추출
+    const uniqueMenuNames = [
+      ...new Set(mealPlans.map((mp) => mp.menuName.trim())),
+    ].filter((name) => !existingNames.has(name.toLowerCase()));
+
+    if (uniqueMenuNames.length === 0) {
+      return { created: 0, message: '모든 식단 재료가 이미 냉장고에 있습니다.' };
+    }
+
+    // 쇼핑 목록에 일괄 추가
+    await this.prisma.shoppingItem.createMany({
+      data: uniqueMenuNames.map((name) => ({
+        groupId: dto.groupId,
+        name,
+      })),
+      skipDuplicates: true,
+    });
+
+    return { created: uniqueMenuNames.length, items: uniqueMenuNames };
   }
 
   /** 존재 여부 확인 헬퍼 */

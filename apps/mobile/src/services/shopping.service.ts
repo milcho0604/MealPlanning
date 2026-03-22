@@ -60,4 +60,20 @@ export const shoppingService = {
   clearChecked: async (groupId: string): Promise<void> => {
     await apiClient.delete('/shopping/checked', { params: { groupId } });
   },
+
+  /**
+   * 주간 식단 기반 쇼핑 목록 자동 생성
+   * @param groupId 그룹 ID
+   * @param weekStartDate 주 시작일 (YYYY-MM-DD, 보통 월요일)
+   */
+  generate: async (
+    groupId: string,
+    weekStartDate: string,
+  ): Promise<{ created: number; items?: string[]; message?: string }> => {
+    const { data } = await apiClient.post<{
+      success: true;
+      data: { created: number; items?: string[]; message?: string };
+    }>('/shopping/generate', { groupId, weekStartDate });
+    return data.data;
+  },
 };

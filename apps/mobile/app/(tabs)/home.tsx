@@ -1,16 +1,18 @@
 /**
  * 홈 화면 (Home Screen)
  *
- * 오늘의 식단(아침/점심/저녁/간식)을 카드 목록으로 보여줍니다.
- * - 날짜 헤더: 오늘 날짜 표시
- * - 식단 목록: 오늘 날짜에 등록된 식단 카드
- * - 추가 버튼: 우하단 FAB(Floating Action Button)으로 식단 추가
+ * 주간(7일) 날짜 탭과 선택된 날짜의 식단 목록을 보여줍니다.
+ * - 상단 날짜 스트립: 이번 주 월~일 탭
+ * - 선택 날짜의 식단 카드 목록
+ * - 우하단 FAB으로 식단 추가
+ * - Phase 2: 반복 식단, 레시피 URL 지원 (MealPlanFormModal에서 처리)
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   FlatList,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -30,12 +32,41 @@ import { colors } from '../../src/constants/colors';
 
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
 function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** 날짜 문자열을 "2월 15일 (토)" 형식으로 포맷 */
-function formatDateHeader(dateStr: string): string {
-  const date = new Date(dateStr);
+/** Date → YYYY-MM-DD */
+function toDateString(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 이번 주 월요일부터 7일치 날짜 배열 반환 */
+function getWeekDates(): Date[] {
+  const now = new Date();
+  const day = now.getDay(); // 0=일, 1=월, ..., 6=토
+  const diff = day === 0 ? -6 : 1 - day; // 이번 주 월요일로
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    return d;
+  });
+}
+
+/** 날짜를 "월 (월)" 형식으로 포맷 */
+function formatMonthLabel(date: Date): string {
+  const month = date.getMonth() + 1;
+  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+  const weekday = weekdays[date.getDay()];
+  return `${month}월 (${weekday})`;
+}
+
+/** 날짜를 "3월 22일 (토)" 형식으로 포맷 */
+function formatDateHeader(date: Date): string {
   const month = date.getMonth() + 1;
   const day = date.getDate();
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
@@ -45,27 +76,30 @@ function formatDateHeader(dateStr: string): string {
 
 export default function HomeScreen() {
   const today = getTodayString();
-  const now = new Date();
+  const weekDates = getWeekDates();
   const { currentGroupId } = useGroupStore();
 
   // 그룹이 없으면 안내 화면 표시
   if (!currentGroupId) return <NoGroupView />;
 
-  // 오늘 날짜 기준으로 해당 월의 식단을 모두 가져온 후 오늘 것만 필터링
-  const { data: allMealPlans, isLoading } = useMealPlans(
-    now.getFullYear(),
-    now.getMonth() + 1,
-  );
+  // 선택된 날짜 (기본값: 오늘, 없으면 이번 주 월요일)
+  const defaultDate = weekDates.find((d) => toDateString(d) === today) ? today : toDateString(weekDates[0]);
+  const [selectedDate, setSelectedDate] = useState(defaultDate);
+
+  const selectedDateObj = new Date(selectedDate + 'T00:00:00');
+  const year = selectedDateObj.getFullYear();
+  const month = selectedDateObj.getMonth() + 1;
+
+  // 선택된 날짜가 속한 월의 식단을 조회
+  const { data: allMealPlans, isLoading } = useMealPlans(year, month);
   const { removeMealPlan } = useMealPlanMutation();
 
   // ── 모달 상태 ──────────────────────────────────────────
-  /** 추가/수정 모달 표시 여부 */
   const [isModalVisible, setIsModalVisible] = useState(false);
-  /** 수정 중인 식단 (null이면 추가 모드) */
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
 
-  // 오늘 날짜의 식단만 필터링
-  const todayMealPlans = (allMealPlans ?? []).filter((mp) => mp.date === today);
+  // 선택된 날짜의 식단만 필터링
+  const selectedMealPlans = (allMealPlans ?? []).filter((mp) => mp.date === selectedDate);
 
   /** 수정 버튼 핸들러 */
   const handleEdit = (mealPlan: MealPlanWithUser) => {
@@ -95,15 +129,55 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 날짜 헤더 */}
+      {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>오늘의 식단</Text>
-        <Text style={styles.headerDate}>{formatDateHeader(today)}</Text>
+        <Text style={styles.headerTitle}>
+          {selectedDate === today ? '오늘의 식단' : '식단'}
+        </Text>
+        <Text style={styles.headerDate}>{formatDateHeader(selectedDateObj)}</Text>
+      </View>
+
+      {/* 주간 날짜 탭 스트립 */}
+      <View style={styles.weekStrip}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.weekScrollContent}
+        >
+          {weekDates.map((date) => {
+            const dateStr = toDateString(date);
+            const isSelected = dateStr === selectedDate;
+            const isToday = dateStr === today;
+            const dayNum = date.getDate();
+            const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+            const weekday = weekdays[date.getDay()];
+
+            return (
+              <TouchableOpacity
+                key={dateStr}
+                style={[styles.dayTab, isSelected && styles.dayTabSelected]}
+                onPress={() => setSelectedDate(dateStr)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.dayWeekday, isSelected && styles.dayWeekdaySelected]}>
+                  {weekday}
+                </Text>
+                <Text style={[styles.dayNum, isSelected && styles.dayNumSelected]}>
+                  {dayNum}
+                </Text>
+                {/* 오늘 강조 점 */}
+                {isToday && (
+                  <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {/* 식단 목록 */}
       <FlatList
-        data={todayMealPlans}
+        data={selectedMealPlans}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <MealPlanCard
@@ -115,7 +189,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <EmptyState
-            message={'오늘 등록된 식단이 없습니다.\n+ 버튼을 눌러 식단을 추가해보세요!'}
+            message={`${formatDateHeader(selectedDateObj)}에\n등록된 식단이 없습니다.\n+ 버튼을 눌러 추가해보세요!`}
           />
         }
       />
@@ -129,7 +203,7 @@ export default function HomeScreen() {
       <MealPlanFormModal
         visible={isModalVisible}
         onClose={handleModalClose}
-        date={today}
+        date={selectedDate}
         mealPlan={editingMealPlan ?? undefined}
       />
     </SafeAreaView>
@@ -145,7 +219,7 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 8,
   },
   headerTitle: {
     fontSize: 26,
@@ -157,11 +231,59 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: 2,
   },
+  // ── 주간 날짜 탭 ─────────────────────────────────────────
+  weekStrip: {
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  weekScrollContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  dayTab: {
+    width: 44,
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    gap: 4,
+  },
+  dayTabSelected: {
+    backgroundColor: colors.primary,
+  },
+  dayWeekday: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.textSecondary,
+  },
+  dayWeekdaySelected: {
+    color: '#fff',
+  },
+  dayNum: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  dayNumSelected: {
+    color: '#fff',
+  },
+  todayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
+  },
+  todayDotSelected: {
+    backgroundColor: '#fff',
+  },
   // ── 리스트 ───────────────────────────────────────────────
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 100, // FAB에 가리지 않게 여유 공간
-    flexGrow: 1,        // EmptyState가 세로 중앙에 오도록
+    paddingTop: 8,
+    paddingBottom: 100,
+    flexGrow: 1,
   },
   // ── FAB ─────────────────────────────────────────────────
   fab: {
@@ -174,12 +296,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    /** 그림자 (iOS) */
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
-    /** 그림자 (Android) */
     elevation: 6,
   },
 });
