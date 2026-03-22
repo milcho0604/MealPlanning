@@ -1,0 +1,11 @@
+{
+  "name": "@mealplan/shared",
+  "version": "0.0.1",
+  "description": "모바일 앱과 백엔드 API가 공통으로 사용하는 타입, 상수, 유틸 패키지",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  }
+}
