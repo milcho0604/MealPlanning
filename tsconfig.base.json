@@ -1,0 +1,20 @@
+{
+  // 모든 패키지/앱이 상속하는 공통 TypeScript 설정
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "strict": true,                    // 엄격한 타입 체크 (null check, any 경고 등)
+    "esModuleInterop": true,           // import/export 호환성
+    "skipLibCheck": true,              // 라이브러리 타입 검사 생략 (빌드 속도 향상)
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,    // NestJS 데코레이터 사용
+    "emitDecoratorMetadata": true      // NestJS 메타데이터 반영
+  }
+}

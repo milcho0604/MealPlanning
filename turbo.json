@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    // 빌드: shared 패키지가 먼저 빌드된 후 각 앱이 빌드되도록 의존성 설정
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    // 개발 서버: 각 앱/패키지를 병렬로 실행
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    // 린트: 캐시 활용하여 변경된 패키지만 재실행
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    // 테스트: 빌드 완료 후 실행
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    // 클린: dist, node_modules 등 빌드 산출물 제거
+    "clean": {
+      "cache": false
+    }
+  }
+}
