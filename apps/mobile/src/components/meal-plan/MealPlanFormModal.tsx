@@ -8,6 +8,10 @@
  * Phase 2 추가:
  * - 반복 설정: 매주 / 매월 반복 토글
  * - 레시피 URL 입력 필드
+ *
+ * Phase 2 (템플릿):
+ * - 템플릿에서 불러오기 버튼 → TemplatePickerModal
+ * - 현재 입력 내용을 템플릿으로 저장 버튼
  */
 
 import { useEffect, useState } from 'react';
@@ -24,11 +28,14 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
-import type { MealType, RecurRule } from '@mealplan/shared';
+import type { MealTemplate, MealType, RecurRule } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
 import { useMealPlanMutation } from '../../hooks/meal-plan/use-meal-plan-mutation.hook';
+import { useTemplateMutation } from '../../hooks/template/use-template-mutation.hook';
 import { useGroupStore } from '../../stores/group.store';
+import { TemplatePickerModal } from './TemplatePickerModal';
 import { colors } from '../../constants/colors';
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
@@ -54,6 +61,7 @@ export function MealPlanFormModal({
 }: MealPlanFormModalProps) {
   const { currentGroupId } = useGroupStore();
   const { createMealPlan, updateMealPlan, isCreating, isUpdating } = useMealPlanMutation();
+  const { saveTemplate, isSaving } = useTemplateMutation();
 
   const [mealType, setMealType] = useState<MealType>(initialMealType);
   const [menuName, setMenuName] = useState('');
@@ -61,6 +69,9 @@ export function MealPlanFormModal({
   const [recipeUrl, setRecipeUrl] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurRule, setRecurRule] = useState<RecurRule>('weekly');
+
+  // 템플릿 관련 상태
+  const [isTemplatePickerVisible, setIsTemplatePickerVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -122,6 +133,44 @@ export function MealPlanFormModal({
     }
   };
 
+  /** 템플릿 선택 → 폼 자동 채우기 */
+  const handleTemplateSelect = (template: MealTemplate) => {
+    setMealType(template.mealType);
+    setMenuName(template.menuName);
+    setMemo(template.memo ?? '');
+    setRecipeUrl(template.recipeUrl ?? '');
+  };
+
+  /** 현재 입력 내용을 템플릿으로 저장 */
+  const handleSaveAsTemplate = () => {
+    if (!menuName.trim()) {
+      Alert.alert('입력 오류', '메뉴 이름을 입력한 후 저장해주세요.');
+      return;
+    }
+    Alert.prompt(
+      '템플릿 이름',
+      '이 메뉴를 어떤 이름으로 저장할까요?',
+      async (templateName) => {
+        if (!templateName?.trim()) return;
+        try {
+          await saveTemplate({
+            groupId: currentGroupId!,
+            name: templateName.trim(),
+            mealType,
+            menuName: menuName.trim(),
+            memo: memo.trim() || undefined,
+            recipeUrl: recipeUrl.trim() || undefined,
+          });
+          Alert.alert('저장 완료', `"${templateName.trim()}" 템플릿이 저장되었습니다.`);
+        } catch {
+          Alert.alert('오류', '템플릿 저장에 실패했습니다.');
+        }
+      },
+      'plain-text',
+      menuName.trim(),
+    );
+  };
+
   const isLoading = isCreating || isUpdating;
   const isEditMode = !!mealPlan;
 
@@ -150,6 +199,29 @@ export function MealPlanFormModal({
         </View>
 
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+          {/* 템플릿 버튼 영역 (추가 모드에서만 표시) */}
+          {!isEditMode && (
+            <View style={styles.templateRow}>
+              <TouchableOpacity
+                style={styles.templateBtn}
+                onPress={() => setIsTemplatePickerVisible(true)}
+              >
+                <Ionicons name="bookmark-outline" size={15} color={colors.primary} />
+                <Text style={styles.templateBtnText}>불러오기</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.templateBtn, isSaving && styles.templateBtnDisabled]}
+                onPress={handleSaveAsTemplate}
+                disabled={isSaving}
+              >
+                <Ionicons name="save-outline" size={15} color={colors.primary} />
+                <Text style={styles.templateBtnText}>
+                  {isSaving ? '저장 중...' : '템플릿으로 저장'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* 식사 유형 선택 */}
           <Text style={styles.label}>식사 유형</Text>
           <View style={styles.mealTypeRow}>
@@ -243,6 +315,13 @@ export function MealPlanFormModal({
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* 템플릿 선택 모달 */}
+      <TemplatePickerModal
+        visible={isTemplatePickerVisible}
+        onClose={() => setIsTemplatePickerVisible(false)}
+        onSelect={handleTemplateSelect}
+      />
     </Modal>
   );
 }
@@ -326,4 +405,25 @@ const styles = StyleSheet.create({
   recurRuleBtnActive: { borderColor: colors.primary, backgroundColor: '#E8F5E9' },
   recurRuleBtnText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
   recurRuleBtnTextActive: { color: colors.primary, fontWeight: '700' },
+  // ── 템플릿 버튼 ───────────────────────────────────────────
+  templateRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  templateBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  templateBtnDisabled: { opacity: 0.5 },
+  templateBtnText: { fontSize: 13, fontWeight: '600', color: colors.primary },
 });

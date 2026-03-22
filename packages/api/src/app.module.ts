@@ -24,6 +24,7 @@ import { GroupsModule } from './modules/groups/groups.module';
 import { IngredientsModule } from './modules/ingredients/ingredients.module';
 import { ShoppingModule } from './modules/shopping/shopping.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { MealTemplatesModule } from './modules/meal-templates/meal-templates.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     IngredientsModule,
     ShoppingModule,
     NotificationsModule,
+    MealTemplatesModule,
   ],
 })
 export class AppModule {}

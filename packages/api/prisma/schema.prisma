@@ -59,11 +59,12 @@ model Group {
   createdAt  DateTime @default(now()) @map("created_at")
 
   // 연관 관계
-  owner         User          @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  owner         User           @relation("GroupOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   members       GroupMember[]
   mealPlans     MealPlan[]
   ingredients   Ingredient[]
   shoppingItems ShoppingItem[]
+  mealTemplates MealTemplate[]
 
   @@map("groups")
 }
@@ -140,6 +141,29 @@ model Ingredient {
   // 유통기한 임박 조회가 빈번하므로 인덱스 추가
   @@index([groupId, expiryDate])
   @@map("ingredients")
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// 식단 템플릿 (Meal Templates)
+// 자주 사용하는 메뉴를 저장해두고 재사용
+// ─────────────────────────────────────────────────────────────────────
+model MealTemplate {
+  id        String   @id @default(uuid())
+  groupId   String   @map("group_id")
+  /// 템플릿 이름 (사용자 지정, e.g. "월요일 아침 루틴")
+  name      String
+  /// 식사 유형: breakfast | lunch | dinner | snack
+  mealType  String   @map("meal_type")
+  menuName  String   @map("menu_name")
+  memo      String?
+  recipeUrl String?  @map("recipe_url")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 연관 관계
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
+  @@map("meal_templates")
 }
 
 // ─────────────────────────────────────────────────────────────────────

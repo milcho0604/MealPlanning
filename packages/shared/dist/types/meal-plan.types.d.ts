@@ -34,6 +34,27 @@ export interface CreateMealPlanRequest {
 }
 /** 식단 수정 요청 바디 - 모든 필드 선택적 */
 export type UpdateMealPlanRequest = Partial<Pick<CreateMealPlanRequest, 'menuName' | 'memo' | 'recipeUrl' | 'isRecurring' | 'recurRule'>>;
+/** 식단 템플릿 */
+export interface MealTemplate {
+    id: string;
+    groupId: string;
+    /** 템플릿 이름 (사용자 지정) */
+    name: string;
+    mealType: MealType;
+    menuName: string;
+    memo: string | null;
+    recipeUrl: string | null;
+    createdAt: string;
+}
+/** 템플릿 생성 요청 바디 */
+export interface CreateMealTemplateRequest {
+    groupId: string;
+    name: string;
+    mealType: MealType;
+    menuName: string;
+    memo?: string;
+    recipeUrl?: string;
+}
 /** 기간별 식단 조회 쿼리 파라미터 */
 export interface GetMealPlansQuery {
     groupId: string;
