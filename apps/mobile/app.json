@@ -33,13 +33,13 @@
       [
         "@react-native-google-signin/google-signin",
         {
-          "iosUrlScheme": "com.googleusercontent.apps.REPLACE_WITH_REVERSED_CLIENT_ID"
+          "iosUrlScheme": "com.googleusercontent.apps.88190697802-1ukeekh66h57e8e62q79lec1no9oscjp"
         }
       ],
       [
         "@react-native-kakao/core",
         {
-          "nativeAppKey": "REPLACE_WITH_KAKAO_NATIVE_APP_KEY",
+          "nativeAppKey": "e853e6f283f75a8256546445c2add6d1",
           "kotlinVersion": "1.9.0"
         }
       ]
