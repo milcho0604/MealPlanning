@@ -150,14 +150,14 @@ export class AuthController {
 
   /**
    * 회원 탈퇴 (인증 필요)
-   * TODO: Supabase Auth 계정 삭제 + 로컬 DB 사용자 삭제 구현
+   * Supabase Auth 계정 + 로컬 DB 사용자 및 연관 데이터 삭제
    */
   @Delete('account')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '회원 탈퇴' })
   deleteAccount(@CurrentUser() user: RequestUser) {
-    // TODO: 회원 탈퇴 로직 구현 (Phase 1)
-    return { message: `회원 탈퇴 처리 완료 (userId: ${user.id})` };
+    return this.authService.deleteAccount(user.id);
   }
 }

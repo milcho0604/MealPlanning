@@ -304,6 +304,26 @@ export class AuthService {
   }
 
   /**
+   * 회원 탈퇴
+   *
+   * 1. Supabase Auth에서 계정 삭제
+   * 2. 로컬 DB에서 사용자 삭제 (cascade로 연관 데이터 자동 삭제)
+   *    - group_members, meal_plans, ingredients 모두 삭제됨
+   *    - 사용자가 owner인 그룹은 그룹 자체가 삭제되며, 해당 그룹의 모든 데이터도 삭제
+   */
+  async deleteAccount(userId: string): Promise<void> {
+    // 1. Supabase Auth 계정 삭제
+    const { error } = await this.supabase.auth.admin.deleteUser(userId);
+    if (error) {
+      // Supabase에 계정이 없어도(소셜 로그인 등) DB 삭제는 계속 진행
+      console.warn('[탈퇴] Supabase Auth 삭제 실패 (무시):', error.message);
+    }
+
+    // 2. 로컬 DB에서 삭제 (Prisma cascade가 연관 데이터 처리)
+    await this.prisma.user.delete({ where: { id: userId } });
+  }
+
+  /**
    * 로그아웃
    * 서버에서 처리할 로직 없음 (JWT는 stateless)
    * 클라이언트가 토큰을 삭제하면 로그아웃 완료

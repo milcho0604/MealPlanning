@@ -61,4 +61,12 @@ export const authService = {
     const { data } = await apiClient.get<{ success: true; data: User }>('/auth/me');
     return data.data;
   },
+
+  /**
+   * 회원 탈퇴
+   * Supabase Auth + DB의 모든 사용자 데이터 삭제
+   */
+  deleteAccount: async (): Promise<void> => {
+    await apiClient.delete('/auth/account');
+  },
 };

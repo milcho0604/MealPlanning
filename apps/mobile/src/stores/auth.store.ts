@@ -42,6 +42,8 @@ interface AuthState {
   setAuth: (tokens: AuthTokens, user: User) => Promise<void>;
   /** 로그아웃 */
   signOut: () => Promise<void>;
+  /** 회원 탈퇴 */
+  deleteAccount: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -113,16 +115,25 @@ export const useAuthStore = create<AuthState>((set) => ({
    */
   signOut: async () => {
     try {
-      // 서버에 로그아웃 요청 (토큰 블랙리스트 처리)
       await authService.signOut();
     } catch {
       // 서버 에러가 있어도 클라이언트 측은 로그아웃 진행
     } finally {
       await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
       await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
-      // 그룹 스토어도 초기화
       resetGroupStore();
       set({ user: null, isAuthenticated: false });
     }
+  },
+
+  /**
+   * 회원 탈퇴 - 서버에서 계정 및 모든 데이터 삭제 후 로컬 상태 초기화
+   */
+  deleteAccount: async () => {
+    await authService.deleteAccount();
+    await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+    await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+    resetGroupStore();
+    set({ user: null, isAuthenticated: false });
   },
 }));

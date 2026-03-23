@@ -31,7 +31,7 @@ import { colors } from '../../src/constants/colors';
 type GroupModalType = 'create' | 'join' | null;
 
 export default function SettingsScreen() {
-  const { user, signOut } = useAuthStore();
+  const { user, signOut, deleteAccount } = useAuthStore();
   const { groups, currentGroupId, setCurrentGroupId, createGroup, joinGroup, loadGroups } =
     useGroupStore();
 
@@ -47,6 +47,28 @@ export default function SettingsScreen() {
       { text: '취소', style: 'cancel' },
       { text: '로그아웃', style: 'destructive', onPress: signOut },
     ]);
+  };
+
+  /** 회원 탈퇴 */
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      '회원 탈퇴',
+      '탈퇴하면 모든 식단, 냉장고, 쇼핑 데이터가 영구적으로 삭제됩니다.\n정말 탈퇴하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '탈퇴하기',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+            } catch {
+              Alert.alert('오류', '탈퇴 처리에 실패했습니다. 다시 시도해주세요.');
+            }
+          },
+        },
+      ],
+    );
   };
 
   /** 그룹 생성 */
@@ -181,6 +203,11 @@ export default function SettingsScreen() {
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
           <Text style={styles.signOutText}>로그아웃</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteAccountButton} onPress={handleDeleteAccount}>
+          <Ionicons name="trash-outline" size={16} color={colors.textSecondary} />
+          <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -426,6 +453,19 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 15,
     fontWeight: '600',
+  },
+  deleteAccountButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  deleteAccountText: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    textDecorationLine: 'underline',
   },
   // ── 모달 다이얼로그 ──────────────────────────────────────
   overlay: {
