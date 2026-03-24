@@ -24,7 +24,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IngredientsService } from './ingredients.service';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { UpdateIngredientDto } from './dto/update-ingredient.dto';
@@ -62,7 +67,11 @@ export class IngredientsController {
   @Get('expiring')
   @ApiOperation({ summary: '유통기한 임박 재료 조회' })
   @ApiQuery({ name: 'groupId', required: true })
-  @ApiQuery({ name: 'days', required: false, description: '기준 일수 (기본 3)' })
+  @ApiQuery({
+    name: 'days',
+    required: false,
+    description: '기준 일수 (기본 3)',
+  })
   findExpiring(
     @CurrentUser() user: RequestUser,
     @Query('groupId') groupId: string,
@@ -81,10 +90,7 @@ export class IngredientsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '재료 추가' })
-  create(
-    @CurrentUser() user: RequestUser,
-    @Body() dto: CreateIngredientDto,
-  ) {
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateIngredientDto) {
     return this.ingredientsService.create(user.id, dto);
   }
 
@@ -106,10 +112,7 @@ export class IngredientsController {
    */
   @Delete(':id')
   @ApiOperation({ summary: '재료 삭제' })
-  remove(
-    @CurrentUser() user: RequestUser,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.ingredientsService.remove(user.id, id);
   }
 
@@ -119,10 +122,7 @@ export class IngredientsController {
    */
   @Patch(':id/consume')
   @ApiOperation({ summary: '재료 소진 처리' })
-  consume(
-    @CurrentUser() user: RequestUser,
-    @Param('id') id: string,
-  ) {
+  consume(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.ingredientsService.consume(user.id, id);
   }
 }

@@ -9,7 +9,11 @@
  * - 그룹 접근 권한 검증 (내 그룹의 식단만 조작 가능)
  */
 
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
 import { UpdateMealPlanDto } from './dto/update-meal-plan.dto';
@@ -37,7 +41,7 @@ export class MealPlansService {
         groupId: query.groupId,
         date: {
           gte: new Date(query.from), // 시작 날짜 이상
-          lte: new Date(query.to),   // 종료 날짜 이하
+          lte: new Date(query.to), // 종료 날짜 이하
         },
       },
       include: {
@@ -53,7 +57,7 @@ export class MealPlansService {
       ],
     });
 
-    return mealPlans.map(this.toResponse);
+    return mealPlans.map((mp) => this.toResponse(mp));
   }
 
   /**

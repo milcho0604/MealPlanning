@@ -31,7 +31,10 @@ export class MealTemplatesController {
 
   /** 템플릿 목록 조회 */
   @Get()
-  findAll(@Query() query: GetMealTemplatesDto, @CurrentUser() user: RequestUser) {
+  findAll(
+    @Query() query: GetMealTemplatesDto,
+    @CurrentUser() user: RequestUser,
+  ) {
     return this.mealTemplatesService.findAll(query.groupId, user.id);
   }
 

@@ -29,7 +29,7 @@ export class ShoppingService {
     return this.prisma.shoppingItem.findMany({
       where: { groupId },
       orderBy: [
-        { isChecked: 'asc' },   // 미완료(false) 먼저
+        { isChecked: 'asc' }, // 미완료(false) 먼저
         { createdAt: 'asc' },
       ],
     });
@@ -144,7 +144,10 @@ export class ShoppingService {
     ].filter((name) => !existingNames.has(name.toLowerCase()));
 
     if (uniqueMenuNames.length === 0) {
-      return { created: 0, message: '모든 식단 재료가 이미 냉장고에 있습니다.' };
+      return {
+        created: 0,
+        message: '모든 식단 재료가 이미 냉장고에 있습니다.',
+      };
     }
 
     // 쇼핑 목록에 일괄 추가
@@ -171,7 +174,8 @@ export class ShoppingService {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
-    if (!member) throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
+    if (!member)
+      throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
     return member;
   }
 }

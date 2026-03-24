@@ -7,5 +7,11 @@ import { PartialType, PickType } from '@nestjs/swagger';
 import { CreateIngredientDto } from './create-ingredient.dto';
 
 export class UpdateIngredientDto extends PartialType(
-  PickType(CreateIngredientDto, ['name', 'quantity', 'unit', 'category', 'expiryDate'] as const),
+  PickType(CreateIngredientDto, [
+    'name',
+    'quantity',
+    'unit',
+    'category',
+    'expiryDate',
+  ] as const),
 ) {}

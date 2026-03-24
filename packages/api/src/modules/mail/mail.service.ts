@@ -27,8 +27,15 @@ export class MailService {
     });
   }
 
-  async sendVerificationEmail(email: string, name: string, token: string): Promise<void> {
-    const appUrl = this.configService.get<string>('APP_URL', 'http://localhost:3300');
+  async sendVerificationEmail(
+    email: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
+    const appUrl = this.configService.get<string>(
+      'APP_URL',
+      'http://localhost:3300',
+    );
     const verifyUrl = `${appUrl}/v1/auth/verify-email?token=${token}`;
 
     try {

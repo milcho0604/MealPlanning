@@ -12,7 +12,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import Expo, { type ExpoPushMessage } from 'expo-server-sdk';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -30,7 +30,7 @@ export class NotificationsService {
   async savePushToken(userId: string, pushToken: string): Promise<void> {
     // 유효한 Expo 푸시 토큰인지 검증
     if (!Expo.isExpoPushToken(pushToken)) {
-      this.logger.warn(`유효하지 않은 Expo 푸시 토큰: ${pushToken}`);
+      this.logger.warn(`유효하지 않은 Expo 푸시 토큰: ${String(pushToken)}`);
       return;
     }
 

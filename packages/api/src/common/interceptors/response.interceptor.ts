@@ -10,7 +10,12 @@
  *   { "success": true, "data": { "user": {...}, "tokens": {...} } }
  */
 
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -21,11 +26,17 @@ interface SuccessResponse<T> {
 }
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, SuccessResponse<T>> {
-  intercept(_context: ExecutionContext, next: CallHandler): Observable<SuccessResponse<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<
+  T,
+  SuccessResponse<T>
+> {
+  intercept(
+    _context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<SuccessResponse<T>> {
     return next.handle().pipe(
       // 컨트롤러의 반환값을 { success: true, data: ... } 형태로 감싸기
-      map((data) => ({ success: true as const, data })),
+      map((data: T) => ({ success: true as const, data })),
     );
   }
 }

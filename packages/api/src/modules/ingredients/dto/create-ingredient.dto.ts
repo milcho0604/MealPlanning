@@ -3,7 +3,15 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsNumber, IsOptional, IsPositive, IsString, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import type { IngredientCategory, IngredientUnit } from '@mealplan/shared';
 
 export class CreateIngredientDto {
@@ -27,12 +35,35 @@ export class CreateIngredientDto {
   @IsEnum(['g', 'kg', 'ml', 'L', '개', '봉', '팩', '캔'])
   unit?: IngredientUnit;
 
-  @ApiPropertyOptional({ enum: ['meat', 'vegetable', 'dairy', 'seafood', 'grain', 'sauce', 'frozen', 'other'] })
+  @ApiPropertyOptional({
+    enum: [
+      'meat',
+      'vegetable',
+      'dairy',
+      'seafood',
+      'grain',
+      'sauce',
+      'frozen',
+      'other',
+    ],
+  })
   @IsOptional()
-  @IsEnum(['meat', 'vegetable', 'dairy', 'seafood', 'grain', 'sauce', 'frozen', 'other'])
+  @IsEnum([
+    'meat',
+    'vegetable',
+    'dairy',
+    'seafood',
+    'grain',
+    'sauce',
+    'frozen',
+    'other',
+  ])
   category?: IngredientCategory;
 
-  @ApiPropertyOptional({ example: '2026-04-01', description: '유통기한 (YYYY-MM-DD)' })
+  @ApiPropertyOptional({
+    example: '2026-04-01',
+    description: '유통기한 (YYYY-MM-DD)',
+  })
   @IsOptional()
   @IsDateString()
   expiryDate?: string;

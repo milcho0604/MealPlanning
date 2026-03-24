@@ -5,7 +5,11 @@
  * 모든 작업은 그룹 멤버만 수행할 수 있습니다.
  */
 
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateMealTemplateDto } from './dto/create-meal-template.dto';
 
@@ -55,7 +59,9 @@ export class MealTemplatesService {
 
   /** 존재 여부 확인 헬퍼 */
   private async findOneOrThrow(id: string) {
-    const template = await this.prisma.mealTemplate.findUnique({ where: { id } });
+    const template = await this.prisma.mealTemplate.findUnique({
+      where: { id },
+    });
     if (!template) throw new NotFoundException('템플릿을 찾을 수 없습니다.');
     return template;
   }
@@ -65,7 +71,8 @@ export class MealTemplatesService {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
-    if (!member) throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
+    if (!member)
+      throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
     return member;
   }
 }

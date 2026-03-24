@@ -38,13 +38,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
-        : (exceptionResponse as { message?: string | string[] })?.message ?? exception.message;
+        : ((exceptionResponse as { message?: string | string[] })?.message ??
+          exception.message);
 
     // 에러 코드: HTTP 상태 코드를 기반으로 생성
     const code = HttpStatus[status] ?? 'INTERNAL_SERVER_ERROR';
 
     // 500 이상 에러는 서버 로그에 기록
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
       this.logger.error(
         `[${request.method}] ${request.url} → ${status} ${exception.message}`,
         exception.stack,

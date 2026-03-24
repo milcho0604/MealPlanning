@@ -10,5 +10,11 @@ import { CreateMealPlanDto } from './create-meal-plan.dto';
 
 // CreateMealPlanDto에서 수정 가능한 필드만 선택하고, 모두 Optional로 변환
 export class UpdateMealPlanDto extends PartialType(
-  PickType(CreateMealPlanDto, ['menuName', 'memo', 'recipeUrl', 'isRecurring', 'recurRule'] as const),
+  PickType(CreateMealPlanDto, [
+    'menuName',
+    'memo',
+    'recipeUrl',
+    'isRecurring',
+    'recurRule',
+  ] as const),
 ) {}

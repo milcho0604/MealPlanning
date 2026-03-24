@@ -27,11 +27,11 @@ import { MailModule } from '../mail/mail.module';
     // JwtModule: 비동기로 설정하여 ConfigService에서 시크릿 키를 읽음
     JwtModule.registerAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService): Record<string, unknown> => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),
-        // expiresIn은 '1h', '30d' 같은 문자열 또는 초(number)를 받음
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN', '1h') as any },
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') ?? '1h',
+        },
       }),
     }),
   ],
@@ -41,7 +41,7 @@ import { MailModule } from '../mail/mail.module';
     JwtStrategy, // @UseGuards(JwtAuthGuard) 사용 시 이 전략이 실행됨
   ],
   exports: [
-    JwtModule,     // 다른 모듈에서 JwtService를 사용할 수 있도록 export
+    JwtModule, // 다른 모듈에서 JwtService를 사용할 수 있도록 export
     PassportModule,
   ],
 })

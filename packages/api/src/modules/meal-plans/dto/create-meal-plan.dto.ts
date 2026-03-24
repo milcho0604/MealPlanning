@@ -5,7 +5,15 @@
  */
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDateString, IsEnum, IsOptional, IsString, IsUrl, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUrl,
+  MinLength,
+} from 'class-validator';
 import type { MealType, RecurRule } from '@mealplan/shared';
 
 export class CreateMealPlanDto {
@@ -17,7 +25,10 @@ export class CreateMealPlanDto {
   @IsDateString()
   date: string;
 
-  @ApiProperty({ enum: ['breakfast', 'lunch', 'dinner', 'snack'], description: '식사 유형' })
+  @ApiProperty({
+    enum: ['breakfast', 'lunch', 'dinner', 'snack'],
+    description: '식사 유형',
+  })
   @IsEnum(['breakfast', 'lunch', 'dinner', 'snack'])
   mealType: MealType;
 
@@ -31,7 +42,10 @@ export class CreateMealPlanDto {
   @IsString()
   memo?: string;
 
-  @ApiPropertyOptional({ example: 'https://recipe.com/...', description: '레시피 URL' })
+  @ApiPropertyOptional({
+    example: 'https://recipe.com/...',
+    description: '레시피 URL',
+  })
   @IsOptional()
   @IsUrl({}, { message: '올바른 URL 형식을 입력해주세요.' })
   recipeUrl?: string;
@@ -41,7 +55,10 @@ export class CreateMealPlanDto {
   @IsBoolean()
   isRecurring?: boolean;
 
-  @ApiPropertyOptional({ enum: ['weekly', 'monthly'], description: '반복 규칙' })
+  @ApiPropertyOptional({
+    enum: ['weekly', 'monthly'],
+    description: '반복 규칙',
+  })
   @IsOptional()
   @IsEnum(['weekly', 'monthly'])
   recurRule?: RecurRule;

@@ -12,11 +12,17 @@ export class GetMealPlansDto {
   @IsString()
   groupId: string;
 
-  @ApiProperty({ example: '2026-03-01', description: '조회 시작 날짜 (YYYY-MM-DD)' })
+  @ApiProperty({
+    example: '2026-03-01',
+    description: '조회 시작 날짜 (YYYY-MM-DD)',
+  })
   @IsDateString()
   from: string;
 
-  @ApiProperty({ example: '2026-03-31', description: '조회 종료 날짜 (YYYY-MM-DD)' })
+  @ApiProperty({
+    example: '2026-03-31',
+    description: '조회 종료 날짜 (YYYY-MM-DD)',
+  })
   @IsDateString()
   to: string;
 }

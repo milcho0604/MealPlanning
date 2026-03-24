@@ -144,7 +144,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Expo 푸시 토큰 등록/갱신' })
-  savePushToken(@CurrentUser() user: RequestUser, @Body() dto: SavePushTokenDto) {
+  savePushToken(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: SavePushTokenDto,
+  ) {
     return this.notificationsService.savePushToken(user.id, dto.pushToken);
   }
 

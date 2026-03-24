@@ -79,4 +79,4 @@ async function bootstrap() {
   console.log(`🚀 MealPlan API 서버 실행 중: http://localhost:${port}`);
 }
 
-bootstrap();
+void bootstrap();

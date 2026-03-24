@@ -10,7 +10,11 @@
  * - 유통기한 임박 재료 조회 (기본 3일 이내)
  */
 
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
 import { EXPIRY_WARNING_DAYS } from '@mealplan/shared';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -47,7 +51,7 @@ export class IngredientsService {
       ],
     });
 
-    return ingredients.map(this.toResponse);
+    return ingredients.map((i) => this.toResponse(i));
   }
 
   /**
@@ -58,7 +62,11 @@ export class IngredientsService {
    *
    * @param days - 기준 일수 (기본 EXPIRY_WARNING_DAYS = 3)
    */
-  async findExpiring(userId: string, groupId: string, days: number = EXPIRY_WARNING_DAYS) {
+  async findExpiring(
+    userId: string,
+    groupId: string,
+    days: number = EXPIRY_WARNING_DAYS,
+  ) {
     await this.validateGroupMember(userId, groupId);
 
     const today = new Date();
@@ -75,13 +83,13 @@ export class IngredientsService {
         expiryDate: {
           not: null,
           lte: expiryThreshold, // 기준일 이전 만료
-          gte: today,           // 오늘 이후 (이미 만료된 것도 포함하려면 제거)
+          gte: today, // 오늘 이후 (이미 만료된 것도 포함하려면 제거)
         },
       },
       orderBy: { expiryDate: 'asc' }, // 가장 먼저 만료되는 순서
     });
 
-    return ingredients.map(this.toResponse);
+    return ingredients.map((i) => this.toResponse(i));
   }
 
   /**
@@ -161,7 +169,9 @@ export class IngredientsService {
   // ── Private Methods ────────────────────────────────────────────────────────
 
   private async findIngredientOrThrow(id: string) {
-    const ingredient = await this.prisma.ingredient.findUnique({ where: { id } });
+    const ingredient = await this.prisma.ingredient.findUnique({
+      where: { id },
+    });
     if (!ingredient) throw new NotFoundException('재료를 찾을 수 없습니다.');
     return ingredient;
   }
@@ -170,13 +180,15 @@ export class IngredientsService {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });
-    if (!member) throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
+    if (!member)
+      throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
     return member;
   }
 
   private async validateGroupEditor(userId: string, groupId: string) {
     const member = await this.validateGroupMember(userId, groupId);
-    if (member.role === 'viewer') throw new ForbiddenException('편집 권한이 없습니다.');
+    if (member.role === 'viewer')
+      throw new ForbiddenException('편집 권한이 없습니다.');
     return member;
   }
 

@@ -59,10 +59,7 @@ export class MealPlansController {
    */
   @Get(':id')
   @ApiOperation({ summary: '식단 단건 조회' })
-  findOne(
-    @CurrentUser() user: RequestUser,
-    @Param('id') id: string,
-  ) {
+  findOne(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.mealPlansService.findOne(user.id, id);
   }
 
@@ -72,10 +69,7 @@ export class MealPlansController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '식단 생성' })
-  create(
-    @CurrentUser() user: RequestUser,
-    @Body() dto: CreateMealPlanDto,
-  ) {
+  create(@CurrentUser() user: RequestUser, @Body() dto: CreateMealPlanDto) {
     return this.mealPlansService.create(user.id, dto);
   }
 
@@ -97,10 +91,7 @@ export class MealPlansController {
    */
   @Delete(':id')
   @ApiOperation({ summary: '식단 삭제' })
-  remove(
-    @CurrentUser() user: RequestUser,
-    @Param('id') id: string,
-  ) {
+  remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.mealPlansService.remove(user.id, id);
   }
 }

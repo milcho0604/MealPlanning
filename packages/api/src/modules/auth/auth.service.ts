@@ -12,11 +12,16 @@
  *   이후 요청: 클라이언트 → NestJS (JWT 검증) → 처리
  */
 
-import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { OAuth2Client } from 'google-auth-library';
 import appleSignin from 'apple-signin-auth';
 import axios from 'axios';
@@ -47,21 +52,13 @@ export interface AuthResponse {
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  private readonly supabase: SupabaseClient;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly mailService: MailService,
-  ) {
-    // Supabase Admin 클라이언트 초기화 (service_role key 사용)
-    // service_role key는 RLS를 우회하므로 서버에서만 사용해야 합니다.
-    this.supabase = createClient(
-      this.configService.getOrThrow<string>('SUPABASE_URL'),
-      this.configService.getOrThrow<string>('SUPABASE_SERVICE_ROLE_KEY'),
-    );
-  }
+  ) {}
 
   /**
    * 회원가입
@@ -74,7 +71,9 @@ export class AuthService {
    */
   async signUp(dto: SignUpDto): Promise<{ message: string }> {
     // 이미 가입된 이메일 확인
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) throw new ConflictException('이미 사용 중인 이메일입니다.');
 
     // 비밀번호 해시
@@ -98,7 +97,11 @@ export class AuthService {
     });
 
     // 인증 메일 발송
-    await this.mailService.sendVerificationEmail(dto.email, dto.name, verifyToken);
+    await this.mailService.sendVerificationEmail(
+      dto.email,
+      dto.name,
+      verifyToken,
+    );
 
     return { message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.' };
   }
@@ -112,7 +115,8 @@ export class AuthService {
       },
     });
 
-    if (!user) throw new NotFoundException('유효하지 않거나 만료된 인증 링크입니다.');
+    if (!user)
+      throw new NotFoundException('유효하지 않거나 만료된 인증 링크입니다.');
 
     await this.prisma.user.update({
       where: { id: user.id },
@@ -154,15 +158,22 @@ export class AuthService {
    * @throws UnauthorizedException - 이메일/비밀번호가 틀린 경우
    */
   async signIn(dto: SignInDto): Promise<AuthResponse> {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
 
     if (!user || !user.passwordHash) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다.',
+      );
     }
 
     const bcrypt = await import('bcrypt');
     const isValid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!isValid) throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+    if (!isValid)
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 올바르지 않습니다.',
+      );
 
     // 이메일 인증 여부 확인
     if (!user.isVerified) {
@@ -189,11 +200,9 @@ export class AuthService {
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     try {
       // 리프레시 토큰 서명 검증
-      const payload = this.jwtService.verify<{ sub: string; email: string; type: string }>(
+      const payload: { sub: string; type: string } = this.jwtService.verify(
         refreshToken,
-        {
-          secret: this.configService.getOrThrow<string>('JWT_SECRET'),
-        },
+        { secret: this.configService.getOrThrow<string>('JWT_SECRET') },
       );
 
       // 리프레시 토큰인지 확인 (액세스 토큰으로 갱신 시도 방지)
@@ -257,7 +266,8 @@ export class AuthService {
     if (!user) {
       // 이메일이 없는 경우(Apple 이메일 숨기기) 고유 이메일 생성
       const email =
-        providerUser.email ?? `${provider}_${providerUser.providerId}@social.mealplan`;
+        providerUser.email ??
+        `${provider}_${providerUser.providerId}@social.mealplan`;
       user = await this.prisma.user.create({
         data: {
           email,
@@ -290,9 +300,13 @@ export class AuthService {
   /** Google ID 토큰 검증 */
   private async verifyGoogleToken(idToken: string): Promise<SocialUserInfo> {
     try {
-      const clientId = this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
+      const clientId =
+        this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
       const client = new OAuth2Client(clientId);
-      const ticket = await client.verifyIdToken({ idToken, audience: clientId });
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: clientId,
+      });
       const payload = ticket.getPayload()!;
       return {
         providerId: payload.sub,
@@ -308,7 +322,13 @@ export class AuthService {
   /** Kakao 액세스 토큰으로 사용자 정보 조회 */
   private async verifyKakaoToken(accessToken: string): Promise<SocialUserInfo> {
     try {
-      const { data } = await axios.get('https://kapi.kakao.com/v2/user/me', {
+      const { data } = await axios.get<{
+        id: number;
+        kakao_account?: {
+          email?: string;
+          profile?: { nickname?: string; profile_image_url?: string };
+        };
+      }>('https://kapi.kakao.com/v2/user/me', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const account = data.kakao_account ?? {};
@@ -366,7 +386,10 @@ export class AuthService {
    * 탈퇴 후 90일 이내에만 가능.
    * status_yn = Y, deleted_at = null 로 복구.
    */
-  async reactivateAccount(email: string, password: string): Promise<AuthResponse> {
+  async reactivateAccount(
+    email: string,
+    password: string,
+  ): Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({ where: { email } });
 
     if (!user || user.statusYn !== 'N') {
@@ -376,7 +399,8 @@ export class AuthService {
     // 비밀번호 확인
     const bcrypt = await import('bcrypt');
     const isValid = await bcrypt.compare(password, user.passwordHash ?? '');
-    if (!isValid) throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
+    if (!isValid)
+      throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
 
     // 복구
     const restored = await this.prisma.user.update({
@@ -404,7 +428,9 @@ export class AuthService {
     }
 
     if (expired.length > 0) {
-      this.logger.log(`[계정 정리] ${expired.length}개 탈퇴 계정 영구 삭제 완료`);
+      this.logger.log(
+        `[계정 정리] ${expired.length}개 탈퇴 계정 영구 삭제 완료`,
+      );
     }
   }
 
@@ -445,16 +471,23 @@ export class AuthService {
    */
   private generateTokens(userId: string, email: string): AuthTokens {
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN', '1h');
-    const refreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN', '30d');
+    const refreshExpiresIn = this.configService.get<string>(
+      'JWT_REFRESH_EXPIRES_IN',
+      '30d',
+    );
     const secret = this.configService.getOrThrow<string>('JWT_SECRET');
 
     // 액세스 토큰 (API 요청 시 사용)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const accessToken = this.jwtService.sign({ sub: userId, email }, { secret, expiresIn: expiresIn as any });
+    const accessToken: string = this.jwtService.sign(
+      { sub: userId, email },
+      { secret, expiresIn },
+    );
 
     // 리프레시 토큰 (type: 'refresh' 필드로 액세스 토큰과 구분)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const refreshToken = this.jwtService.sign({ sub: userId, email, type: 'refresh' }, { secret, expiresIn: refreshExpiresIn as any });
+    const refreshToken: string = this.jwtService.sign(
+      { sub: userId, email, type: 'refresh' },
+      { secret, expiresIn: refreshExpiresIn },
+    );
 
     // 액세스 토큰 만료 시각 계산 (클라이언트 측 갱신 타이밍 결정용)
     const expiresAt = new Date();
@@ -472,7 +505,13 @@ export class AuthService {
    * Prisma User 모델을 API 응답용 User 타입으로 변환합니다.
    * avatarUrl 필드명 변환 및 불필요한 필드 제거를 담당합니다.
    */
-  private toUserResponse(user: { id: string; email: string; name: string; avatarUrl: string | null; createdAt: Date }): User {
+  private toUserResponse(user: {
+    id: string;
+    email: string;
+    name: string;
+    avatarUrl: string | null;
+    createdAt: Date;
+  }): User {
     return {
       id: user.id,
       email: user.email,

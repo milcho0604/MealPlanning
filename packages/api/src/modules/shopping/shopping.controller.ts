@@ -38,7 +38,10 @@ export class ShoppingController {
 
   /** 쇼핑 목록 조회 */
   @Get()
-  findAll(@Query() query: GetShoppingItemsDto, @CurrentUser() user: RequestUser) {
+  findAll(
+    @Query() query: GetShoppingItemsDto,
+    @CurrentUser() user: RequestUser,
+  ) {
     return this.shoppingService.findAll(query.groupId, user.id);
   }
 
@@ -56,7 +59,10 @@ export class ShoppingController {
 
   /** 완료 항목 일괄 삭제 - /shopping/:id 보다 먼저 선언해야 라우팅 충돌 없음 */
   @Delete('checked')
-  clearChecked(@Query() query: GetShoppingItemsDto, @CurrentUser() user: RequestUser) {
+  clearChecked(
+    @Query() query: GetShoppingItemsDto,
+    @CurrentUser() user: RequestUser,
+  ) {
     return this.shoppingService.clearChecked(query.groupId, user.id);
   }
 

@@ -27,8 +27,9 @@ const INVITE_CODE_LENGTH = 6;
 /** 랜덤 대문자+숫자 초대 코드 생성 */
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 헷갈리는 문자(0,O,1,I) 제외
-  return Array.from({ length: INVITE_CODE_LENGTH }, () =>
-    chars[Math.floor(Math.random() * chars.length)],
+  return Array.from(
+    { length: INVITE_CODE_LENGTH },
+    () => chars[Math.floor(Math.random() * chars.length)],
   ).join('');
 }
 
@@ -73,7 +74,9 @@ export class GroupsService {
     let attempts = 0;
     do {
       inviteCode = generateInviteCode();
-      const existing = await this.prisma.group.findUnique({ where: { inviteCode } });
+      const existing = await this.prisma.group.findUnique({
+        where: { inviteCode },
+      });
       if (!existing) break;
       attempts++;
     } while (attempts < 10);
@@ -165,7 +168,11 @@ export class GroupsService {
   /**
    * 멤버 내보내기 (owner만 가능)
    */
-  async removeMember(groupId: string, requesterId: string, targetUserId: string) {
+  async removeMember(
+    groupId: string,
+    requesterId: string,
+    targetUserId: string,
+  ) {
     const requester = await this.assertMember(groupId, requesterId);
 
     if (requester.role !== 'owner') {
