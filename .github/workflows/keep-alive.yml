@@ -2,7 +2,7 @@ name: Render 서버 슬립 방지
 
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 5분마다 실행
+    - cron: '*/4 * * * *'  # 4분마다 실행
   workflow_dispatch:        # 수동 실행 가능
 
 jobs:
