@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.mealplan.app",
-      "versionCode": 2
+      "versionCode": 3
     },
     "plugins": [
       "expo-router",
@@ -41,6 +41,16 @@
         {
           "nativeAppKey": "e853e6f283f75a8256546445c2add6d1",
           "kotlinVersion": "1.9.0"
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraMavenRepos": [
+              "https://devrepo.kakao.com/nexus/content/groups/public/"
+            ]
+          }
         }
       ]
     ],
