@@ -27,12 +27,16 @@ export const authService = {
    * 회원가입
    * @returns 생성된 사용자 정보와 인증 토큰
    */
-  signUp: async (body: SignUpRequest): Promise<SignUpResponse> => {
-    const { data } = await apiClient.post<{ success: true; data: SignUpResponse }>(
+  signUp: async (body: SignUpRequest): Promise<{ message: string }> => {
+    const { data } = await apiClient.post<{ success: true; data: { message: string } }>(
       '/auth/signup',
       body,
     );
     return data.data;
+  },
+
+  resendVerification: async (email: string): Promise<void> => {
+    await apiClient.post('/auth/resend-verification', { email });
   },
 
   /**

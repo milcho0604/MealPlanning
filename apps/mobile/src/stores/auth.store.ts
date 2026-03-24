@@ -7,8 +7,8 @@
  * - 인증 상태(isAuthenticated), 사용자 정보(user) 제공
  */
 
-import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
+import { storage } from '../utils/storage';
 import type { AuthTokens, User } from '@mealplan/shared';
 import type { SignInRequest, SignUpRequest } from '@mealplan/shared';
 import { authService } from '../services/auth.service';
@@ -57,7 +57,7 @@ export const useAuthStore = create<AuthState>((set) => ({
    */
   initialize: async () => {
     try {
-      const accessToken = await SecureStore.getItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
+      const accessToken = await storage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
       if (accessToken) {
         // 토큰이 있으면 서버에서 현재 사용자 정보 조회 (토큰 유효성도 함께 검증)
@@ -66,8 +66,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       }
     } catch {
       // 토큰이 만료되거나 유효하지 않은 경우 → 저장된 인증 정보 삭제
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+      await storage.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
+      await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
       set({ user: null, isAuthenticated: false });
     } finally {
       // 성공/실패 무관하게 초기화 완료로 표시 (스플래시 화면 숨기기)
@@ -82,8 +82,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { user, tokens } = await authService.signUp(body);
 
     // 토큰을 안전한 저장소에 저장
-    await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    await storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+    await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
 
     set({ user, isAuthenticated: true });
   },
@@ -94,8 +94,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   signIn: async (body) => {
     const { user, tokens } = await authService.signIn(body);
 
-    await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    await storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+    await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
 
     set({ user, isAuthenticated: true });
   },
@@ -105,8 +105,8 @@ export const useAuthStore = create<AuthState>((set) => ({
    * (Google / Kakao / Apple 로그인 완료 후 호출)
    */
   setAuth: async (tokens, user) => {
-    await SecureStore.setItemAsync(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-    await SecureStore.setItemAsync(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    await storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+    await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
     set({ user, isAuthenticated: true });
   },
 
@@ -119,8 +119,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // 서버 에러가 있어도 클라이언트 측은 로그아웃 진행
     } finally {
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-      await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+      await storage.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
+      await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
       resetGroupStore();
       set({ user: null, isAuthenticated: false });
     }
@@ -131,8 +131,8 @@ export const useAuthStore = create<AuthState>((set) => ({
    */
   deleteAccount: async () => {
     await authService.deleteAccount();
-    await SecureStore.deleteItemAsync(STORAGE_KEYS.ACCESS_TOKEN);
-    await SecureStore.deleteItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+    await storage.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
+    await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
     resetGroupStore();
     set({ user: null, isAuthenticated: false });
   },

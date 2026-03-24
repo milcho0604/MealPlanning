@@ -36,10 +36,22 @@ model User {
   avatarUrl String?  @map("avatar_url")
   /// Expo 푸시 알림 토큰 (앱 실행 시 등록)
   pushToken  String?  @map("push_token")
+  /// 이메일/비밀번호 로그인용 bcrypt 해시 (소셜 로그인은 null)
+  passwordHash String?  @map("password_hash")
   /// 소셜 로그인 제공자: google | kakao | apple (이메일 가입은 null)
   provider   String?
   /// 소셜 제공자의 사용자 고유 ID
   providerId String?  @map("provider_id")
+  /// 계정 상태: Y=정상, N=탈퇴(90일 후 하드삭제)
+  statusYn          String   @default("Y") @map("status_yn")
+  /// 탈퇴 처리 시각 (null이면 정상 계정)
+  deletedAt         DateTime? @map("deleted_at")
+  /// 이메일 인증 여부 (소셜 로그인은 true, 이메일 가입은 인증 후 true)
+  isVerified        Boolean  @default(false) @map("is_verified")
+  /// 이메일 인증 토큰 (인증 완료 후 null)
+  verifyToken       String?  @map("verify_token")
+  /// 이메일 인증 토큰 만료 시각
+  verifyTokenExpiry DateTime? @map("verify_token_expiry")
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@unique([provider, providerId])

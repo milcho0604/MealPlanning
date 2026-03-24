@@ -15,15 +15,17 @@ import { apiClient } from './api.client';
  * 앱 포그라운드에서 알림을 받을 때 표시 방식 설정
  * (기본값은 포그라운드에서 알림을 무시함)
  */
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+}
 
 /**
  * 푸시 알림 권한 요청 및 Expo 푸시 토큰 발급
@@ -32,6 +34,9 @@ Notifications.setNotificationHandler({
  * @returns Expo 푸시 토큰 문자열 또는 null
  */
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
+  // 웹에서는 푸시 알림 미지원
+  if (Platform.OS === 'web') return null;
+
   // 시뮬레이터/에뮬레이터에서는 푸시 알림 불가
   if (!Device.isDevice) {
     console.log('[알림] 실제 디바이스에서만 푸시 알림이 지원됩니다.');

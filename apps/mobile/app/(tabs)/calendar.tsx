@@ -46,9 +46,6 @@ export default function CalendarScreen() {
   const now = new Date();
   const { currentGroupId } = useGroupStore();
 
-  // 그룹이 없으면 안내 화면 표시
-  if (!currentGroupId) return <NoGroupView />;
-
   // ── 현재 보여주는 연/월 상태 ───────────────────────────
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1); // 1~12
@@ -121,6 +118,7 @@ export default function CalendarScreen() {
     setEditingMealPlan(null);
   };
 
+  if (!currentGroupId) return <NoGroupView />;
   if (isLoading) return <LoadingSpinner />;
 
   return (

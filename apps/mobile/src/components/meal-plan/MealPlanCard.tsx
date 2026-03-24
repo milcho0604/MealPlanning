@@ -50,11 +50,11 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
 
         {/* 액션 버튼 */}
         <View style={styles.actions}>
-          <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.actionBtn}>
-            <Ionicons name="pencil-outline" size={16} color={colors.textSecondary} />
+          <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn}>
+            <Ionicons name="create" size={13} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.actionBtn}>
-            <Ionicons name="trash-outline" size={16} color={colors.error} />
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+            <Ionicons name="trash" size={13} color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>
@@ -107,10 +107,23 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
-  actionBtn: {
-    padding: 4,
+  editBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   menuName: {
     fontSize: 16,

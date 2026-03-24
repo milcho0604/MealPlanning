@@ -5,7 +5,8 @@
  */
 
 import { useState } from 'react';
-import { useAuthStore } from '../../stores/auth.store';
+import { router } from 'expo-router';
+import { authService } from '../../services/auth.service';
 
 /** 회원가입 폼 상태 타입 */
 interface SignUpForm {
@@ -25,7 +26,6 @@ interface UseSignUpReturn {
 }
 
 export function useSignUp(): UseSignUpReturn {
-  const { signUp } = useAuthStore();
 
   const [form, setForm] = useState<SignUpForm>({
     name: '',
@@ -62,11 +62,13 @@ export function useSignUp(): UseSignUpReturn {
     setError(null);
 
     try {
-      await signUp({
+      await authService.signUp({
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
       });
+      // 가입 성공 → 인증 안내 화면으로 이동
+      router.replace({ pathname: '/(auth)/verify-email', params: { email: form.email.trim() } });
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error

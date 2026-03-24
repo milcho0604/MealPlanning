@@ -49,11 +49,11 @@ export default function SettingsScreen() {
     ]);
   };
 
-  /** 회원 탈퇴 */
+  /** 회원 탈퇴 - 1단계: 안내 */
   const handleDeleteAccount = () => {
     Alert.alert(
       '회원 탈퇴',
-      '탈퇴하면 모든 식단, 냉장고, 쇼핑 데이터가 영구적으로 삭제됩니다.\n정말 탈퇴하시겠습니까?',
+      '탈퇴 후 90일간 계정 정보가 보관되며,\n그 기간 내에 다시 로그인하면 계정을 복구할 수 있습니다.\n\n90일이 지나면 모든 데이터가 영구 삭제됩니다.\n\n정말 탈퇴하시겠습니까?',
       [
         { text: '취소', style: 'cancel' },
         {

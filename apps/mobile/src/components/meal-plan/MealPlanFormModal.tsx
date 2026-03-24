@@ -147,28 +147,31 @@ export function MealPlanFormModal({
       Alert.alert('입력 오류', '메뉴 이름을 입력한 후 저장해주세요.');
       return;
     }
-    Alert.prompt(
-      '템플릿 이름',
-      '이 메뉴를 어떤 이름으로 저장할까요?',
-      async (templateName) => {
-        if (!templateName?.trim()) return;
-        try {
-          await saveTemplate({
-            groupId: currentGroupId!,
-            name: templateName.trim(),
-            mealType,
-            menuName: menuName.trim(),
-            memo: memo.trim() || undefined,
-            recipeUrl: recipeUrl.trim() || undefined,
-          });
-          Alert.alert('저장 완료', `"${templateName.trim()}" 템플릿이 저장되었습니다.`);
-        } catch {
-          Alert.alert('오류', '템플릿 저장에 실패했습니다.');
-        }
-      },
-      'plain-text',
-      menuName.trim(),
-    );
+
+    const doSave = async (templateName: string) => {
+      if (!templateName?.trim()) return;
+      try {
+        await saveTemplate({
+          groupId: currentGroupId!,
+          name: templateName.trim(),
+          mealType,
+          menuName: menuName.trim(),
+          memo: memo.trim() || undefined,
+          recipeUrl: recipeUrl.trim() || undefined,
+        });
+        Alert.alert('저장 완료', `"${templateName.trim()}" 템플릿이 저장되었습니다.`);
+      } catch {
+        Alert.alert('오류', '템플릿 저장에 실패했습니다.');
+      }
+    };
+
+    // Alert.prompt는 iOS 전용 — 웹에서는 브라우저 prompt 사용
+    if (typeof Alert.prompt === 'function') {
+      Alert.prompt('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?', doSave, 'plain-text', menuName.trim());
+    } else {
+      const name = window.prompt('템플릿 이름을 입력하세요', menuName.trim());
+      if (name) doSave(name);
+    }
   };
 
   const isLoading = isCreating || isUpdating;

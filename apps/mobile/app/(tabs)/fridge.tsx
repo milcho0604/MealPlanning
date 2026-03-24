@@ -57,9 +57,6 @@ function isExpiringSoon(expiryDate: string | null): boolean {
 export default function FridgeScreen() {
   const { currentGroupId } = useGroupStore();
 
-  // 그룹이 없으면 안내 화면 표시
-  if (!currentGroupId) return <NoGroupView />;
-
   // ── 필터 탭 상태 ──────────────────────────────────────
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
@@ -103,6 +100,7 @@ export default function FridgeScreen() {
     setEditingIngredient(null);
   };
 
+  if (!currentGroupId) return <NoGroupView />;
   if (isLoading) return <LoadingSpinner />;
 
   return (

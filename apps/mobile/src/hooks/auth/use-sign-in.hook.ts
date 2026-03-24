@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { useAuthStore } from '../../stores/auth.store';
 
 /** 로그인 폼 상태 타입 */
@@ -57,10 +58,20 @@ export function useSignIn(): UseSignInReturn {
       // 로그인 성공 시 auth.store가 상태를 업데이트하면
       // AuthLayout의 Redirect가 자동으로 메인 화면으로 이동시킵니다.
     } catch (err: unknown) {
-      // 서버 에러 메시지 파싱
       const message =
         (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
           ?.message ?? '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+
+      // 이메일 미인증 → 인증 안내 화면으로 이동
+      if (message === 'EMAIL_NOT_VERIFIED') {
+        router.replace({ pathname: '/(auth)/verify-email', params: { email: form.email.trim() } });
+        return;
+      }
+      // 탈퇴 계정 → 휴면 해제 화면으로 이동
+      if (message === 'ACCOUNT_DELETED') {
+        router.replace({ pathname: '/(auth)/reactivate', params: { email: form.email.trim() } });
+        return;
+      }
       setError(message);
     } finally {
       setIsLoading(false);

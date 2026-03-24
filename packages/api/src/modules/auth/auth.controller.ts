@@ -24,8 +24,11 @@ import {
   Param,
   Patch,
   Post,
+  Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { AuthResponse, AuthService, SocialProvider } from './auth.service';
@@ -40,6 +43,19 @@ import type { RequestUser } from './strategies/jwt.strategy';
 class SavePushTokenDto {
   @IsString()
   pushToken: string;
+}
+
+class ResendVerificationDto {
+  @IsString()
+  email: string;
+}
+
+class ReactivateDto {
+  @IsString()
+  email: string;
+
+  @IsString()
+  password: string;
 }
 
 class SocialSignInDto {
@@ -146,6 +162,32 @@ export class AuthController {
     @Body() dto: SocialSignInDto,
   ): Promise<AuthResponse> {
     return this.authService.socialSignIn(provider, dto.token, dto.name);
+  }
+
+  /** 탈퇴 계정 휴면 해제 */
+  @Post('reactivate')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '탈퇴 계정 휴면 해제 (90일 이내)' })
+  reactivate(@Body() dto: ReactivateDto) {
+    return this.authService.reactivateAccount(dto.email, dto.password);
+  }
+
+  /** 이메일 인증 */
+  @Get('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '이메일 인증 완료' })
+  async verifyEmail(@Query('token') token: string, @Res() res: Response) {
+    const html = await this.authService.verifyEmail(token);
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  }
+
+  /** 인증 메일 재발송 */
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '인증 메일 재발송' })
+  resendVerification(@Body() dto: ResendVerificationDto) {
+    return this.authService.resendVerification(dto.email);
   }
 
   /**

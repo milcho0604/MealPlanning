@@ -12,14 +12,17 @@
  *   이후 요청: 클라이언트 → NestJS (JWT 검증) → 처리
  */
 
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { OAuth2Client } from 'google-auth-library';
 import appleSignin from 'apple-signin-auth';
 import axios from 'axios';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import type { AuthTokens, User } from '@mealplan/shared';
@@ -43,12 +46,14 @@ export interface AuthResponse {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly supabase: SupabaseClient;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly mailService: MailService,
   ) {
     // Supabase Admin 클라이언트 초기화 (service_role key 사용)
     // service_role key는 RLS를 우회하므로 서버에서만 사용해야 합니다.
@@ -67,38 +72,78 @@ export class AuthService {
    *
    * @throws ConflictException - 이미 가입된 이메일인 경우
    */
-  async signUp(dto: SignUpDto): Promise<AuthResponse> {
-    // 1. Supabase Auth에 계정 생성
-    const { data: authData, error: authError } = await this.supabase.auth.admin.createUser({
-      email: dto.email,
-      password: dto.password,
-      email_confirm: true, // 개발 환경에서는 이메일 확인 없이 즉시 활성화
-    });
+  async signUp(dto: SignUpDto): Promise<{ message: string }> {
+    // 이미 가입된 이메일 확인
+    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('이미 사용 중인 이메일입니다.');
 
-    if (authError) {
-      // 이미 존재하는 이메일인 경우
-      if (authError.message.includes('already')) {
-        throw new ConflictException('이미 사용 중인 이메일입니다.');
-      }
-      throw new Error(authError.message);
-    }
+    // 비밀번호 해시
+    const bcrypt = await import('bcrypt');
+    const passwordHash = await bcrypt.hash(dto.password, 10);
 
-    // 2. 로컬 DB에 사용자 정보 저장 (Supabase Auth UUID를 그대로 사용)
-    const user = await this.prisma.user.create({
+    // 인증 토큰 생성 (24시간 유효)
+    const verifyToken = randomBytes(32).toString('hex');
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // DB 저장 (미인증 상태)
+    await this.prisma.user.create({
       data: {
-        id: authData.user.id, // Supabase Auth UUID와 동일한 ID 사용
         email: dto.email,
         name: dto.name,
+        passwordHash,
+        verifyToken,
+        verifyTokenExpiry,
+        isVerified: false,
       },
     });
 
-    // 3. JWT 토큰 발급
-    const tokens = this.generateTokens(user.id, user.email);
+    // 인증 메일 발송
+    await this.mailService.sendVerificationEmail(dto.email, dto.name, verifyToken);
 
-    return {
-      user: this.toUserResponse(user),
-      tokens,
-    };
+    return { message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.' };
+  }
+
+  /** 이메일 인증 완료 */
+  async verifyEmail(token: string): Promise<string> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        verifyToken: token,
+        verifyTokenExpiry: { gt: new Date() },
+      },
+    });
+
+    if (!user) throw new NotFoundException('유효하지 않거나 만료된 인증 링크입니다.');
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isVerified: true, verifyToken: null, verifyTokenExpiry: null },
+    });
+
+    // 인증 완료 후 브라우저에 보여줄 HTML
+    return `
+      <html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#f5f5f5;">
+        <div style="max-width:400px;margin:0 auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e0e0e0;">
+          <h2 style="color:#4CAF50;">✅ 이메일 인증 완료!</h2>
+          <p style="color:#555;">앱으로 돌아가서 로그인해주세요.</p>
+        </div>
+      </body></html>
+    `;
+  }
+
+  /** 인증 메일 재발송 */
+  async resendVerification(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || user.isVerified) return; // 존재하지 않거나 이미 인증된 경우 무시
+
+    const verifyToken = randomBytes(32).toString('hex');
+    const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verifyToken, verifyTokenExpiry },
+    });
+
+    await this.mailService.sendVerificationEmail(email, user.name, verifyToken);
   }
 
   /**
@@ -109,32 +154,28 @@ export class AuthService {
    * @throws UnauthorizedException - 이메일/비밀번호가 틀린 경우
    */
   async signIn(dto: SignInDto): Promise<AuthResponse> {
-    // Supabase Auth로 이메일/비밀번호 검증
-    const { data: authData, error: authError } = await this.supabase.auth.signInWithPassword({
-      email: dto.email,
-      password: dto.password,
-    });
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
 
-    if (authError || !authData.user) {
+    if (!user || !user.passwordHash) {
       throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
 
-    // 로컬 DB에서 사용자 정보 조회
-    const user = await this.prisma.user.findUnique({
-      where: { id: authData.user.id },
-    });
+    const bcrypt = await import('bcrypt');
+    const isValid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!isValid) throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
 
-    if (!user) {
-      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+    // 이메일 인증 여부 확인
+    if (!user.isVerified) {
+      throw new UnauthorizedException('EMAIL_NOT_VERIFIED');
     }
 
-    // JWT 토큰 발급
-    const tokens = this.generateTokens(user.id, user.email);
+    // 탈퇴 상태 확인
+    if (user.statusYn === 'N') {
+      throw new UnauthorizedException('ACCOUNT_DELETED');
+    }
 
-    return {
-      user: this.toUserResponse(user),
-      tokens,
-    };
+    const tokens = this.generateTokens(user.id, user.email);
+    return { user: this.toUserResponse(user), tokens };
   }
 
   /**
@@ -304,23 +345,67 @@ export class AuthService {
   }
 
   /**
-   * 회원 탈퇴
+   * 회원 탈퇴 (Soft Delete)
    *
-   * 1. Supabase Auth에서 계정 삭제
-   * 2. 로컬 DB에서 사용자 삭제 (cascade로 연관 데이터 자동 삭제)
-   *    - group_members, meal_plans, ingredients 모두 삭제됨
-   *    - 사용자가 owner인 그룹은 그룹 자체가 삭제되며, 해당 그룹의 모든 데이터도 삭제
+   * 즉시 삭제하지 않고 status_yn = N, deleted_at = now() 으로 표시.
+   * 90일 후 Cron이 하드 삭제 처리.
    */
   async deleteAccount(userId: string): Promise<void> {
-    // 1. Supabase Auth 계정 삭제
-    const { error } = await this.supabase.auth.admin.deleteUser(userId);
-    if (error) {
-      // Supabase에 계정이 없어도(소셜 로그인 등) DB 삭제는 계속 진행
-      console.warn('[탈퇴] Supabase Auth 삭제 실패 (무시):', error.message);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        statusYn: 'N',
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * 휴면 해제 (탈퇴 취소)
+   *
+   * 탈퇴 후 90일 이내에만 가능.
+   * status_yn = Y, deleted_at = null 로 복구.
+   */
+  async reactivateAccount(email: string, password: string): Promise<AuthResponse> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+
+    if (!user || user.statusYn !== 'N') {
+      throw new UnauthorizedException('탈퇴된 계정을 찾을 수 없습니다.');
     }
 
-    // 2. 로컬 DB에서 삭제 (Prisma cascade가 연관 데이터 처리)
-    await this.prisma.user.delete({ where: { id: userId } });
+    // 비밀번호 확인
+    const bcrypt = await import('bcrypt');
+    const isValid = await bcrypt.compare(password, user.passwordHash ?? '');
+    if (!isValid) throw new UnauthorizedException('비밀번호가 올바르지 않습니다.');
+
+    // 복구
+    const restored = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { statusYn: 'Y', deletedAt: null },
+    });
+
+    const tokens = this.generateTokens(restored.id, restored.email);
+    return { user: this.toUserResponse(restored), tokens };
+  }
+
+  /**
+   * [Cron] 매일 자정 - 탈퇴 후 90일 경과 계정 하드 삭제
+   */
+  @Cron('0 0 * * *', { timeZone: 'Asia/Seoul' })
+  async purgeExpiredAccounts(): Promise<void> {
+    const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+    const expired = await this.prisma.user.findMany({
+      where: { statusYn: 'N', deletedAt: { lte: cutoff } },
+      select: { id: true },
+    });
+
+    for (const { id } of expired) {
+      await this.prisma.user.delete({ where: { id } });
+    }
+
+    if (expired.length > 0) {
+      this.logger.log(`[계정 정리] ${expired.length}개 탈퇴 계정 영구 삭제 완료`);
+    }
   }
 
   /**

@@ -79,9 +79,6 @@ export default function HomeScreen() {
   const weekDates = getWeekDates();
   const { currentGroupId } = useGroupStore();
 
-  // 그룹이 없으면 안내 화면 표시
-  if (!currentGroupId) return <NoGroupView />;
-
   // 선택된 날짜 (기본값: 오늘, 없으면 이번 주 월요일)
   const defaultDate = weekDates.find((d) => toDateString(d) === today) ? today : toDateString(weekDates[0]);
   const [selectedDate, setSelectedDate] = useState(defaultDate);
@@ -97,6 +94,9 @@ export default function HomeScreen() {
   // ── 모달 상태 ──────────────────────────────────────────
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
+
+  // 그룹이 없으면 안내 화면 표시 (훅 호출 이후에 체크)
+  if (!currentGroupId) return <NoGroupView />;
 
   // 선택된 날짜의 식단만 필터링
   const selectedMealPlans = (allMealPlans ?? []).filter((mp) => mp.date === selectedDate);

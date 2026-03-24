@@ -15,6 +15,7 @@
  */
 
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaModule } from './prisma/prisma.module';
@@ -27,6 +28,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { MealTemplatesModule } from './modules/meal-templates/meal-templates.module';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // 환경 변수 전역 로드 - isGlobal: true 이므로 다른 모듈에서 ConfigService를 직접 주입 가능
     ConfigModule.forRoot({

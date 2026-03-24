@@ -24,7 +24,7 @@ async function bootstrap() {
 
   // ── 전역 API 경로 prefix ──────────────────────────────────────────────────
   // 모든 엔드포인트가 /v1/ 로 시작 (예: /v1/auth/login)
-  app.setGlobalPrefix('v1');
+  app.setGlobalPrefix('v1', { exclude: ['/', 'health'] });
 
   // ── 전역 예외 필터 ────────────────────────────────────────────────────────
   // 모든 HTTP 예외를 { success: false, error: {...} } 형태로 통일

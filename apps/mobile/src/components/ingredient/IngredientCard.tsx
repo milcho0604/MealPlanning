@@ -96,17 +96,14 @@ export function IngredientCard({ ingredient, onEdit, onConsume, onDelete }: Ingr
 
         {/* 액션 버튼들 */}
         <View style={styles.actions}>
-          {/* 수정 */}
-          <TouchableOpacity onPress={() => onEdit(ingredient)} style={styles.actionBtn}>
-            <Ionicons name="pencil-outline" size={16} color={colors.textSecondary} />
+          <TouchableOpacity onPress={() => onEdit(ingredient)} style={styles.editBtn}>
+            <Ionicons name="create" size={13} color={colors.primary} />
           </TouchableOpacity>
-          {/* 소진 처리 */}
-          <TouchableOpacity onPress={handleConsume} style={styles.actionBtn}>
-            <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} />
+          <TouchableOpacity onPress={handleConsume} style={styles.consumeBtn}>
+            <Ionicons name="checkmark" size={13} color="#fff" />
           </TouchableOpacity>
-          {/* 삭제 */}
-          <TouchableOpacity onPress={handleDelete} style={styles.actionBtn}>
-            <Ionicons name="trash-outline" size={16} color={colors.error} />
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+            <Ionicons name="trash" size={13} color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>
@@ -164,10 +161,31 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
-  actionBtn: {
-    padding: 4,
+  editBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  consumeBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#FFEBEE',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   name: {
     fontSize: 16,
