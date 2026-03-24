@@ -9,6 +9,10 @@
     },
     "preview": {
       "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://mealplan-api-dtx0.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "88190697802-1c32584i9f2g7v8d5j4nimk8sorsd8qg.apps.googleusercontent.com"
+      },
       "android": {
         "buildType": "apk"
       },
@@ -17,7 +21,11 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://mealplan-api-dtx0.onrender.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "88190697802-1c32584i9f2g7v8d5j4nimk8sorsd8qg.apps.googleusercontent.com"
+      }
     }
   },
   "submit": {
