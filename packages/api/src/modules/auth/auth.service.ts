@@ -470,23 +470,21 @@ export class AuthService {
    * - 리프레시 토큰: 긴 유효기간 (기본 30일), 액세스 토큰 갱신 시 사용
    */
   private generateTokens(userId: string, email: string): AuthTokens {
-    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN', '1h');
-    const refreshExpiresIn = this.configService.get<string>(
-      'JWT_REFRESH_EXPIRES_IN',
-      '30d',
-    );
+    const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') ?? '1h';
+    const refreshExpiresIn =
+      this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') ?? '30d';
     const secret = this.configService.getOrThrow<string>('JWT_SECRET');
 
     // 액세스 토큰 (API 요청 시 사용)
     const accessToken: string = this.jwtService.sign(
       { sub: userId, email },
-      { secret, expiresIn },
+      { secret, expiresIn: expiresIn as import('ms').StringValue },
     );
 
     // 리프레시 토큰 (type: 'refresh' 필드로 액세스 토큰과 구분)
     const refreshToken: string = this.jwtService.sign(
       { sub: userId, email, type: 'refresh' },
-      { secret, expiresIn: refreshExpiresIn },
+      { secret, expiresIn: refreshExpiresIn as import('ms').StringValue },
     );
 
     // 액세스 토큰 만료 시각 계산 (클라이언트 측 갱신 타이밍 결정용)
