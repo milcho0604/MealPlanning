@@ -84,7 +84,7 @@ export class AuthController {
   @Post('signup')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '회원가입' })
-  signUp(@Body() dto: SignUpDto): Promise<AuthResponse> {
+  signUp(@Body() dto: SignUpDto): Promise<{ message: string }> {
     return this.authService.signUp(dto);
   }
 
