@@ -75,3 +75,8 @@ packages/api/node_modules/.prisma/
 # Claude Code
 # ========================
 .claude/settings.local.json
+
+# ========================
+# 블로그 / 문서 (개인용)
+# ========================
+docs/
