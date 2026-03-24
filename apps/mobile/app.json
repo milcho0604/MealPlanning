@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.mealplan.app",
-      "googleServicesFile": "./google-services.json"
+      "versionCode": 2
     },
     "plugins": [
       "expo-router",
