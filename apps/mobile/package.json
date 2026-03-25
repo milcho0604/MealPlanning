@@ -7,7 +7,8 @@
     "dev": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "RNTL_SKIP_DEPS_CHECK=1 jest --passWithNoTests --config jest.config.js"
   },
   "dependencies": {
     "@expo/metro-runtime": "~55.0.6",
@@ -36,7 +37,11 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@testing-library/jest-native": "^5.4.3",
+    "@testing-library/react-native": "^13.3.3",
     "@types/react": "~19.2.2",
+    "jest-expo": "^55.0.11",
+    "react-test-renderer": "^19.2.0",
     "typescript": "~5.9.2"
   },
   "private": true
