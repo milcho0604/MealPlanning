@@ -167,20 +167,22 @@ export default function CalendarScreen() {
             return (
               <TouchableOpacity
                 key={dateStr}
-                style={[styles.cell, isSelected && styles.cellSelected]}
+                style={styles.cell}
                 onPress={() => setSelectedDate(dateStr)}
               >
-                <Text
-                  style={[
-                    styles.dayText,
-                    isToday && styles.dayTextToday,
-                    isSelected && styles.dayTextSelected,
-                    dayOfWeek === 0 && !isSelected && styles.sundayText,
-                    dayOfWeek === 6 && !isSelected && styles.saturdayText,
-                  ]}
-                >
-                  {day}
-                </Text>
+                <View style={[styles.dayCircle, isSelected && styles.dayCircleSelected, isToday && !isSelected && styles.dayCircleToday]}>
+                  <Text
+                    style={[
+                      styles.dayText,
+                      isToday && !isSelected && styles.dayTextToday,
+                      isSelected && styles.dayTextSelected,
+                      dayOfWeek === 0 && !isSelected && styles.sundayText,
+                      dayOfWeek === 6 && !isSelected && styles.saturdayText,
+                    ]}
+                  >
+                    {day}
+                  </Text>
+                </View>
                 {/* 식단 등록 여부 점 표시 */}
                 {hasMeals && (
                   <View style={[styles.dot, isSelected && styles.dotSelected]} />
@@ -274,13 +276,23 @@ const styles = StyleSheet.create({
   },
   cell: {
     width: `${100 / 7}%`,
-    aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 8,
+    paddingVertical: 4,
   },
-  cellSelected: {
+  dayCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayCircleSelected: {
     backgroundColor: colors.primary,
+  },
+  dayCircleToday: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
   },
   dayText: {
     fontSize: 14,
@@ -297,19 +309,22 @@ const styles = StyleSheet.create({
   sundayText: { color: '#EF5350' },
   saturdayText: { color: '#42A5F5' },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
     backgroundColor: colors.primary,
-    marginTop: 2,
+    marginTop: 3,
   },
   dotSelected: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.primary,
   },
   // ── 하단 식단 패널 ────────────────────────────────────────
   panel: {
-    marginTop: 8,
+    marginTop: 12,
     paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 16,
   },
   panelTitle: {
     fontSize: 16,
