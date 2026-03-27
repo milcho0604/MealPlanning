@@ -35,7 +35,7 @@ import { colors } from '../../constants/colors';
 const CATEGORIES = Object.keys(INGREDIENT_CATEGORY_LABELS) as IngredientCategory[];
 
 /** 선택 가능한 단위 목록 */
-const UNITS: IngredientUnit[] = ['g', 'kg', 'ml', 'L', '개', '봉', '팩', '캔'];
+const UNITS: IngredientUnit[] = ['g', 'kg', 'ml', 'L', '개', '인분', '봉', '팩', '캔'];
 
 interface IngredientFormModalProps {
   visible: boolean;

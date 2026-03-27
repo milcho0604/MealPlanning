@@ -30,9 +30,9 @@ export class CreateIngredientDto {
   @IsPositive()
   quantity?: number;
 
-  @ApiPropertyOptional({ enum: ['g', 'kg', 'ml', 'L', '개', '봉', '팩', '캔'] })
+  @ApiPropertyOptional({ enum: ['g', 'kg', 'ml', 'L', '개', '봉', '팩', '캔', '인분'] })
   @IsOptional()
-  @IsEnum(['g', 'kg', 'ml', 'L', '개', '봉', '팩', '캔'])
+  @IsEnum(['g', 'kg', 'ml', 'L', '개', '봉', '팩', '캔', '인분'])
   unit?: IngredientUnit;
 
   @ApiPropertyOptional({

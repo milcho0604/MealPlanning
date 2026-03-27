@@ -4,7 +4,7 @@
 /** 재료 카테고리 */
 export type IngredientCategory = 'meat' | 'vegetable' | 'dairy' | 'seafood' | 'grain' | 'sauce' | 'frozen' | 'other';
 /** 재료 수량 단위 */
-export type IngredientUnit = 'g' | 'kg' | 'ml' | 'L' | '개' | '봉' | '팩' | '캔';
+export type IngredientUnit = 'g' | 'kg' | 'ml' | 'L' | '개' | '봉' | '팩' | '캔' | '인분';
 /** 냉장고 재료 단건 */
 export interface Ingredient {
     id: string;
