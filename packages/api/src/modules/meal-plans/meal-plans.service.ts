@@ -92,18 +92,43 @@ export class MealPlansService {
     // 그룹 멤버이며 편집 권한이 있는지 확인
     await this.validateGroupEditor(userId, dto.groupId);
 
+    // 특정 날짜 반복(custom)인 경우 기본 날짜 + 추가 날짜 모두 생성
+    const allDates = [dto.date, ...(dto.dates ?? [])];
+    // 중복 날짜 제거
+    const uniqueDates = [...new Set(allDates)];
+
+    const commonData = {
+      groupId: dto.groupId,
+      createdBy: userId,
+      mealType: dto.mealType,
+      menuName: dto.menuName,
+      memo: dto.memo ?? null,
+      recipeUrl: dto.recipeUrl ?? null,
+      isRecurring: dto.isRecurring ?? false,
+      recurRule: dto.recurRule ?? null,
+    };
+
+    // 날짜가 여러 개면 트랜잭션으로 일괄 생성
+    if (uniqueDates.length > 1) {
+      await this.prisma.$transaction(
+        uniqueDates.map((d) =>
+          this.prisma.mealPlan.create({
+            data: { ...commonData, date: new Date(d) },
+          }),
+        ),
+      );
+
+      // 첫 번째 날짜의 식단을 응답으로 반환
+      const first = await this.prisma.mealPlan.findFirst({
+        where: { groupId: dto.groupId, createdBy: userId, date: new Date(dto.date), mealType: dto.mealType, menuName: dto.menuName },
+        orderBy: { createdAt: 'desc' },
+        include: { createdByUser: { select: { id: true, name: true, avatarUrl: true } } },
+      });
+      return this.toResponse(first!);
+    }
+
     const mealPlan = await this.prisma.mealPlan.create({
-      data: {
-        groupId: dto.groupId,
-        createdBy: userId,
-        date: new Date(dto.date),
-        mealType: dto.mealType,
-        menuName: dto.menuName,
-        memo: dto.memo ?? null,
-        recipeUrl: dto.recipeUrl ?? null,
-        isRecurring: dto.isRecurring ?? false,
-        recurRule: dto.recurRule ?? null,
-      },
+      data: { ...commonData, date: new Date(dto.date) },
       include: {
         createdByUser: {
           select: { id: true, name: true, avatarUrl: true },

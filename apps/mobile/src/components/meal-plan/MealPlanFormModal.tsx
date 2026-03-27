@@ -42,7 +42,29 @@ const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 const RECUR_OPTIONS: { value: RecurRule; label: string }[] = [
   { value: 'weekly', label: '매주' },
   { value: 'monthly', label: '매월' },
+  { value: 'custom', label: '날짜 선택' },
 ];
+
+/** 간단한 날짜 포맷 (M/D 요일) */
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+}
+
+/** 다음 30일 날짜 목록 생성 */
+function getNext30Days(baseDate: string): string[] {
+  const dates: string[] = [];
+  const base = new Date(baseDate + 'T00:00:00');
+  for (let i = 1; i <= 30; i++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + i);
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    dates.push(`${d.getFullYear()}-${mm}-${dd}`);
+  }
+  return dates;
+}
 
 interface MealPlanFormModalProps {
   visible: boolean;
@@ -69,6 +91,7 @@ export function MealPlanFormModal({
   const [recipeUrl, setRecipeUrl] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurRule, setRecurRule] = useState<RecurRule>('weekly');
+  const [customDates, setCustomDates] = useState<string[]>([]);
 
   // 템플릿 관련 상태
   const [isTemplatePickerVisible, setIsTemplatePickerVisible] = useState(false);
@@ -89,6 +112,7 @@ export function MealPlanFormModal({
         setRecipeUrl('');
         setIsRecurring(false);
         setRecurRule('weekly');
+        setCustomDates([]);
       }
     }
   }, [visible, mealPlan, initialMealType]);
@@ -125,6 +149,7 @@ export function MealPlanFormModal({
           recipeUrl: recipeUrl.trim() || undefined,
           isRecurring,
           recurRule: isRecurring ? recurRule : undefined,
+          dates: isRecurring && recurRule === 'custom' && customDates.length > 0 ? customDates : undefined,
         });
       }
       onClose();
@@ -305,13 +330,58 @@ export function MealPlanFormModal({
                 <TouchableOpacity
                   key={opt.value}
                   style={[styles.recurRuleBtn, recurRule === opt.value && styles.recurRuleBtnActive]}
-                  onPress={() => setRecurRule(opt.value)}
+                  onPress={() => { setRecurRule(opt.value); if (opt.value !== 'custom') setCustomDates([]); }}
                 >
                   <Text style={[styles.recurRuleBtnText, recurRule === opt.value && styles.recurRuleBtnTextActive]}>
                     {opt.label}
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          )}
+
+          {/* 특정 날짜 선택 UI (custom 선택 시) */}
+          {isRecurring && recurRule === 'custom' && (
+            <View style={styles.customDatesSection}>
+              <Text style={styles.customDatesLabel}>
+                추가할 날짜를 선택하세요 ({customDates.length}개 선택됨)
+              </Text>
+              {/* 선택된 날짜 태그 */}
+              {customDates.length > 0 && (
+                <View style={styles.selectedDatesRow}>
+                  {customDates.map((d) => (
+                    <TouchableOpacity
+                      key={d}
+                      style={styles.selectedDateTag}
+                      onPress={() => setCustomDates((prev) => prev.filter((x) => x !== d))}
+                    >
+                      <Text style={styles.selectedDateTagText}>{formatShortDate(d)}</Text>
+                      <Ionicons name="close-circle" size={14} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {/* 날짜 선택 그리드 (다음 30일) */}
+              <View style={styles.dateGrid}>
+                {getNext30Days(date).map((d) => {
+                  const isChosen = customDates.includes(d);
+                  return (
+                    <TouchableOpacity
+                      key={d}
+                      style={[styles.dateChip, isChosen && styles.dateChipSelected]}
+                      onPress={() => {
+                        setCustomDates((prev) =>
+                          isChosen ? prev.filter((x) => x !== d) : [...prev, d],
+                        );
+                      }}
+                    >
+                      <Text style={[styles.dateChipText, isChosen && styles.dateChipTextSelected]}>
+                        {formatShortDate(d)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           )}
 
@@ -408,6 +478,65 @@ const styles = StyleSheet.create({
   recurRuleBtnActive: { borderColor: colors.primary, backgroundColor: '#E8F5E9' },
   recurRuleBtnText: { fontSize: 14, color: colors.textSecondary, fontWeight: '500' },
   recurRuleBtnTextActive: { color: colors.primary, fontWeight: '700' },
+  // ── 특정 날짜 선택 ──────────────────────────────────────────
+  customDatesSection: {
+    marginTop: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  customDatesLabel: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginBottom: 10,
+  },
+  selectedDatesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 12,
+  },
+  selectedDateTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E8F5E9',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+  },
+  selectedDateTagText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  dateGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  dateChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  dateChipSelected: {
+    borderColor: colors.primary,
+    backgroundColor: '#E8F5E9',
+  },
+  dateChipText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  dateChipTextSelected: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
   // ── 템플릿 버튼 ───────────────────────────────────────────
   templateRow: {
     flexDirection: 'row',

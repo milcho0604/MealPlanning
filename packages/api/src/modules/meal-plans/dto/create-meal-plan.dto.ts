@@ -6,6 +6,7 @@
 
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsEnum,
@@ -56,10 +57,19 @@ export class CreateMealPlanDto {
   isRecurring?: boolean;
 
   @ApiPropertyOptional({
-    enum: ['weekly', 'monthly'],
+    enum: ['weekly', 'monthly', 'custom'],
     description: '반복 규칙',
   })
   @IsOptional()
-  @IsEnum(['weekly', 'monthly'])
+  @IsEnum(['weekly', 'monthly', 'custom'])
   recurRule?: RecurRule;
+
+  @ApiPropertyOptional({
+    example: ['2026-04-01', '2026-04-05'],
+    description: '특정 날짜 반복 시 추가 등록할 날짜 목록',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsDateString({}, { each: true })
+  dates?: string[];
 }

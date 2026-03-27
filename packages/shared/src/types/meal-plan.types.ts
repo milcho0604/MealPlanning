@@ -5,8 +5,8 @@
 /** 식사 유형 - 아침/점심/저녁/간식 */
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-/** 반복 규칙 - 매주/매월 */
-export type RecurRule = 'weekly' | 'monthly';
+/** 반복 규칙 - 매주/매월/특정 날짜 */
+export type RecurRule = 'weekly' | 'monthly' | 'custom';
 
 /** 식단 단건 */
 export interface MealPlan {
@@ -35,6 +35,8 @@ export interface CreateMealPlanRequest {
   recipeUrl?: string;
   isRecurring?: boolean;
   recurRule?: RecurRule;
+  /** 특정 날짜 반복 시 추가 날짜 목록 (YYYY-MM-DD[]) */
+  dates?: string[];
 }
 
 /** 식단 수정 요청 바디 - 모든 필드 선택적 */
