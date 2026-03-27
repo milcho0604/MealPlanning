@@ -16,6 +16,7 @@ import {
   Modal,
   SafeAreaView,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -106,11 +107,15 @@ export default function SettingsScreen() {
     }
   };
 
-  /** 초대 코드 클립보드 복사 대신 Alert로 표시 */
-  const showInviteCode = (inviteCode: string) => {
-    Alert.alert('초대 코드', `친구에게 이 코드를 공유하세요:\n\n${inviteCode}`, [
-      { text: '확인' },
-    ]);
+  /** 초대 코드를 다른 앱(카카오톡, 문자 등)으로 공유 */
+  const shareInviteCode = async (groupName: string, inviteCode: string) => {
+    try {
+      await Share.share({
+        message: `[MealPlan] "${groupName}" 그룹에 초대합니다!\n\n초대 코드: ${inviteCode}\n\nMealPlan 앱에서 설정 > 초대 코드로 참여를 눌러 위 코드를 입력하세요.`,
+      });
+    } catch {
+      // 사용자가 공유 취소 시 무시
+    }
   };
 
   return (
@@ -166,7 +171,7 @@ export default function SettingsScreen() {
                 {group.myRole === 'owner' && (
                   <TouchableOpacity
                     style={styles.inviteBtn}
-                    onPress={() => showInviteCode(group.inviteCode)}
+                    onPress={() => shareInviteCode(group.name, group.inviteCode)}
                   >
                     <Ionicons name="share-outline" size={16} color={colors.primary} />
                     <Text style={styles.inviteBtnText}>초대</Text>
