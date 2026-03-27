@@ -70,9 +70,12 @@ export class AuthService {
    * @throws ConflictException - 이미 가입된 이메일인 경우
    */
   async signUp(dto: SignUpDto): Promise<{ message: string }> {
+    // 이메일 소문자 정규화 (대소문자 중복 방지)
+    const email = dto.email.toLowerCase().trim();
+
     // 이미 가입된 이메일 확인
     const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email },
     });
 
     // 이미 인증 완료된 계정이면 중복 가입 차단
@@ -103,7 +106,7 @@ export class AuthService {
       // 신규 사용자: DB 저장 (미인증 상태)
       await this.prisma.user.create({
         data: {
-          email: dto.email,
+          email,
           name: dto.name,
           passwordHash,
           verifyToken,
@@ -113,12 +116,17 @@ export class AuthService {
       });
     }
 
-    // 인증 메일 발송
-    await this.mailService.sendVerificationEmail(
-      dto.email,
-      dto.name,
-      verifyToken,
-    );
+    // 인증 메일 발송 (실패 시에도 계정은 생성됨 → 재발송 가능)
+    try {
+      await this.mailService.sendVerificationEmail(
+        email,
+        dto.name,
+        verifyToken,
+      );
+    } catch {
+      this.logger.error(`회원가입 인증 메일 발송 실패: ${email}`);
+      // 메일 실패해도 계정 생성은 완료 → 재발송으로 복구 가능
+    }
 
     return { message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.' };
   }
@@ -153,7 +161,7 @@ export class AuthService {
 
   /** 인증 메일 재발송 */
   async resendVerification(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
     if (!user || user.isVerified) return; // 존재하지 않거나 이미 인증된 경우 무시
 
     const verifyToken = randomBytes(32).toString('hex');
@@ -176,7 +184,7 @@ export class AuthService {
    */
   async signIn(dto: SignInDto): Promise<AuthResponse> {
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: dto.email.toLowerCase().trim() },
     });
 
     if (!user || !user.passwordHash) {
@@ -420,7 +428,7 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<AuthResponse> {
-    const user = await this.prisma.user.findUnique({ where: { email } });
+    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
 
     if (!user || user.statusYn !== 'N') {
       throw new UnauthorizedException('탈퇴된 계정을 찾을 수 없습니다.');

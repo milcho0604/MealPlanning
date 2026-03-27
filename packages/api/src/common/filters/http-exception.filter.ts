@@ -1,7 +1,8 @@
 /**
- * HTTP 예외 필터 (HTTP Exception Filter)
+ * 전역 예외 필터 (All Exceptions Filter)
  *
- * NestJS의 모든 HttpException을 잡아서 통일된 에러 응답 형태로 반환합니다.
+ * HttpException뿐 아니라 Prisma 에러, 일반 Error 등
+ * 모든 예외를 잡아서 통일된 에러 응답 형태로 반환합니다.
  *
  * 에러 응답 형태:
  * {
@@ -23,41 +24,70 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-@Catch(HttpException)
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const status = exception.getStatus();
 
-    // NestJS의 기본 에러 응답 또는 직접 던진 메시지 파싱
-    const exceptionResponse = exception.getResponse();
-    const message =
-      typeof exceptionResponse === 'string'
-        ? exceptionResponse
-        : ((exceptionResponse as { message?: string | string[] })?.message ??
-          exception.message);
+    // HttpException인 경우 (NestJS에서 직접 던진 에러)
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+      const message =
+        typeof exceptionResponse === 'string'
+          ? exceptionResponse
+          : ((exceptionResponse as { message?: string | string[] })?.message ??
+            exception.message);
+      const code = HttpStatus[status] ?? 'INTERNAL_SERVER_ERROR';
 
-    // 에러 코드: HTTP 상태 코드를 기반으로 생성
-    const code = HttpStatus[status] ?? 'INTERNAL_SERVER_ERROR';
+      if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
+        this.logger.error(
+          `[${request.method}] ${request.url} → ${status} ${exception.message}`,
+          exception.stack,
+        );
+      }
 
-    // 500 이상 에러는 서버 로그에 기록
-    if (status >= Number(HttpStatus.INTERNAL_SERVER_ERROR)) {
-      this.logger.error(
-        `[${request.method}] ${request.url} → ${status} ${exception.message}`,
-        exception.stack,
-      );
+      response.status(status).json({
+        success: false,
+        error: {
+          code,
+          message: Array.isArray(message) ? message[0] : message,
+        },
+      });
+      return;
     }
 
-    response.status(status).json({
+    // Prisma 에러 처리 (unique constraint 위반 등)
+    const prismaError = exception as { code?: string; meta?: { target?: string[] } };
+    if (prismaError.code === 'P2002') {
+      const target = prismaError.meta?.target?.join(', ') ?? '필드';
+      response.status(HttpStatus.CONFLICT).json({
+        success: false,
+        error: {
+          code: 'CONFLICT',
+          message: `이미 사용 중인 ${target}입니다.`,
+        },
+      });
+      return;
+    }
+
+    // 그 외 모든 에러 → 500
+    const errorMessage =
+      exception instanceof Error ? exception.message : '서버 내부 오류가 발생했습니다.';
+    this.logger.error(
+      `[${request.method}] ${request.url} → 500 ${errorMessage}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
+
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       error: {
-        code,
-        // 배열인 경우(ValidationPipe 에러) 첫 번째 메시지만 반환
-        message: Array.isArray(message) ? message[0] : message,
+        code: 'INTERNAL_SERVER_ERROR',
+        message: '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
       },
     });
   }

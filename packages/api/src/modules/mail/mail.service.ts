@@ -55,6 +55,7 @@ export class MailService {
       });
     } catch (error) {
       this.logger.error(`이메일 발송 실패: ${email}`, error);
+      throw error; // 호출자에게 에러 전파하여 회원가입 실패 처리
     }
   }
 }
