@@ -15,7 +15,9 @@ import { Link } from 'expo-router';
 import {
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -44,7 +46,15 @@ export default function SignInScreen() {
   const isAnyLoading = isLoading || loadingProvider !== null;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
       {/* 헤더 */}
       <View style={styles.header}>
         <Text style={styles.title}>MealPlan</Text>
@@ -151,7 +161,8 @@ export default function SignInScreen() {
           회원가입
         </Link>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -159,6 +170,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
   },

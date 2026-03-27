@@ -6,7 +6,17 @@
  */
 
 import { Link } from 'expo-router';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSignUp } from '../../src/hooks/auth/use-sign-up.hook';
 import { colors } from '../../src/constants/colors';
 
@@ -14,7 +24,15 @@ export default function SignUpScreen() {
   const { form, setField, handleSignUp, isLoading, error } = useSignUp();
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
       <View style={styles.header}>
         <Text style={styles.title}>회원가입</Text>
         <Text style={styles.subtitle}>MealPlan과 함께 식단을 관리하세요</Text>
@@ -86,7 +104,8 @@ export default function SignUpScreen() {
           로그인
         </Link>
       </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -94,6 +113,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
