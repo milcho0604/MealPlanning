@@ -37,9 +37,12 @@ export function useSocialSignIn() {
       ) {
         return;
       }
+      // 백엔드 에러 메시지가 있으면 표시, 없으면 기본 메시지
+      const axiosErr = error as { response?: { data?: { error?: { message?: string } } } };
+      const detail = axiosErr?.response?.data?.error?.message;
       Alert.alert(
         '로그인 실패',
-        `${providerLabel(provider)} 로그인에 실패했습니다.\n잠시 후 다시 시도해주세요.`,
+        detail ?? `${providerLabel(provider)} 로그인에 실패했습니다.\n잠시 후 다시 시도해주세요.`,
       );
     } finally {
       setLoadingProvider(null);

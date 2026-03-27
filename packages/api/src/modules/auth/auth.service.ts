@@ -271,10 +271,16 @@ export class AuthService {
         where: { email: providerUser.email },
       });
       if (emailUser) {
-        // 소셜 계정 정보 연동
+        // 소셜 계정 정보 연동 + 소셜 인증이므로 이메일 인증도 완료 처리
         user = await this.prisma.user.update({
           where: { id: emailUser.id },
-          data: { provider, providerId: providerUser.providerId },
+          data: {
+            provider,
+            providerId: providerUser.providerId,
+            isVerified: true,
+            verifyToken: null,
+            verifyTokenExpiry: null,
+          },
         });
       }
     }
@@ -292,6 +298,7 @@ export class AuthService {
           avatarUrl: providerUser.avatarUrl,
           provider,
           providerId: providerUser.providerId,
+          isVerified: true, // 소셜 인증은 이메일 인증 불필요
         },
       });
     }
@@ -314,15 +321,21 @@ export class AuthService {
     throw new UnauthorizedException('지원하지 않는 소셜 제공자입니다.');
   }
 
-  /** Google ID 토큰 검증 */
+  /** Google ID 토큰 검증 (웹/iOS/Android 클라이언트 ID 모두 허용) */
   private async verifyGoogleToken(idToken: string): Promise<SocialUserInfo> {
     try {
       const clientId =
         this.configService.getOrThrow<string>('GOOGLE_CLIENT_ID');
+      // 플랫폼별 클라이언트 ID를 모두 허용 (모바일은 webClientId로 토큰 발급)
+      const allowedAudiences = [
+        clientId,
+        this.configService.get<string>('GOOGLE_IOS_CLIENT_ID'),
+        this.configService.get<string>('GOOGLE_ANDROID_CLIENT_ID'),
+      ].filter((id): id is string => !!id);
       const client = new OAuth2Client(clientId);
       const ticket = await client.verifyIdToken({
         idToken,
-        audience: clientId,
+        audience: allowedAudiences,
       });
       const payload = ticket.getPayload()!;
       return {
