@@ -21,8 +21,10 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  // DATABASE_URL: Supabase > Settings > Database > Connection String
+  // DATABASE_URL: Supabase Connection Pooler (포트 6543, 런타임용)
   url       = env("DATABASE_URL")
+  // DIRECT_URL: Supabase 직접 연결 (포트 5432, 마이그레이션용)
+  directUrl = env("DIRECT_URL")
 }
 
 // ─────────────────────────────────────────────────────────────────────
