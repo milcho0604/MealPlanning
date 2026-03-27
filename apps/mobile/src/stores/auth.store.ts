@@ -76,16 +76,11 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   /**
-   * 회원가입 후 자동 로그인 처리
+   * 회원가입 (이메일 인증 필요 → 자동 로그인하지 않음)
+   * 가입 후 인증 메일이 발송되며, 인증 완료 후 로그인해야 합니다.
    */
   signUp: async (body) => {
-    const { user, tokens } = await authService.signUp(body);
-
-    // 토큰을 안전한 저장소에 저장
-    await storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-    await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
-
-    set({ user, isAuthenticated: true });
+    await authService.signUp(body);
   },
 
   /**

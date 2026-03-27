@@ -74,7 +74,11 @@ export class AuthService {
     const existing = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-    if (existing) throw new ConflictException('이미 사용 중인 이메일입니다.');
+
+    // 이미 인증 완료된 계정이면 중복 가입 차단
+    if (existing && existing.isVerified) {
+      throw new ConflictException('이미 사용 중인 이메일입니다.');
+    }
 
     // 비밀번호 해시
     const bcrypt = await import('bcrypt');
@@ -84,17 +88,30 @@ export class AuthService {
     const verifyToken = randomBytes(32).toString('hex');
     const verifyTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // DB 저장 (미인증 상태)
-    await this.prisma.user.create({
-      data: {
-        email: dto.email,
-        name: dto.name,
-        passwordHash,
-        verifyToken,
-        verifyTokenExpiry,
-        isVerified: false,
-      },
-    });
+    if (existing && !existing.isVerified) {
+      // 미인증 사용자: 비밀번호/이름/토큰을 갱신하여 재가입 허용
+      await this.prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          name: dto.name,
+          passwordHash,
+          verifyToken,
+          verifyTokenExpiry,
+        },
+      });
+    } else {
+      // 신규 사용자: DB 저장 (미인증 상태)
+      await this.prisma.user.create({
+        data: {
+          email: dto.email,
+          name: dto.name,
+          passwordHash,
+          verifyToken,
+          verifyTokenExpiry,
+          isVerified: false,
+        },
+      });
+    }
 
     // 인증 메일 발송
     await this.mailService.sendVerificationEmail(

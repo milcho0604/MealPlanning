@@ -70,9 +70,12 @@ export function useSignUp(): UseSignUpReturn {
       // 가입 성공 → 인증 안내 화면으로 이동
       router.replace({ pathname: '/(auth)/verify-email', params: { email: form.email.trim() } });
     } catch (err: unknown) {
+      // 백엔드 에러 응답 형태: { success: false, error: { code, message } }
+      const axiosErr = err as { response?: { data?: { success?: boolean; error?: { message?: string }; message?: string } } };
       const message =
-        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
-          ?.message ?? '회원가입에 실패했습니다. 다시 시도해주세요.';
+        axiosErr?.response?.data?.error?.message ??
+        axiosErr?.response?.data?.message ??
+        '회원가입에 실패했습니다. 다시 시도해주세요.';
       setError(message);
     } finally {
       setIsLoading(false);

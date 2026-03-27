@@ -10,12 +10,6 @@ import type { AuthTokens, SignInRequest, SignUpRequest } from '@mealplan/shared'
 import type { User } from '@mealplan/shared';
 import { apiClient } from './api.client';
 
-/** 회원가입 응답 */
-interface SignUpResponse {
-  user: User;
-  tokens: AuthTokens;
-}
-
 /** 로그인 응답 */
 interface SignInResponse {
   user: User;
