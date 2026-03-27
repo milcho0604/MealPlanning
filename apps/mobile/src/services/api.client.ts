@@ -16,7 +16,7 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 /** Axios 인스턴스 생성 */
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/v1`,
-  timeout: 10000, // 10초 타임아웃
+  timeout: 60000, // 60초 타임아웃 (Render 무료 플랜 콜드 스타트 대응)
   headers: {
     'Content-Type': 'application/json',
   },
