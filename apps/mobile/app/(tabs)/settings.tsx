@@ -111,11 +111,21 @@ export default function SettingsScreen() {
   const shareInviteCode = async (groupName: string, inviteCode: string) => {
     try {
       await Share.share({
-        message: `[MealPlan] "${groupName}" 그룹에 초대합니다!\n\n초대 코드: ${inviteCode}\n\nMealPlan 앱에서 설정 > 초대 코드로 참여를 눌러 위 코드를 입력하세요.`,
+        message: `[MealPlan] "${groupName}" 그룹에 초대합니다!\n\n초대 코드: ${inviteCode}\n\n📲 앱에서 참여하기:\nmealplan://join/${inviteCode}\n\n또는 MealPlan 앱 > 설정 > 초대 코드로 참여에서 코드를 입력하세요.`,
       });
     } catch {
       // 사용자가 공유 취소 시 무시
     }
+  };
+
+  /** 초대 코드 클립보드 복사 */
+  const copyInviteCode = (inviteCode: string) => {
+    import('expo-clipboard').then(({ setStringAsync }) => {
+      setStringAsync(inviteCode);
+      Alert.alert('복사 완료', `초대 코드 ${inviteCode}가 클립보드에 복사되었습니다.`);
+    }).catch(() => {
+      Alert.alert('초대 코드', inviteCode);
+    });
   };
 
   return (
@@ -167,16 +177,22 @@ export default function SettingsScreen() {
                   </View>
                 </View>
 
-                {/* 초대 코드 보기 (owner만) */}
-                {group.myRole === 'owner' && (
+                {/* 초대 코드 공유 (모든 멤버 가능) */}
+                <View style={styles.inviteBtns}>
+                  <TouchableOpacity
+                    style={styles.inviteBtn}
+                    onPress={() => copyInviteCode(group.inviteCode)}
+                  >
+                    <Ionicons name="copy-outline" size={15} color={colors.primary} />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.inviteBtn}
                     onPress={() => shareInviteCode(group.name, group.inviteCode)}
                   >
-                    <Ionicons name="share-outline" size={16} color={colors.primary} />
+                    <Ionicons name="share-outline" size={15} color={colors.primary} />
                     <Text style={styles.inviteBtnText}>초대</Text>
                   </TouchableOpacity>
-                )}
+                </View>
               </TouchableOpacity>
             );
           })
@@ -401,6 +417,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.textSecondary,
     marginTop: 2,
+  },
+  inviteBtns: {
+    flexDirection: 'row',
+    gap: 6,
   },
   inviteBtn: {
     flexDirection: 'row',
