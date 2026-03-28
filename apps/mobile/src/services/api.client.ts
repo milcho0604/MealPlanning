@@ -13,6 +13,9 @@ import { STORAGE_KEYS } from '../constants/storage-keys';
 /** API 기본 URL - 환경 변수에서 읽음 */
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 
+/** 토큰 갱신 중복 방지: 진행 중인 refresh Promise를 공유 */
+let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
+
 /** Axios 인스턴스 생성 */
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/v1`,
@@ -48,18 +51,21 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const refreshToken = await SecureStore.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-        if (!refreshToken) throw new Error('리프레시 토큰 없음');
+        // 이미 갱신 중이면 기존 Promise 재사용 (race condition 방지)
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            const rt = await SecureStore.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+            if (!rt) throw new Error('리프레시 토큰 없음');
+            const { data: resp } = await axios.post(`${BASE_URL}/v1/auth/refresh`, { refreshToken: rt });
+            const tokens = resp.data;
+            await SecureStore.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+            await SecureStore.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+            return tokens;
+          })().finally(() => { refreshPromise = null; });
+        }
 
-        // 토큰 갱신 요청 (인터셉터 없이 직접 호출하여 무한 루프 방지)
-        const { data } = await axios.post(`${BASE_URL}/v1/auth/refresh`, { refreshToken });
-
-        // 새 토큰 저장
-        await SecureStore.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.data.accessToken);
-        await SecureStore.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.data.refreshToken);
-
-        // 원래 요청 헤더에 새 토큰 설정 후 재시도
-        originalRequest.headers.Authorization = `Bearer ${data.data.accessToken}`;
+        const tokens = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${tokens.accessToken}`;
         return apiClient(originalRequest);
       } catch {
         // 토큰 갱신 실패 시 저장된 인증 정보 삭제 (로그아웃 처리)
