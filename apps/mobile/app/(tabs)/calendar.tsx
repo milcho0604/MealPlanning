@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCircleSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#2E7D32',
   },
   dayCircleToday: {
     borderWidth: 1.5,
@@ -312,19 +312,21 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: colors.primary,
+    backgroundColor: '#66BB6A',
     marginTop: 3,
   },
   dotSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#fff',
   },
   // ── 하단 식단 패널 ────────────────────────────────────────
   panel: {
-    marginTop: 12,
-    paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: 16,
+    marginTop: 16,
+    marginHorizontal: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   panelTitle: {
     fontSize: 16,
@@ -336,7 +338,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
-    paddingVertical: 24,
+    paddingVertical: 20,
   },
   // ── FAB ─────────────────────────────────────────────────
   fab: {
