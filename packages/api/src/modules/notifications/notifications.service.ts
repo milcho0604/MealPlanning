@@ -54,8 +54,11 @@ export class NotificationsService {
   async sendDailyMealNotification(): Promise<void> {
     this.logger.log('오늘 식단 알림 Cron 실행');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // KST(UTC+9) 기준 오늘 날짜 계산 (서버 타임존과 무관하게 정확한 한국 날짜 사용)
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const kstDate = new Date(now.getTime() + kstOffset);
+    const today = new Date(Date.UTC(kstDate.getUTCFullYear(), kstDate.getUTCMonth(), kstDate.getUTCDate()));
 
     // 오늘 식단이 있는 그룹 조회
     const groupsWithMeals = await this.prisma.mealPlan.findMany({
@@ -97,8 +100,11 @@ export class NotificationsService {
   async sendExpiryWarningNotification(): Promise<void> {
     this.logger.log('유통기한 임박 알림 Cron 실행');
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // KST 기준 오늘 날짜 계산
+    const now = new Date();
+    const kstOffset = 9 * 60 * 60 * 1000;
+    const kstDate = new Date(now.getTime() + kstOffset);
+    const today = new Date(Date.UTC(kstDate.getUTCFullYear(), kstDate.getUTCMonth(), kstDate.getUTCDate()));
 
     const warningDate = new Date(today);
     warningDate.setDate(warningDate.getDate() + 3); // 3일 후
