@@ -434,6 +434,11 @@ export class AuthService {
       throw new UnauthorizedException('탈퇴된 계정을 찾을 수 없습니다.');
     }
 
+    // 90일 복구 기간 검증
+    if (!user.deletedAt || user.deletedAt.getTime() < Date.now() - 90 * 24 * 60 * 60 * 1000) {
+      throw new UnauthorizedException('복구 기간(90일)이 만료되었습니다.');
+    }
+
     // 비밀번호 확인
     const bcrypt = await import('bcrypt');
     const isValid = await bcrypt.compare(password, user.passwordHash ?? '');

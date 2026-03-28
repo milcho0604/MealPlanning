@@ -29,8 +29,11 @@ export default function ReactivateScreen() {
       );
       await setAuth(data.data.tokens, data.data.user);
       Alert.alert('복구 완료', '계정이 복구되었습니다. 환영합니다!');
-    } catch {
-      Alert.alert('오류', '비밀번호가 올바르지 않거나 복구 기간이 만료되었습니다.');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error
+          ?.message ?? '비밀번호가 올바르지 않거나 복구 기간이 만료되었습니다.';
+      Alert.alert('오류', message);
     } finally {
       setIsLoading(false);
     }
