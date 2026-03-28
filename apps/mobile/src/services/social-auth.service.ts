@@ -11,7 +11,7 @@
  */
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import * as KakaoUser from '@react-native-kakao/user';
+import { login as kakaoLogin } from '@react-native-kakao/login';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 import { apiClient } from './api.client';
@@ -44,7 +44,7 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
 
 /** ── Kakao 로그인 ─────────────────────────────────────── */
 export async function signInWithKakao(): Promise<SocialAuthResult> {
-  const tokenInfo = await KakaoUser.login();
+  const tokenInfo = await kakaoLogin();
   const accessToken = tokenInfo.accessToken;
   if (!accessToken) throw new Error('Kakao 액세스 토큰을 받지 못했습니다.');
 

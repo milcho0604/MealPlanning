@@ -16,6 +16,7 @@
     "@mealplan/shared": "*",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@react-native-kakao/core": "^2.4.5",
+    "@react-native-kakao/login": "^2.4.5",
     "@react-native-kakao/user": "^2.4.5",
     "@tanstack/react-query": "^5.94.5",
     "axios": "^1.13.6",
