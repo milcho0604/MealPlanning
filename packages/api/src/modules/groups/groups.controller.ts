@@ -16,6 +16,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -59,6 +60,17 @@ export class GroupsController {
   @Delete(':id/leave')
   leave(@Param('id') groupId: string, @CurrentUser() user: RequestUser) {
     return this.groupsService.leave(groupId, user.id);
+  }
+
+  /** 멤버 역할 변경 (owner 전용) */
+  @Patch(':id/members/:userId/role')
+  changeRole(
+    @Param('id') groupId: string,
+    @Param('userId') targetUserId: string,
+    @CurrentUser() user: RequestUser,
+    @Body() body: { role: string },
+  ) {
+    return this.groupsService.changeRole(groupId, user.id, targetUserId, body.role);
   }
 
   /** 멤버 내보내기 (owner 전용) */

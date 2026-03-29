@@ -196,6 +196,34 @@ export class GroupsService {
   }
 
   /**
+   * 멤버 역할 변경 (owner만 가능)
+   */
+  async changeRole(
+    groupId: string,
+    requesterId: string,
+    targetUserId: string,
+    newRole: string,
+  ) {
+    const requester = await this.assertMember(groupId, requesterId);
+    if (requester.role !== 'owner') {
+      throw new ForbiddenException('그룹 소유자만 역할을 변경할 수 있습니다.');
+    }
+    if (requesterId === targetUserId) {
+      throw new BadRequestException('자기 자신의 역할은 변경할 수 없습니다.');
+    }
+    if (!['editor', 'viewer'].includes(newRole)) {
+      throw new BadRequestException('유효하지 않은 역할입니다.');
+    }
+
+    await this.prisma.groupMember.update({
+      where: { groupId_userId: { groupId, userId: targetUserId } },
+      data: { role: newRole },
+    });
+
+    return { message: '역할이 변경되었습니다.' };
+  }
+
+  /**
    * 그룹 멤버 여부 확인 헬퍼
    * 멤버가 아니면 ForbiddenException 발생
    */

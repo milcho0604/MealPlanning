@@ -24,13 +24,15 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
 import { authService } from '../../src/services/auth.service';
+import { groupService } from '../../src/services/group.service';
 import { colors } from '../../src/constants/colors';
 
 /** 모달 타입 */
-type GroupModalType = 'create' | 'join' | 'changePassword' | null;
+type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
@@ -44,6 +46,9 @@ export default function SettingsScreen() {
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [members, setMembers] = useState<any[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroupRole, setSelectedGroupRole] = useState<string>('');
 
   /** 로그아웃 */
   const handleSignOut = () => {
@@ -180,8 +185,22 @@ export default function SettingsScreen() {
                   </View>
                 </View>
 
-                {/* 초대 코드 공유 (모든 멤버 가능) */}
+                {/* 초대 + 멤버 관리 */}
                 <View style={styles.inviteBtns}>
+                  <TouchableOpacity
+                    style={styles.inviteBtn}
+                    onPress={async () => {
+                      setSelectedGroupId(group.id);
+                      setSelectedGroupRole(group.myRole);
+                      try {
+                        const m = await groupService.getMembers(group.id);
+                        setMembers(m);
+                        setModalType('members');
+                      } catch { Alert.alert('오류', '멤버 목록을 불러올 수 없습니다.'); }
+                    }}
+                  >
+                    <Ionicons name="people-outline" size={15} color={colors.primary} />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.inviteBtn}
                     onPress={() => copyInviteCode(group.inviteCode)}
@@ -376,6 +395,78 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+      </Modal>
+      {/* ── 멤버 관리 모달 ── */}
+      <Modal
+        visible={modalType === 'members'}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setModalType(null)}
+      >
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.membersHeader}>
+            <Text style={styles.membersTitle}>멤버 관리</Text>
+            <TouchableOpacity onPress={() => setModalType(null)}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {members.map((m: any) => (
+              <View key={m.userId} style={styles.memberItem}>
+                <View style={styles.memberInfo}>
+                  <View style={styles.memberAvatar}>
+                    <Text style={styles.memberAvatarText}>{m.user?.name?.[0]?.toUpperCase() ?? '?'}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.memberName}>{m.user?.name ?? '알 수 없음'}</Text>
+                    <Text style={styles.memberRole}>
+                      {(MEMBER_ROLE_LABELS as any)[m.role] ?? m.role}
+                    </Text>
+                  </View>
+                </View>
+                {/* owner만 다른 멤버의 역할 변경/강퇴 가능 */}
+                {selectedGroupRole === 'owner' && m.role !== 'owner' && (
+                  <View style={styles.memberActions}>
+                    <TouchableOpacity
+                      style={styles.roleBtn}
+                      onPress={() => {
+                        const nextRole = m.role === 'editor' ? 'viewer' : 'editor';
+                        Alert.alert('역할 변경', `${m.user?.name}의 역할을 ${(MEMBER_ROLE_LABELS as any)[nextRole]}(으)로 변경할까요?`, [
+                          { text: '취소', style: 'cancel' },
+                          { text: '변경', onPress: async () => {
+                            try {
+                              await groupService.changeRole(selectedGroupId!, m.userId, nextRole);
+                              setMembers(prev => prev.map(x => x.userId === m.userId ? { ...x, role: nextRole } : x));
+                            } catch { Alert.alert('오류', '역할 변경에 실패했습니다.'); }
+                          }},
+                        ]);
+                      }}
+                    >
+                      <Text style={styles.roleBtnText}>{m.role === 'editor' ? '뷰어로' : '편집자로'}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.kickBtn}
+                      onPress={() => {
+                        Alert.alert('멤버 내보내기', `${m.user?.name}을(를) 내보낼까요?`, [
+                          { text: '취소', style: 'cancel' },
+                          { text: '내보내기', style: 'destructive', onPress: async () => {
+                            try {
+                              await groupService.removeMember(selectedGroupId!, m.userId);
+                              setMembers(prev => prev.filter(x => x.userId !== m.userId));
+                              loadGroups();
+                            } catch { Alert.alert('오류', '멤버 내보내기에 실패했습니다.'); }
+                          }},
+                        ]);
+                      }}
+                    >
+                      <Ionicons name="person-remove-outline" size={14} color={colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -644,5 +735,53 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     opacity: 0.5,
+  },
+  // ── 멤버 관리 ────────────────────────────────────────────
+  membersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  membersTitle: { fontSize: 17, fontWeight: '700', color: colors.text },
+  memberItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  memberInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  memberAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memberAvatarText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  memberName: { fontSize: 15, fontWeight: '600', color: colors.text },
+  memberRole: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
+  memberActions: { flexDirection: 'row', gap: 8 },
+  roleBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#E3F2FD',
+  },
+  roleBtnText: { fontSize: 12, fontWeight: '600', color: '#1976D2' },
+  kickBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: '#FFEBEE',
   },
 });
