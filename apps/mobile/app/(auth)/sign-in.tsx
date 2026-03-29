@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import { Link } from 'expo-router';
 import {
   ActivityIndicator,
+  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -83,6 +84,24 @@ export default function SignInScreen() {
         />
 
         {error && <Text style={styles.errorText}>{error}</Text>}
+
+        <TouchableOpacity
+          style={styles.forgotPassword}
+          onPress={() => {
+            Alert.prompt
+              ? Alert.prompt('비밀번호 찾기', '가입한 이메일을 입력하세요', async (email) => {
+                  if (!email?.trim()) return;
+                  try {
+                    const { authService: svc } = await import('../../src/services/auth.service');
+                    await svc.forgotPassword(email.trim());
+                    Alert.alert('발송 완료', '비밀번호 재설정 링크를 이메일로 발송했습니다.');
+                  } catch { Alert.alert('오류', '이메일 발송에 실패했습니다.'); }
+                }, 'plain-text', form.email)
+              : Alert.alert('비밀번호 찾기', '이메일로 비밀번호 재설정 링크가 발송됩니다.\n설정 > 비밀번호 변경에서 변경할 수 있습니다.');
+          }}
+        >
+          <Text style={styles.forgotPasswordText}>비밀번호를 잊으셨나요?</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.button, isAnyLoading && styles.buttonDisabled]}
@@ -209,6 +228,15 @@ const styles = StyleSheet.create({
     color: colors.error,
     fontSize: 13,
     marginTop: 4,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: 4,
+  },
+  forgotPasswordText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
   },
   button: {
     backgroundColor: colors.primary,

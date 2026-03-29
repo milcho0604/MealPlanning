@@ -30,7 +30,7 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator';
 import { AuthResponse, AuthService, SocialProvider } from './auth.service';
 import { SignUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -56,6 +56,29 @@ class ReactivateDto {
 
   @IsString()
   password: string;
+}
+
+class ChangePasswordDto {
+  @IsString()
+  currentPassword: string;
+
+  @IsString()
+  @MinLength(8, { message: '새 비밀번호는 8자 이상이어야 합니다.' })
+  newPassword: string;
+}
+
+class ForgotPasswordDto {
+  @IsEmail()
+  email: string;
+}
+
+class ResetPasswordDto {
+  @IsString()
+  token: string;
+
+  @IsString()
+  @MinLength(8, { message: '새 비밀번호는 8자 이상이어야 합니다.' })
+  newPassword: string;
 }
 
 class SocialSignInDto {
@@ -165,6 +188,34 @@ export class AuthController {
     @Body() dto: SocialSignInDto,
   ): Promise<AuthResponse> {
     return this.authService.socialSignIn(provider, dto.token, dto.name);
+  }
+
+  /** 비밀번호 변경 (로그인 상태) */
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '비밀번호 변경' })
+  changePassword(@CurrentUser() user: RequestUser, @Body() dto: ChangePasswordDto) {
+    return this.authService.changePassword(user.id, dto.currentPassword, dto.newPassword);
+  }
+
+  /** 비밀번호 찾기 (재설정 링크 발송) */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '비밀번호 재설정 링크 발송' })
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    await this.authService.forgotPassword(dto.email);
+    return { message: '비밀번호 재설정 링크를 이메일로 발송했습니다.' };
+  }
+
+  /** 비밀번호 재설정 실행 */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '비밀번호 재설정' })
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    await this.authService.resetPassword(dto.token, dto.newPassword);
+    return { message: '비밀번호가 변경되었습니다.' };
   }
 
   /** 탈퇴 계정 휴면 해제 */

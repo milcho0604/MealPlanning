@@ -486,7 +486,75 @@ export class AuthService {
    */
   async signOut(): Promise<void> {
     // stateless JWT 방식이므로 서버에서 별도 처리 없음
-    // 클라이언트에서 SecureStore의 토큰을 삭제하는 것으로 충분
+  }
+
+  /**
+   * 비밀번호 변경 (로그인 상태)
+   * 현재 비밀번호 확인 후 새 비밀번호로 변경
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('비밀번호를 변경할 수 없는 계정입니다.');
+    }
+
+    const bcrypt = await import('bcrypt');
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new UnauthorizedException('현재 비밀번호가 올바르지 않습니다.');
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHash },
+    });
+  }
+
+  /**
+   * 비밀번호 재설정 요청 (비로그인)
+   * 이메일로 재설정 링크 발송
+   */
+  async forgotPassword(email: string): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    // 보안: 존재하지 않는 이메일이어도 동일 응답
+    if (!user || !user.passwordHash) return;
+
+    const resetToken = randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1시간
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verifyToken: resetToken, verifyTokenExpiry: resetTokenExpiry },
+    });
+
+    await this.mailService.sendPasswordResetEmail(normalizedEmail, user.name, resetToken);
+  }
+
+  /**
+   * 비밀번호 재설정 실행 (토큰 검증 후)
+   */
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findFirst({
+      where: { verifyToken: token, verifyTokenExpiry: { gt: new Date() } },
+    });
+
+    if (!user) {
+      throw new NotFoundException('유효하지 않거나 만료된 링크입니다.');
+    }
+
+    const bcrypt = await import('bcrypt');
+    const newHash = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: newHash, verifyToken: null, verifyTokenExpiry: null },
+    });
   }
 
   /**

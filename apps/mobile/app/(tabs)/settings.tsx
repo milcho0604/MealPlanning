@@ -26,10 +26,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
+import { authService } from '../../src/services/auth.service';
 import { colors } from '../../src/constants/colors';
 
-/** 그룹 액션 모달 타입 */
-type GroupModalType = 'create' | 'join' | null;
+/** 모달 타입 */
+type GroupModalType = 'create' | 'join' | 'changePassword' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
@@ -40,6 +41,8 @@ export default function SettingsScreen() {
   const [modalType, setModalType] = useState<GroupModalType>(null);
   const [groupNameInput, setGroupNameInput] = useState('');
   const [inviteCodeInput, setInviteCodeInput] = useState('');
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   /** 로그아웃 */
@@ -221,6 +224,15 @@ export default function SettingsScreen() {
 
         {/* ── 4. 계정 ── */}
         <Text style={styles.sectionLabel}>계정</Text>
+        <TouchableOpacity
+          style={styles.accountActionBtn}
+          onPress={() => { setCurrentPw(''); setNewPw(''); setModalType('changePassword'); }}
+        >
+          <Ionicons name="lock-closed-outline" size={18} color={colors.text} />
+          <Text style={styles.accountActionText}>비밀번호 변경</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
           <Text style={styles.signOutText}>로그아웃</Text>
@@ -307,6 +319,59 @@ export default function SettingsScreen() {
                 <Text style={styles.dialogConfirmText}>
                   {isSubmitting ? '참여 중...' : '참여'}
                 </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── 비밀번호 변경 모달 ── */}
+      <Modal
+        visible={modalType === 'changePassword'}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalType(null)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>비밀번호 변경</Text>
+            <TextInput
+              style={styles.dialogInput}
+              value={currentPw}
+              onChangeText={setCurrentPw}
+              placeholder="현재 비밀번호"
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+              autoFocus
+            />
+            <TextInput
+              style={styles.dialogInput}
+              value={newPw}
+              onChangeText={setNewPw}
+              placeholder="새 비밀번호 (8자 이상)"
+              placeholderTextColor={colors.textSecondary}
+              secureTextEntry
+            />
+            <View style={styles.dialogButtons}>
+              <TouchableOpacity style={styles.dialogCancelBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.dialogCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dialogConfirmBtn, isSubmitting && styles.disabledBtn]}
+                onPress={async () => {
+                  if (newPw.length < 8) { Alert.alert('오류', '새 비밀번호는 8자 이상이어야 합니다.'); return; }
+                  setIsSubmitting(true);
+                  try {
+                    await authService.changePassword(currentPw, newPw);
+                    Alert.alert('완료', '비밀번호가 변경되었습니다.');
+                    setModalType(null);
+                  } catch (e: any) {
+                    Alert.alert('오류', e?.response?.data?.error?.message ?? '비밀번호 변경에 실패했습니다.');
+                  } finally { setIsSubmitting(false); }
+                }}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.dialogConfirmText}>{isSubmitting ? '변경 중...' : '변경'}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -461,6 +526,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
+  },
+  // ── 계정 액션 버튼 ────────────────────────────────────────
+  accountActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  accountActionText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: colors.text,
   },
   // ── 로그아웃 ────────────────────────────────────────────
   signOutButton: {

@@ -60,6 +60,16 @@ export const authService = {
     return data.data;
   },
 
+  /** 비밀번호 변경 (로그인 상태) */
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await apiClient.post('/auth/change-password', { currentPassword, newPassword });
+  },
+
+  /** 비밀번호 찾기 (재설정 링크 발송) */
+  forgotPassword: async (email: string): Promise<void> => {
+    await apiClient.post('/auth/forgot-password', { email });
+  },
+
   /**
    * 회원 탈퇴
    * Supabase Auth + DB의 모든 사용자 데이터 삭제
