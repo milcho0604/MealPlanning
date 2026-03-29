@@ -548,7 +548,11 @@ export class AuthService {
       data: { verifyToken: resetToken, verifyTokenExpiry: resetTokenExpiry },
     });
 
-    await this.mailService.sendPasswordResetEmail(normalizedEmail, user.name, resetToken);
+    try {
+      await this.mailService.sendPasswordResetEmail(normalizedEmail, user.name, resetToken);
+    } catch {
+      this.logger.error(`비밀번호 재설정 메일 발송 실패: ${normalizedEmail}`);
+    }
   }
 
   /**

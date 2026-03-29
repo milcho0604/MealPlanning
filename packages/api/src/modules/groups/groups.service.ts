@@ -215,6 +215,13 @@ export class GroupsService {
       throw new BadRequestException('유효하지 않은 역할입니다.');
     }
 
+    const target = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId: targetUserId } },
+    });
+    if (!target) {
+      throw new NotFoundException('해당 멤버를 찾을 수 없습니다.');
+    }
+
     await this.prisma.groupMember.update({
       where: { groupId_userId: { groupId, userId: targetUserId } },
       data: { role: newRole },
