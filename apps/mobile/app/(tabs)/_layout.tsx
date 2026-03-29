@@ -10,24 +10,44 @@
  */
 
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
+import { useThemeStore } from '../../src/stores/theme.store';
 import { OfflineBanner } from '../../src/components/common/OfflineBanner';
 import { colors } from '../../src/constants/colors';
 
 export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
   const { loadGroups } = useGroupStore();
+  const { initialize: initTheme, hasAskedTheme, markAsked, setMode } = useThemeStore();
 
-  // 로그인 상태가 확인되면 그룹 목록 로드
+  // 로그인 상태가 확인되면 그룹 목록 로드 + 테마 초기화
   useEffect(() => {
     if (isAuthenticated) {
       loadGroups();
+      initTheme();
     }
-  }, [isAuthenticated, loadGroups]);
+  }, [isAuthenticated, loadGroups, initTheme]);
+
+  // 최초 로그인 시 다크 모드 설정 팝업
+  useEffect(() => {
+    if (isAuthenticated && !hasAskedTheme) {
+      setTimeout(() => {
+        Alert.alert(
+          '테마 설정',
+          '다크 모드를 사용하시겠습니까?\n(나중에 설정에서 변경할 수 있습니다)',
+          [
+            { text: '라이트', onPress: () => { setMode('light'); markAsked(); } },
+            { text: '다크', onPress: () => { setMode('dark'); markAsked(); } },
+            { text: '시스템 설정', onPress: () => { setMode('system'); markAsked(); } },
+          ],
+        );
+      }, 1000);
+    }
+  }, [isAuthenticated, hasAskedTheme, setMode, markAsked]);
 
   // 비로그인 상태이면 인증 화면으로 이동
   if (!isAuthenticated) {

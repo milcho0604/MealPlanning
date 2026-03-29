@@ -27,6 +27,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
+import { useThemeStore, type ThemeMode } from '../../src/stores/theme.store';
 import { authService } from '../../src/services/auth.service';
 import { groupService } from '../../src/services/group.service';
 import { colors } from '../../src/constants/colors';
@@ -36,6 +37,12 @@ type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
+  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
+  const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
+    { value: 'light', label: '라이트' },
+    { value: 'dark', label: '다크' },
+    { value: 'system', label: '시스템' },
+  ];
   const { groups, currentGroupId, setCurrentGroupId, createGroup, joinGroup, loadGroups } =
     useGroupStore();
 
@@ -251,6 +258,25 @@ export default function SettingsScreen() {
           <Text style={styles.accountActionText}>비밀번호 변경</Text>
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
+
+        {/* 테마 설정 */}
+        <View style={styles.accountActionBtn}>
+          <Ionicons name="moon-outline" size={18} color={colors.text} />
+          <Text style={styles.accountActionText}>테마</Text>
+          <View style={styles.themeToggle}>
+            {THEME_OPTIONS.map((opt) => (
+              <TouchableOpacity
+                key={opt.value}
+                style={[styles.themeBtn, themeMode === opt.value && styles.themeBtnActive]}
+                onPress={() => setThemeMode(opt.value)}
+              >
+                <Text style={[styles.themeBtnText, themeMode === opt.value && styles.themeBtnTextActive]}>
+                  {opt.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
@@ -636,6 +662,16 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.text,
   },
+  themeToggle: { flexDirection: 'row', gap: 4 },
+  themeBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: colors.background,
+  },
+  themeBtnActive: { backgroundColor: colors.primary },
+  themeBtnText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+  themeBtnTextActive: { color: '#fff', fontWeight: '700' },
   // ── 로그아웃 ────────────────────────────────────────────
   signOutButton: {
     flexDirection: 'row',

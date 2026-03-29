@@ -1,40 +1,40 @@
 /**
  * 앱 전체 컬러 팔레트 (Color Palette)
  *
- * 모든 화면에서 이 상수를 참조하여 색상을 사용합니다.
- * 디자인 변경 시 이 파일만 수정하면 앱 전체에 반영됩니다.
+ * 라이트/다크 테마를 지원합니다.
+ * useTheme() 훅으로 현재 테마의 색상을 가져옵니다.
  */
 
-export const colors = {
-  // ── 주요 색상 ──────────────────────────────────────────
-  /** 브랜드 메인 컬러 (버튼, 강조 등) */
+/** 라이트 테마 색상 */
+export const lightColors = {
   primary: '#4CAF50',
-  /** 보조 색상 */
   secondary: '#81C784',
-
-  // ── 텍스트 ────────────────────────────────────────────
-  /** 기본 텍스트 색상 */
   text: '#1A1A1A',
-  /** 보조 텍스트 색상 (라벨, 설명 등) */
   textSecondary: '#757575',
-
-  // ── 배경 ──────────────────────────────────────────────
-  /** 기본 화면 배경 */
   background: '#F5F5F5',
-  /** 카드/모달 배경 */
   surface: '#FFFFFF',
-
-  // ── 경계선 ────────────────────────────────────────────
   border: '#E0E0E0',
-
-  // ── 상태 색상 ─────────────────────────────────────────
-  /** 에러/삭제 등 위험 상태 */
   error: '#F44336',
-  /** 경고 상태 (유통기한 임박 등) */
   warning: '#FF9800',
-  /** 성공 상태 */
   success: '#4CAF50',
 } as const;
 
-/** 색상 타입 (TypeScript 타입 추론용) */
-export type ColorKey = keyof typeof colors;
+/** 다크 테마 색상 */
+export const darkColors = {
+  primary: '#66BB6A',
+  secondary: '#81C784',
+  text: '#E0E0E0',
+  textSecondary: '#9E9E9E',
+  background: '#121212',
+  surface: '#1E1E1E',
+  border: '#333333',
+  error: '#EF5350',
+  warning: '#FFA726',
+  success: '#66BB6A',
+} as const;
+
+/** 기본 내보내기 (라이트 테마 - 하위 호환성) */
+export const colors = lightColors;
+
+/** 색상 타입 */
+export type ColorKey = keyof typeof lightColors;
