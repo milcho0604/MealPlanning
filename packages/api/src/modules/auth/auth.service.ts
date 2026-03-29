@@ -116,17 +116,10 @@ export class AuthService {
       });
     }
 
-    // 인증 메일 발송 (실패 시에도 계정은 생성됨 → 재발송 가능)
-    try {
-      await this.mailService.sendVerificationEmail(
-        email,
-        dto.name,
-        verifyToken,
-      );
-    } catch {
+    // 인증 메일 발송 (백그라운드 - 응답을 기다리지 않음)
+    this.mailService.sendVerificationEmail(email, dto.name, verifyToken).catch(() => {
       this.logger.error(`회원가입 인증 메일 발송 실패: ${email}`);
-      // 메일 실패해도 계정 생성은 완료 → 재발송으로 복구 가능
-    }
+    });
 
     return { message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.' };
   }
@@ -548,11 +541,10 @@ export class AuthService {
       data: { verifyToken: resetToken, verifyTokenExpiry: resetTokenExpiry },
     });
 
-    try {
-      await this.mailService.sendPasswordResetEmail(normalizedEmail, user.name, resetToken);
-    } catch {
+    // 메일 발송 (백그라운드 - 응답을 기다리지 않음)
+    this.mailService.sendPasswordResetEmail(normalizedEmail, user.name, resetToken).catch(() => {
       this.logger.error(`비밀번호 재설정 메일 발송 실패: ${normalizedEmail}`);
-    }
+    });
   }
 
   /**
