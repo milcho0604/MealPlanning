@@ -110,21 +110,16 @@ export class MealPlansService {
 
     // 날짜가 여러 개면 트랜잭션으로 일괄 생성
     if (uniqueDates.length > 1) {
-      await this.prisma.$transaction(
+      const created = await this.prisma.$transaction(
         uniqueDates.map((d) =>
           this.prisma.mealPlan.create({
             data: { ...commonData, date: new Date(d) },
+            include: { createdByUser: { select: { id: true, name: true, avatarUrl: true } } },
           }),
         ),
       );
 
-      // 첫 번째 날짜의 식단을 응답으로 반환
-      const first = await this.prisma.mealPlan.findFirst({
-        where: { groupId: dto.groupId, createdBy: userId, date: new Date(dto.date), mealType: dto.mealType, menuName: dto.menuName },
-        orderBy: { createdAt: 'desc' },
-        include: { createdByUser: { select: { id: true, name: true, avatarUrl: true } } },
-      });
-      return this.toResponse(first!);
+      return this.toResponse(created[0]);
     }
 
     const mealPlan = await this.prisma.mealPlan.create({

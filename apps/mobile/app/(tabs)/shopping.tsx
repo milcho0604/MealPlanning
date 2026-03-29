@@ -156,7 +156,7 @@ export default function ShoppingScreen() {
         </Text>
         {item.quantity != null && (
           <Text style={styles.itemQuantity}>
-            {item.quantity}{item.unit ?? ''}
+            {item.quantity}{item.unit ? ` ${item.unit}` : ''}
           </Text>
         )}
       </View>

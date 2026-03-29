@@ -5,11 +5,11 @@
  */
 
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsString } from 'class-validator';
+import { IsDateString, IsUUID } from 'class-validator';
 
 export class GetMealPlansDto {
   @ApiProperty({ example: 'uuid-group-id', description: '그룹 ID' })
-  @IsString()
+  @IsUUID()
   groupId: string;
 
   @ApiProperty({
