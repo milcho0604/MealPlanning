@@ -59,6 +59,47 @@ export class MealPlansService {
     return mealPlans.map((mp) => this.toResponse(mp));
   }
 
+  /**
+   * 식단 통계: 자주 먹는 메뉴 TOP N + 월별 식사 유형 분포
+   */
+  async getStats(userId: string, groupId: string, months: number = 3) {
+    await this.validateGroupMember(userId, groupId);
+
+    const since = new Date();
+    since.setMonth(since.getMonth() - months);
+
+    // 자주 먹는 메뉴 TOP 5
+    const topMenus = await this.prisma.mealPlan.groupBy({
+      by: ['menuName'],
+      where: { groupId, date: { gte: since } },
+      _count: { menuName: true },
+      orderBy: { _count: { menuName: 'desc' } },
+      take: 5,
+    });
+
+    // 월별 식사 유형 분포
+    const allPlans = await this.prisma.mealPlan.findMany({
+      where: { groupId, date: { gte: since } },
+      select: { date: true, mealType: true },
+      orderBy: { date: 'asc' },
+    });
+
+    const monthlyDistribution: Record<string, Record<string, number>> = {};
+    for (const plan of allPlans) {
+      const monthKey = plan.date.toISOString().slice(0, 7); // YYYY-MM
+      if (!monthlyDistribution[monthKey]) {
+        monthlyDistribution[monthKey] = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
+      }
+      monthlyDistribution[monthKey][plan.mealType] =
+        (monthlyDistribution[monthKey][plan.mealType] ?? 0) + 1;
+    }
+
+    return {
+      topMenus: topMenus.map((m) => ({ menuName: m.menuName, count: m._count.menuName })),
+      monthlyDistribution,
+    };
+  }
+
   async findByDateRange(userId: string, query: GetMealPlansDto) {
     // 그룹 멤버 여부 확인 (비멤버의 데이터 접근 차단)
     await this.validateGroupMember(userId, query.groupId);
