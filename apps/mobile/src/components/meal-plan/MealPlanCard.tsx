@@ -50,11 +50,12 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
 
         {/* 액션 버튼 */}
         <View style={styles.actions}>
-          <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn}>
-            <Ionicons name="create" size={13} color={colors.primary} />
+          <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn} activeOpacity={0.7}>
+            <Ionicons name="pencil-outline" size={14} color={colors.primary} />
+            <Text style={styles.editBtnText}>수정</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
-            <Ionicons name="trash" size={13} color={colors.error} />
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn} activeOpacity={0.7}>
+            <Ionicons name="trash-outline" size={14} color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>
@@ -107,23 +108,33 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
   },
   editBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#E8F5E9',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#E8F5E9',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  editBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
   deleteBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: '#FFEBEE',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
   },
   menuName: {
     fontSize: 16,

@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   INGREDIENT_CATEGORY_LABELS,
 } from '@mealplan/shared';
@@ -74,14 +75,35 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
     }
   }, [visible, ingredient]);
 
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
   /** 유통기한 입력 자동 포맷 (숫자 입력 → YYYY-MM-DD) */
   const handleExpiryChange = (text: string) => {
-    // 숫자만 추출
     const digits = text.replace(/\D/g, '');
     let formatted = digits;
     if (digits.length > 4) formatted = `${digits.slice(0, 4)}-${digits.slice(4)}`;
     if (digits.length > 6) formatted = `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}`;
     setExpiryDate(formatted);
+  };
+
+  /** 간단 달력에서 날짜 생성 (다음 60일) */
+  const getDateOptions = () => {
+    const dates: string[] = [];
+    const today = new Date();
+    for (let i = 0; i <= 60; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() + i);
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      dates.push(`${d.getFullYear()}-${mm}-${dd}`);
+    }
+    return dates;
+  };
+
+  const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+  const formatPickerDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
   };
 
   /** 저장 처리 */
@@ -216,15 +238,44 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
 
           {/* 유통기한 */}
           <Text style={styles.label}>유통기한</Text>
-          <TextInput
-            style={styles.input}
-            value={expiryDate}
-            onChangeText={handleExpiryChange}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-            maxLength={10}
-          />
+          <View style={styles.expiryRow}>
+            <TextInput
+              style={[styles.input, styles.expiryInput]}
+              value={expiryDate}
+              onChangeText={handleExpiryChange}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+            <TouchableOpacity
+              style={styles.calendarBtn}
+              onPress={() => setShowDatePicker(!showDatePicker)}
+            >
+              <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          {/* 달력 날짜 선택 (토글) */}
+          {showDatePicker && (
+            <View style={styles.datePickerGrid}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.dateChips}>
+                  {getDateOptions().map((d) => (
+                    <TouchableOpacity
+                      key={d}
+                      style={[styles.dateChip, expiryDate === d && styles.dateChipActive]}
+                      onPress={() => { setExpiryDate(d); setShowDatePicker(false); }}
+                    >
+                      <Text style={[styles.dateChipText, expiryDate === d && styles.dateChipTextActive]}>
+                        {formatPickerDate(d)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </Modal>
@@ -336,5 +387,51 @@ const styles = StyleSheet.create({
   unitBtnTextActive: {
     color: colors.primary,
     fontWeight: '700',
+  },
+  // ── 유통기한 달력 ──────────────────────────────────────
+  expiryRow: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  expiryInput: {
+    flex: 1,
+  },
+  calendarBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  datePickerGrid: {
+    marginTop: 10,
+  },
+  dateChips: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  dateChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  dateChipActive: {
+    borderColor: colors.primary,
+    backgroundColor: '#E8F5E9',
+  },
+  dateChipText: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  dateChipTextActive: {
+    color: colors.primary,
+    fontWeight: '600',
   },
 });
