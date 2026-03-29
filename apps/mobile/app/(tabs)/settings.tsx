@@ -28,18 +28,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
-import { useThemeStore, type ThemeMode } from '../../src/stores/theme.store';
 import { authService } from '../../src/services/auth.service';
 import { groupService } from '../../src/services/group.service';
 import { apiClient } from '../../src/services/api.client';
 import { colors } from '../../src/constants/colors';
+
+/** 테마 모드 */
+type ThemeMode = 'light' | 'dark' | 'system';
 
 /** 모달 타입 */
 type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
-  const { mode: themeMode, setMode: setThemeMode } = useThemeStore();
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
   const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
     { value: 'light', label: '라이트' },
     { value: 'dark', label: '다크' },

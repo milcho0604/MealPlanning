@@ -10,33 +10,27 @@
  */
 
 import { useEffect } from 'react';
-import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
-import { OfflineBanner } from '../../src/components/common/OfflineBanner';
 import { colors } from '../../src/constants/colors';
 
 export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
   const { loadGroups } = useGroupStore();
 
-  // 로그인 상태가 확인되면 그룹 목록 로드
   useEffect(() => {
     if (isAuthenticated) {
       loadGroups();
     }
   }, [isAuthenticated, loadGroups]);
 
-  // 비로그인 상태이면 인증 화면으로 이동
   if (!isAuthenticated) {
     return <Redirect href="/(auth)/sign-in" />;
   }
 
   return (
-    <View style={{ flex: 1 }}>
-    <OfflineBanner />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
@@ -49,7 +43,6 @@ export default function TabsLayout() {
         headerShown: false,
       }}
     >
-      {/* 홈 - 오늘의 식단 */}
       <Tabs.Screen
         name="home"
         options={{
@@ -59,8 +52,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      {/* 캘린더 - 월간 식단 뷰 */}
       <Tabs.Screen
         name="calendar"
         options={{
@@ -70,8 +61,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      {/* 냉장고 - 재료 관리 */}
       <Tabs.Screen
         name="fridge"
         options={{
@@ -81,8 +70,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      {/* 쇼핑 - 쇼핑 리스트 */}
       <Tabs.Screen
         name="shopping"
         options={{
@@ -92,8 +79,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      {/* 설정 - 프로필, 그룹 관리 */}
       <Tabs.Screen
         name="settings"
         options={{
@@ -104,6 +89,5 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
-    </View>
   );
 }
