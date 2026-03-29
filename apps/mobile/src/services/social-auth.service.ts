@@ -11,7 +11,7 @@
  */
 
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { login as kakaoLogin } from '@react-native-kakao/login';
+import { login as kakaoLogin } from '@react-native-kakao/user';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { Platform } from 'react-native';
 import { apiClient } from './api.client';
