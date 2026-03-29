@@ -8,9 +8,10 @@
  * - FAB: 선택 날짜에 식단 추가
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   FlatList,
+  PanResponder,
   RefreshControl,
   SafeAreaView,
   ScrollView,
@@ -94,6 +95,18 @@ export default function CalendarScreen() {
     calendarCells.push(...Array(7 - remainder).fill(null));
   }
 
+  // ── 스와이프로 월 이동 ──────────────────────────────────
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > 30 && Math.abs(gestureState.dy) < 30,
+      onPanResponderRelease: (_, gestureState) => {
+        if (gestureState.dx < -50) goNextMonth();
+        else if (gestureState.dx > 50) goPrevMonth();
+      },
+    }),
+  ).current;
+
   // ── 월 이동 핸들러 ─────────────────────────────────────
   const goPrevMonth = () => {
     if (month === 1) { setYear(y => y - 1); setMonth(12); }
@@ -158,8 +171,8 @@ export default function CalendarScreen() {
           ))}
         </View>
 
-        {/* ── 날짜 그리드 ── */}
-        <View style={styles.grid}>
+        {/* ── 날짜 그리드 (스와이프 가능) ── */}
+        <View style={styles.grid} {...panResponder.panHandlers}>
           {calendarCells.map((day, idx) => {
             if (day === null) {
               return <View key={`empty-${idx}`} style={styles.cell} />;
@@ -253,7 +266,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   monthArrow: {
-    padding: 8,
+    padding: 12,
+    borderRadius: 20,
   },
   monthTitle: {
     fontSize: 18,
