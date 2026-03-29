@@ -85,6 +85,7 @@ export class ShoppingService {
     await this.assertMember(item.groupId, userId);
 
     await this.prisma.shoppingItem.delete({ where: { id } });
+    return { message: '쇼핑 항목이 삭제되었습니다.' };
   }
 
   /**

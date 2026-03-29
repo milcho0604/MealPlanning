@@ -93,7 +93,7 @@ export default function SettingsScreen() {
   /** 그룹 생성 */
   const handleCreateGroup = async () => {
     const name = groupNameInput.trim();
-    if (!name) return;
+    if (!name) { Alert.alert('입력 오류', '그룹 이름을 입력해주세요.'); return; }
     setIsSubmitting(true);
     try {
       await createGroup(name);

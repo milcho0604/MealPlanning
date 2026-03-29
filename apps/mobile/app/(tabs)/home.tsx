@@ -160,7 +160,12 @@ export default function HomeScreen() {
           </Text>
           <Text style={styles.headerDate}>{formatDateHeader(selectedDateObj)}</Text>
         </View>
-        <TouchableOpacity onPress={() => { setIsSearching(!isSearching); setSearchQuery(''); setSearchResults([]); }}>
+        <TouchableOpacity onPress={() => {
+          setIsSearching(!isSearching);
+          setSearchQuery('');
+          setSearchResults([]);
+          if (searchTimeout.current) clearTimeout(searchTimeout.current);
+        }}>
           <Ionicons name={isSearching ? 'close' : 'search'} size={22} color={colors.text} />
         </TouchableOpacity>
       </View>

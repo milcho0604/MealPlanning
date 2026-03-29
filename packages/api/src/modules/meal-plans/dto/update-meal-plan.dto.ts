@@ -14,6 +14,7 @@ export class UpdateMealPlanDto extends PartialType(
     'menuName',
     'memo',
     'recipeUrl',
+    'photoUrl',
     'isRecurring',
     'recurRule',
   ] as const),
