@@ -32,6 +32,33 @@ export class MealPlansService {
    * @param userId - 요청한 사용자 ID
    * @param query - 그룹 ID, 시작/종료 날짜
    */
+  /**
+   * 메뉴명으로 식단 검색
+   * 최근 50건까지 반환
+   */
+  async search(userId: string, groupId: string, searchQuery: string) {
+    await this.validateGroupMember(userId, groupId);
+
+    if (!searchQuery?.trim()) return [];
+
+    const mealPlans = await this.prisma.mealPlan.findMany({
+      where: {
+        groupId,
+        OR: [
+          { menuName: { contains: searchQuery.trim(), mode: 'insensitive' } },
+          { memo: { contains: searchQuery.trim(), mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { date: 'desc' },
+      take: 50,
+      include: {
+        createdByUser: { select: { id: true, name: true, avatarUrl: true } },
+      },
+    });
+
+    return mealPlans.map((mp) => this.toResponse(mp));
+  }
+
   async findByDateRange(userId: string, query: GetMealPlansDto) {
     // 그룹 멤버 여부 확인 (비멤버의 데이터 접근 차단)
     await this.validateGroupMember(userId, query.groupId);

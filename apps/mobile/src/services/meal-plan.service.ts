@@ -37,6 +37,15 @@ export const mealPlanService = {
     return data.data;
   },
 
+  /** 메뉴명으로 식단 검색 */
+  search: async (groupId: string, query: string): Promise<MealPlanWithUser[]> => {
+    const { data } = await apiClient.get<{ success: true; data: MealPlanWithUser[] }>(
+      '/meal-plans/search',
+      { params: { groupId, query } },
+    );
+    return data.data;
+  },
+
   /**
    * 식단 생성
    */

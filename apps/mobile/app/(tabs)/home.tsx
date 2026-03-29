@@ -15,11 +15,13 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
+import { mealPlanService } from '../../src/services/meal-plan.service';
 import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
 import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
@@ -124,6 +126,24 @@ export default function HomeScreen() {
     setEditingMealPlan(null);
   };
 
+  // ── 검색 ──────────────────────────────────────────────
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<MealPlanWithUser[]>([]);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!text.trim()) { setSearchResults([]); return; }
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const results = await mealPlanService.search(currentGroupId!, text.trim());
+        setSearchResults(results);
+      } catch { setSearchResults([]); }
+    }, 300);
+  };
+
   // ── 렌더링 ────────────────────────────────────────────
   if (isLoading) return <SkeletonLoader rows={4} />;
 
@@ -131,12 +151,46 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>
-          {selectedDate === today ? '오늘의 식단' : '식단'}
-        </Text>
-        <Text style={styles.headerDate}>{formatDateHeader(selectedDateObj)}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>
+            {selectedDate === today ? '오늘의 식단' : '식단'}
+          </Text>
+          <Text style={styles.headerDate}>{formatDateHeader(selectedDateObj)}</Text>
+        </View>
+        <TouchableOpacity onPress={() => { setIsSearching(!isSearching); setSearchQuery(''); setSearchResults([]); }}>
+          <Ionicons name={isSearching ? 'close' : 'search'} size={22} color={colors.text} />
+        </TouchableOpacity>
       </View>
 
+      {/* 검색바 */}
+      {isSearching && (
+        <View style={styles.searchBar}>
+          <Ionicons name="search" size={18} color={colors.textSecondary} />
+          <TextInput
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={handleSearch}
+            placeholder="메뉴명으로 검색..."
+            placeholderTextColor={colors.textSecondary}
+            autoFocus
+            returnKeyType="search"
+          />
+        </View>
+      )}
+
+      {/* 검색 결과 */}
+      {isSearching && searchQuery.trim() ? (
+        <FlatList
+          data={searchResults}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <MealPlanCard mealPlan={item} onEdit={handleEdit} onDelete={handleDelete} />
+          )}
+          ListEmptyComponent={<Text style={styles.emptySearch}>검색 결과가 없습니다.</Text>}
+        />
+      ) : (
+      <>
       {/* 주간 날짜 탭 스트립 */}
       <View style={styles.weekStrip}>
         <ScrollView
@@ -194,6 +248,9 @@ export default function HomeScreen() {
         }
       />
 
+      </>
+      )}
+
       {/* 추가 FAB (Floating Action Button) */}
       <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
         <Ionicons name="add" size={28} color="#fff" />
@@ -217,10 +274,14 @@ const styles = StyleSheet.create({
   },
   // ── 헤더 ────────────────────────────────────────────────
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 8,
   },
+  headerLeft: {},
   headerTitle: {
     fontSize: 26,
     fontWeight: 'bold',
@@ -301,5 +362,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 6,
+  },
+  // ── 검색 ────────────────────────────────────────────────
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+    padding: 0,
+  },
+  emptySearch: {
+    textAlign: 'center',
+    color: colors.textSecondary,
+    fontSize: 14,
+    paddingVertical: 40,
   },
 });

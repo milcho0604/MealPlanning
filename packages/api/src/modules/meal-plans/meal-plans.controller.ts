@@ -55,6 +55,19 @@ export class MealPlansController {
   }
 
   /**
+   * 메뉴명으로 식단 검색
+   */
+  @Get('search')
+  @ApiOperation({ summary: '식단 검색 (메뉴명)' })
+  search(
+    @CurrentUser() user: RequestUser,
+    @Query('groupId') groupId: string,
+    @Query('query') query: string,
+  ) {
+    return this.mealPlansService.search(user.id, groupId, query);
+  }
+
+  /**
    * 식단 단건 조회
    */
   @Get(':id')
