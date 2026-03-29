@@ -18,6 +18,7 @@ import {
   ScrollView,
   Share,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -30,6 +31,7 @@ import { useGroupStore } from '../../src/stores/group.store';
 import { useThemeStore, type ThemeMode } from '../../src/stores/theme.store';
 import { authService } from '../../src/services/auth.service';
 import { groupService } from '../../src/services/group.service';
+import { apiClient } from '../../src/services/api.client';
 import { colors } from '../../src/constants/colors';
 
 /** 모달 타입 */
@@ -53,6 +55,7 @@ export default function SettingsScreen() {
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [members, setMembers] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupRole, setSelectedGroupRole] = useState<string>('');
@@ -297,6 +300,25 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             ))}
           </View>
+        </View>
+
+        {/* 알림 설정 */}
+        <View style={styles.accountActionBtn}>
+          <Ionicons name="notifications-outline" size={18} color={colors.text} />
+          <Text style={styles.accountActionText}>푸시 알림</Text>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={(val) => {
+              setNotificationsEnabled(val);
+              if (!val) {
+                // 알림 비활성화: pushToken을 null로 설정
+                apiClient.patch('/auth/push-token', { pushToken: '' }).catch(() => {});
+              }
+              Alert.alert(val ? '알림 활성화' : '알림 비활성화', val ? '식단/유통기한 알림을 받습니다.' : '알림이 꺼졌습니다.');
+            }}
+            trackColor={{ false: colors.border, true: colors.secondary }}
+            thumbColor={notificationsEnabled ? colors.primary : '#fff'}
+          />
         </View>
 
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
