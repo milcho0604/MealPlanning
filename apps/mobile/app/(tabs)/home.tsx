@@ -11,6 +11,7 @@
 import { useRef, useState } from 'react';
 import {
   FlatList,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -90,7 +91,9 @@ export default function HomeScreen() {
   const month = selectedDateObj.getMonth() + 1;
 
   // 선택된 날짜가 속한 월의 식단을 조회
-  const { data: allMealPlans, isLoading } = useMealPlans(year, month);
+  const { data: allMealPlans, isLoading, refetch } = useMealPlans(year, month);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
   const { removeMealPlan } = useMealPlanMutation();
 
   // ── 모달 상태 ──────────────────────────────────────────
@@ -241,6 +244,7 @@ export default function HomeScreen() {
           />
         )}
         contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
           <EmptyState
             message={`${formatDateHeader(selectedDateObj)}에\n등록된 식단이 없습니다.\n+ 버튼을 눌러 추가해보세요!`}

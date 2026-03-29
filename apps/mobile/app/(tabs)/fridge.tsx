@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import {
   FlatList,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -65,7 +66,9 @@ export default function FridgeScreen() {
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
 
   // ── 데이터 ─────────────────────────────────────────────
-  const { data: ingredients, isLoading } = useIngredients();
+  const { data: ingredients, isLoading, refetch } = useIngredients();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
   const { removeIngredient, consumeIngredient } = useIngredientMutation();
 
   // 소진되지 않은 재료만 필터링
@@ -158,6 +161,7 @@ export default function FridgeScreen() {
           />
         )}
         contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
           <EmptyState
             message={

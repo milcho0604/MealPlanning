@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import {
   FlatList,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -58,7 +59,9 @@ export default function CalendarScreen() {
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
 
   // ── 데이터 ─────────────────────────────────────────────
-  const { data: mealPlans, isLoading } = useMealPlans(year, month);
+  const { data: mealPlans, isLoading, refetch } = useMealPlans(year, month);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
   const { removeMealPlan } = useMealPlanMutation();
 
   // 날짜별 식단 맵 생성: { 'YYYY-MM-DD': MealPlanWithUser[] }
@@ -123,7 +126,11 @@ export default function CalendarScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView stickyHeaderIndices={[0]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        stickyHeaderIndices={[0]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+      >
         {/* ── 월 이동 헤더 (sticky) ── */}
         <View style={styles.monthHeader}>
           <TouchableOpacity onPress={goPrevMonth} style={styles.monthArrow}>

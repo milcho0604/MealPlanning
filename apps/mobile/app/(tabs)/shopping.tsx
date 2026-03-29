@@ -17,6 +17,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -36,7 +37,9 @@ import { colors } from '../../src/constants/colors';
 
 export default function ShoppingScreen() {
   const { currentGroupId } = useGroupStore();
-  const { data: items, isLoading } = useShopping();
+  const { data: items, isLoading, refetch } = useShopping();
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
   const {
     createShoppingItem,
     toggleShoppingItem,
@@ -219,6 +222,7 @@ export default function ShoppingScreen() {
             keyExtractor={(item) => item.id}
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             /** 완료 항목 구분선 */
             ItemSeparatorComponent={() => <View style={styles.separator} />}
             ListFooterComponent={
