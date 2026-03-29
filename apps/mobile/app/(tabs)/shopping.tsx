@@ -19,6 +19,7 @@ import {
   Platform,
   RefreshControl,
   SafeAreaView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -124,6 +125,23 @@ export default function ShoppingScreen() {
     ]);
   };
 
+  /** 쇼핑 리스트 공유 */
+  const handleShareList = async () => {
+    if (uncheckedItems.length === 0) {
+      Alert.alert('공유', '공유할 쇼핑 항목이 없습니다.');
+      return;
+    }
+    const lines = uncheckedItems.map((item) => {
+      const qty = item.quantity != null ? ` ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '';
+      return `☐ ${item.name}${qty}`;
+    });
+    try {
+      await Share.share({
+        message: `[MealPlan] 쇼핑 리스트\n\n${lines.join('\n')}`,
+      });
+    } catch { /* 공유 취소 시 무시 */ }
+  };
+
   /** 완료 항목 일괄 삭제 */
   const handleClearChecked = () => {
     if (checkedItems.length === 0) return;
@@ -186,6 +204,9 @@ export default function ShoppingScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>쇼핑 리스트</Text>
           <View style={styles.headerActions}>
+            <TouchableOpacity onPress={handleShareList} style={styles.headerActionBtn}>
+              <Ionicons name="share-outline" size={16} color={colors.primary} />
+            </TouchableOpacity>
             {checkedItems.length > 0 && (
               <TouchableOpacity onPress={handleClearChecked} style={styles.headerActionBtn}>
                 <Text style={styles.clearBtn}>완료 지우기 ({checkedItems.length})</Text>
