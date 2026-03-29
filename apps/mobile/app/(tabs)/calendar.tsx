@@ -22,7 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
-import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
+import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
 import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useMealPlanMutation } from '../../src/hooks/meal-plan/use-meal-plan-mutation.hook';
 import { useGroupStore } from '../../src/stores/group.store';
@@ -119,7 +119,7 @@ export default function CalendarScreen() {
   };
 
   if (!currentGroupId) return <NoGroupView />;
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <SkeletonLoader rows={5} />;
 
   return (
     <SafeAreaView style={styles.safeArea}>

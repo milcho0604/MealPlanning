@@ -25,7 +25,7 @@ import { useIngredients } from '../../src/hooks/ingredient/use-ingredients.hook'
 import { useIngredientMutation } from '../../src/hooks/ingredient/use-ingredient-mutation.hook';
 import { IngredientCard } from '../../src/components/ingredient/IngredientCard';
 import { IngredientFormModal } from '../../src/components/ingredient/IngredientFormModal';
-import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
+import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
 import { EmptyState } from '../../src/components/common/EmptyState';
 import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useGroupStore } from '../../src/stores/group.store';
@@ -101,7 +101,7 @@ export default function FridgeScreen() {
   };
 
   if (!currentGroupId) return <NoGroupView />;
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <SkeletonLoader rows={4} />;
 
   return (
     <SafeAreaView style={styles.safeArea}>

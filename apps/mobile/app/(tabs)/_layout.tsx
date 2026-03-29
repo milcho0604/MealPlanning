@@ -10,10 +10,12 @@
  */
 
 import { useEffect } from 'react';
+import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
+import { OfflineBanner } from '../../src/components/common/OfflineBanner';
 import { colors } from '../../src/constants/colors';
 
 export default function TabsLayout() {
@@ -33,6 +35,8 @@ export default function TabsLayout() {
   }
 
   return (
+    <View style={{ flex: 1 }}>
+    <OfflineBanner />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
@@ -100,5 +104,6 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }
