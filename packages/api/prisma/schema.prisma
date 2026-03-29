@@ -123,6 +123,8 @@ model MealPlan {
   menuName    String    @map("menu_name")
   memo        String?
   recipeUrl   String?   @map("recipe_url")
+  /// 식단 사진 URL
+  photoUrl    String?   @map("photo_url")
   isRecurring Boolean   @default(false) @map("is_recurring")
   /// 반복 규칙: weekly | monthly
   recurRule   String?   @map("recur_rule")

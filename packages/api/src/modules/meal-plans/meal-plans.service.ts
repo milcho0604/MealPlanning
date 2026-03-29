@@ -172,6 +172,7 @@ export class MealPlansService {
       menuName: dto.menuName,
       memo: dto.memo ?? null,
       recipeUrl: dto.recipeUrl ?? null,
+      photoUrl: dto.photoUrl ?? null,
       isRecurring: dto.isRecurring ?? false,
       recurRule: dto.recurRule ?? null,
     };
@@ -222,6 +223,7 @@ export class MealPlansService {
         ...(dto.menuName !== undefined && { menuName: dto.menuName }),
         ...(dto.memo !== undefined && { memo: dto.memo }),
         ...(dto.recipeUrl !== undefined && { recipeUrl: dto.recipeUrl }),
+        ...(dto.photoUrl !== undefined && { photoUrl: dto.photoUrl }),
         ...(dto.isRecurring !== undefined && { isRecurring: dto.isRecurring }),
         ...(dto.recurRule !== undefined && { recurRule: dto.recurRule }),
       },
@@ -296,6 +298,7 @@ export class MealPlansService {
     menuName: string;
     memo: string | null;
     recipeUrl: string | null;
+    photoUrl?: string | null;
     isRecurring: boolean;
     recurRule: string | null;
     createdAt: Date;
@@ -306,11 +309,12 @@ export class MealPlansService {
       id: mealPlan.id,
       groupId: mealPlan.groupId,
       createdBy: mealPlan.createdBy,
-      date: mealPlan.date.toISOString().split('T')[0], // YYYY-MM-DD 형식으로 반환
+      date: mealPlan.date.toISOString().split('T')[0],
       mealType: mealPlan.mealType,
       menuName: mealPlan.menuName,
       memo: mealPlan.memo,
       recipeUrl: mealPlan.recipeUrl,
+      photoUrl: mealPlan.photoUrl ?? null,
       isRecurring: mealPlan.isRecurring,
       recurRule: mealPlan.recurRule,
       createdAt: mealPlan.createdAt.toISOString(),

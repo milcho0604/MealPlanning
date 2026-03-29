@@ -51,6 +51,11 @@ export class CreateMealPlanDto {
   @IsUrl({}, { message: '올바른 URL 형식을 입력해주세요.' })
   recipeUrl?: string;
 
+  @ApiPropertyOptional({ description: '식단 사진 URL' })
+  @IsOptional()
+  @IsUrl({}, { message: '올바른 URL 형식을 입력해주세요.' })
+  photoUrl?: string;
+
   @ApiPropertyOptional({ example: false, description: '반복 여부' })
   @IsOptional()
   @IsBoolean()
