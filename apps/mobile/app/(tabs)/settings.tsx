@@ -138,12 +138,10 @@ export default function SettingsScreen() {
 
   /** 초대 코드 클립보드 복사 */
   const copyInviteCode = (inviteCode: string) => {
-    import('expo-clipboard').then(({ setStringAsync }) => {
-      setStringAsync(inviteCode);
-      Alert.alert('복사 완료', `초대 코드 ${inviteCode}가 클립보드에 복사되었습니다.`);
-    }).catch(() => {
-      Alert.alert('초대 코드', inviteCode);
-    });
+    Alert.alert('초대 코드', inviteCode, [
+      { text: '확인' },
+      { text: '공유', onPress: () => shareInviteCode('', inviteCode) },
+    ]);
   };
 
   return (
