@@ -152,13 +152,34 @@ export default function SettingsScreen() {
         {/* ── 1. 프로필 ── */}
         <Text style={styles.sectionLabel}>프로필</Text>
         <View style={styles.card}>
-          <View style={styles.profileAvatar}>
+          <TouchableOpacity
+            style={styles.profileAvatar}
+            onPress={() => {
+              Alert.alert('프로필 사진', '프로필 사진 기능은 추후 업데이트에서 지원됩니다.');
+            }}
+          >
             <Text style={styles.profileAvatarText}>
               {user?.name?.[0]?.toUpperCase() ?? '?'}
             </Text>
-          </View>
+          </TouchableOpacity>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>{user?.name}</Text>
+            <TouchableOpacity
+              onPress={() => {
+                if (typeof Alert.prompt === 'function') {
+                  Alert.prompt('이름 변경', '새 이름을 입력하세요', async (newName) => {
+                    if (!newName?.trim()) return;
+                    try {
+                      const updated = await authService.updateProfile({ name: newName.trim() });
+                      useAuthStore.setState({ user: updated });
+                    } catch { Alert.alert('오류', '이름 변경에 실패했습니다.'); }
+                  }, 'plain-text', user?.name);
+                } else {
+                  Alert.alert('이름 변경', '설정에서 프로필을 수정할 수 있습니다.');
+                }
+              }}
+            >
+              <Text style={styles.profileName}>{user?.name} <Ionicons name="pencil" size={13} color={colors.textSecondary} /></Text>
+            </TouchableOpacity>
             <Text style={styles.profileEmail}>{user?.email}</Text>
           </View>
         </View>

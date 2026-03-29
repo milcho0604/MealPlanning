@@ -488,6 +488,21 @@ export class AuthService {
     // stateless JWT 방식이므로 서버에서 별도 처리 없음
   }
 
+  /** 프로필 수정 (이름, 프로필 사진 URL) */
+  async updateProfile(
+    userId: string,
+    update: { name?: string; avatarUrl?: string | null },
+  ): Promise<User> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(update.name !== undefined && { name: update.name }),
+        ...(update.avatarUrl !== undefined && { avatarUrl: update.avatarUrl }),
+      },
+    });
+    return this.toUserResponse(user);
+  }
+
   /**
    * 비밀번호 변경 (로그인 상태)
    * 현재 비밀번호 확인 후 새 비밀번호로 변경

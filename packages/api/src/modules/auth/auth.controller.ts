@@ -158,6 +158,18 @@ export class AuthController {
     return this.authService.getMe(user.id);
   }
 
+  /** 프로필 수정 (이름, 프로필 사진) */
+  @Patch('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: '프로필 수정' })
+  updateProfile(
+    @CurrentUser() user: RequestUser,
+    @Body() body: { name?: string; avatarUrl?: string | null },
+  ) {
+    return this.authService.updateProfile(user.id, body);
+  }
+
   /**
    * 푸시 토큰 등록 (인증 필요)
    * 앱 실행 시 Expo 푸시 토큰을 서버에 저장하여 알림 수신을 활성화합니다.

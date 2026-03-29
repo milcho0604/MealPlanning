@@ -60,6 +60,12 @@ export const authService = {
     return data.data;
   },
 
+  /** 프로필 수정 */
+  updateProfile: async (body: { name?: string; avatarUrl?: string | null }): Promise<User> => {
+    const { data } = await apiClient.patch<{ success: true; data: User }>('/auth/profile', body);
+    return data.data;
+  },
+
   /** 비밀번호 변경 (로그인 상태) */
   changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
     await apiClient.post('/auth/change-password', { currentPassword, newPassword });
