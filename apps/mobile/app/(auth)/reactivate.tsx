@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../src/services/api.client';
@@ -40,7 +40,7 @@ export default function ReactivateScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.iconWrapper}>
         <Ionicons name="refresh-circle" size={64} color={colors.warning} />
       </View>
@@ -73,7 +73,7 @@ export default function ReactivateScreen() {
       <TouchableOpacity style={styles.cancelBtn} onPress={() => router.replace('/(auth)/sign-in')}>
         <Text style={styles.cancelBtnText}>로그인 화면으로</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

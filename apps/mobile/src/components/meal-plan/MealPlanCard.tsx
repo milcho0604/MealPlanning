@@ -61,7 +61,7 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
       </View>
 
       {/* 메뉴 이름 */}
-      <Text style={styles.menuName}>{mealPlan.menuName}</Text>
+      <Text style={styles.menuName} numberOfLines={2}>{mealPlan.menuName}</Text>
 
       {/* 메모 (있는 경우만 표시) */}
       {mealPlan.memo && (
@@ -127,9 +127,9 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   deleteBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#FFEBEE',
     justifyContent: 'center',
     alignItems: 'center',

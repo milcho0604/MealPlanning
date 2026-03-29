@@ -13,7 +13,9 @@
 import { useState } from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
   Share,
@@ -207,7 +209,7 @@ export default function SettingsScreen() {
                   {/* 현재 그룹 인디케이터 */}
                   <View style={[styles.groupDot, isActive && styles.groupDotActive]} />
                   <View>
-                    <Text style={[styles.groupName, isActive && styles.groupNameActive]}>
+                    <Text style={[styles.groupName, isActive && styles.groupNameActive]} numberOfLines={1}>
                       {group.name}
                     </Text>
                     <Text style={styles.groupMeta}>
@@ -339,7 +341,7 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setModalType(null)}
       >
-        <View style={styles.overlay}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>새 그룹 만들기</Text>
             <TextInput
@@ -369,7 +371,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── 초대 코드 참여 모달 ── */}
@@ -379,7 +381,7 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setModalType(null)}
       >
-        <View style={styles.overlay}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>초대 코드로 참여</Text>
             <TextInput
@@ -410,7 +412,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── 비밀번호 변경 모달 ── */}
@@ -420,7 +422,7 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setModalType(null)}
       >
-        <View style={styles.overlay}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>비밀번호 변경</Text>
             <TextInput
@@ -463,7 +465,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
       {/* ── 멤버 관리 모달 ── */}
       <Modal
@@ -487,7 +489,7 @@ export default function SettingsScreen() {
                     <Text style={styles.memberAvatarText}>{m.user?.name?.[0]?.toUpperCase() ?? '?'}</Text>
                   </View>
                   <View>
-                    <Text style={styles.memberName}>{m.user?.name ?? '알 수 없음'}</Text>
+                    <Text style={styles.memberName} numberOfLines={1}>{m.user?.name ?? '알 수 없음'}</Text>
                     <Text style={styles.memberRole}>
                       {(MEMBER_ROLE_LABELS as any)[m.role] ?? m.role}
                     </Text>

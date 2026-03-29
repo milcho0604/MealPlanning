@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../src/services/auth.service';
@@ -32,7 +32,7 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.iconWrapper}>
         <Ionicons name="mail" size={64} color={colors.primary} />
       </View>
@@ -60,7 +60,7 @@ export default function VerifyEmailScreen() {
       <TouchableOpacity style={styles.loginBtn} onPress={() => router.replace('/(auth)/sign-in')}>
         <Text style={styles.loginBtnText}>로그인 화면으로</Text>
       </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 }
 

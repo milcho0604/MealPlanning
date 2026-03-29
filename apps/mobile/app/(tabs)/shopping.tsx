@@ -172,7 +172,7 @@ export default function ShoppingScreen() {
 
       {/* 항목명 + 수량 */}
       <View style={styles.itemContent}>
-        <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]}>
+        <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]} numberOfLines={1}>
           {item.name}
         </Text>
         {item.quantity != null && (
@@ -354,8 +354,8 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 28,
+    height: 28,
     borderRadius: 11,
     borderWidth: 2,
     borderColor: colors.border,
