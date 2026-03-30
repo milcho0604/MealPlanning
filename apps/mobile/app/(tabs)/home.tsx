@@ -100,6 +100,12 @@ export default function HomeScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
 
+  // ── 검색 ──────────────────────────────────────────────
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<MealPlanWithUser[]>([]);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
   // 그룹이 없으면 안내 화면 표시 (훅 호출 이후에 체크)
   if (!currentGroupId) return <NoGroupView />;
 
@@ -128,12 +134,6 @@ export default function HomeScreen() {
     setIsModalVisible(false);
     setEditingMealPlan(null);
   };
-
-  // ── 검색 ──────────────────────────────────────────────
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<MealPlanWithUser[]>([]);
-  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
