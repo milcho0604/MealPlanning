@@ -96,14 +96,14 @@ export function IngredientCard({ ingredient, onEdit, onConsume, onDelete }: Ingr
 
         {/* 액션 버튼들 */}
         <View style={styles.actions}>
-          <TouchableOpacity onPress={() => onEdit(ingredient)} style={styles.editBtn}>
-            <Ionicons name="create" size={13} color={colors.primary} />
+          <TouchableOpacity onPress={() => onEdit(ingredient)} style={styles.editBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="create-outline" size={16} color={colors.primary} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleConsume} style={styles.consumeBtn}>
-            <Ionicons name="checkmark" size={13} color="#fff" />
+          <TouchableOpacity onPress={handleConsume} style={styles.consumeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="checkmark" size={16} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
-            <Ionicons name="trash" size={13} color={colors.error} />
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="trash-outline" size={16} color={colors.error} />
           </TouchableOpacity>
         </View>
       </View>
