@@ -26,16 +26,11 @@ interface MealPlanCardProps {
 }
 
 export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) {
-  const handleMore = () => {
-    Alert.alert(
-      mealPlan.menuName,
-      undefined,
-      [
-        { text: '수정', onPress: () => onEdit(mealPlan) },
-        { text: '삭제', style: 'destructive', onPress: () => onDelete(mealPlan.id) },
-        { text: '취소', style: 'cancel' },
-      ],
-    );
+  const handleDelete = () => {
+    Alert.alert('식단 삭제', `"${mealPlan.menuName}"을(를) 삭제할까요?`, [
+      { text: '취소', style: 'cancel' },
+      { text: '삭제', style: 'destructive', onPress: () => onDelete(mealPlan.id) },
+    ]);
   };
 
   return (
@@ -56,9 +51,14 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
           </View>
         </View>
 
-        <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="create-outline" size={18} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="create-outline" size={16} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="trash-outline" size={16} color={colors.error} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* 메뉴 이름 */}
@@ -114,6 +114,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
+  actions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   editBtn: {
     width: 36,
     height: 36,
@@ -121,6 +125,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.primaryLight,
+  },
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.errorLight,
   },
   menuName: {
     fontSize: 17,
