@@ -133,15 +133,24 @@ export class AuthService {
       },
     });
 
-    if (!user)
-      throw new NotFoundException('유효하지 않거나 만료된 인증 링크입니다.');
+    if (!user) {
+      // 만료/잘못된 토큰 → 에러 HTML 반환 (JSON 에러 대신)
+      return `
+        <html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#f5f5f5;">
+          <div style="max-width:400px;margin:0 auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e0e0e0;">
+            <h2 style="color:#F44336;">❌ 인증 링크 만료</h2>
+            <p style="color:#555;">인증 링크가 만료되었거나 이미 사용된 링크입니다.</p>
+            <p style="color:#999;font-size:13px;">앱에서 인증 메일 재발송을 요청해주세요.</p>
+          </div>
+        </body></html>
+      `;
+    }
 
     await this.prisma.user.update({
       where: { id: user.id },
       data: { isVerified: true, verifyToken: null, verifyTokenExpiry: null },
     });
 
-    // 인증 완료 후 브라우저에 보여줄 HTML
     return `
       <html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#f5f5f5;">
         <div style="max-width:400px;margin:0 auto;background:#fff;padding:40px;border-radius:12px;border:1px solid #e0e0e0;">
