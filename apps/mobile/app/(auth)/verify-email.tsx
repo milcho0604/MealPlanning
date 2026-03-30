@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   resendBtn: {
     width: '100%',
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: colors.primary,
     alignItems: 'center',

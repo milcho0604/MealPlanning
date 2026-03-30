@@ -331,8 +331,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
     color: colors.text,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
   },
   chip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: colors.surface,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   },
   chipActive: {
     borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
   },
   chipText: {
     fontSize: 13,
@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
   },
   unitBtnActive: {
     borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
   },
   unitBtnText: {
     fontSize: 14,
@@ -400,8 +400,8 @@ const styles = StyleSheet.create({
   calendarBtn: {
     width: 44,
     height: 44,
-    borderRadius: 10,
-    backgroundColor: '#E8F5E9',
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
   },
   dateChipActive: {
     borderColor: colors.primary,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
   },
   dateChipText: {
     fontSize: 12,

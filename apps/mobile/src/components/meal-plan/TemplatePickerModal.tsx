@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
   },
   badgeText: { fontSize: 11, fontWeight: '700', color: colors.primary },

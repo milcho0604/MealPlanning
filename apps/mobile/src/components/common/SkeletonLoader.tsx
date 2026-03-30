@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   box: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: colors.border,
     borderRadius: 6,
   },
 });

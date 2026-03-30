@@ -78,7 +78,7 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -97,10 +97,10 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   // 식사 유형별 색상
-  breakfast: { backgroundColor: '#FFF3E0' },
-  lunch:     { backgroundColor: '#E8F5E9' },
-  dinner:    { backgroundColor: '#E3F2FD' },
-  snack:     { backgroundColor: '#F3E5F5' },
+  breakfast: { backgroundColor: colors.warningLight },
+  lunch:     { backgroundColor: colors.primaryLight },
+  dinner:    { backgroundColor: colors.infoLight },
+  snack:     { backgroundColor: colors.purpleLight },
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
     borderWidth: 1,
     borderColor: colors.primary,
   },
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: colors.errorLight,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,

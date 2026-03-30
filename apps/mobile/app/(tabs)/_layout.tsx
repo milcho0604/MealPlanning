@@ -38,7 +38,7 @@ export default function TabsLayout() {
         tabBarStyle: {
           borderTopWidth: 1,
           borderTopColor: colors.border,
-          backgroundColor: '#fff',
+          backgroundColor: colors.surface,
         },
         headerShown: false,
       }}

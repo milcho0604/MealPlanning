@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
   },
   inviteBtnText: {
     fontSize: 13,
@@ -772,8 +772,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 15,
     color: colors.text,
@@ -792,7 +792,7 @@ const styles = StyleSheet.create({
   dialogCancelBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center',
@@ -805,7 +805,7 @@ const styles = StyleSheet.create({
   dialogConfirmBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: colors.primary,
     alignItems: 'center',
   },
@@ -856,13 +856,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#E3F2FD',
+    backgroundColor: colors.infoLight,
   },
   roleBtnText: { fontSize: 12, fontWeight: '600', color: '#1976D2' },
   kickBtn: {
     paddingHorizontal: 8,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: colors.errorLight,
   },
 });

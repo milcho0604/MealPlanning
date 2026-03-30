@@ -130,7 +130,7 @@ export function IngredientCard({ ingredient, onEdit, onConsume, onDelete }: Ingr
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 8,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: colors.errorLight,
     justifyContent: 'center',
     alignItems: 'center',
   },

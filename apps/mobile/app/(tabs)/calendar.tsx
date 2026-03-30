@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
     marginTop: 3,
   },
   dotSelected: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   // ── 하단 식단 패널 ────────────────────────────────────────
   panel: {
