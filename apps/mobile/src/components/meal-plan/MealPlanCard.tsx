@@ -40,7 +40,7 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
 
   return (
     <View style={styles.card}>
-      {/* 상단: 뱃지 + 더보기 */}
+      {/* 상단: 뱃지 + 수정 */}
       <View style={styles.header}>
         <View style={styles.badgeRow}>
           <View style={[styles.badge, styles[mealPlan.mealType]]}>
@@ -56,8 +56,8 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
           </View>
         </View>
 
-        <TouchableOpacity onPress={handleMore} style={styles.moreBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="ellipsis-horizontal" size={18} color={colors.textSecondary} />
+        <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Ionicons name="create-outline" size={18} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -114,12 +114,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
   },
-  moreBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  editBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.primaryLight,
   },
   menuName: {
     fontSize: 17,
