@@ -48,12 +48,9 @@ async function bootstrap() {
   );
 
   // ── CORS 설정 ─────────────────────────────────────────────────────────────
-  // 개발 환경에서는 모든 origin 허용 (프로덕션에서는 제한 필요)
+  // 모바일 앱 + 웹 개발 환경 모두 허용
   app.enableCors({
-    origin:
-      process.env.NODE_ENV === 'production'
-        ? ['https://mealplan.app'] // 프로덕션 도메인
-        : true, // 개발 환경에서는 전체 허용
+    origin: true,
     credentials: true,
   });
 
