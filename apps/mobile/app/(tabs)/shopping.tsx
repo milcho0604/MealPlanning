@@ -240,22 +240,25 @@ export default function ShoppingScreen() {
           />
         ) : (
           <FlatList
-            data={[...uncheckedItems, ...checkedItems]}
+            data={[
+              ...uncheckedItems,
+              ...(checkedItems.length > 0 ? [{ id: '__section_header__', isSection: true } as any] : []),
+              ...checkedItems,
+            ]}
             keyExtractor={(item) => item.id}
-            renderItem={renderItem}
+            renderItem={({ item }) => {
+              if (item.isSection) {
+                return (
+                  <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionHeaderText}>완료됨 ({checkedItems.length})</Text>
+                  </View>
+                );
+              }
+              return renderItem({ item });
+            }}
             contentContainerStyle={styles.listContent}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
-            /** 완료 항목 구분선 */
             ItemSeparatorComponent={() => <View style={styles.separator} />}
-            ListFooterComponent={
-              checkedItems.length > 0 && uncheckedItems.length > 0 ? (
-                // 미완료 / 완료 섹션 사이의 구분 텍스트
-                // FlatList는 단순 배열이므로 인덱스로 위치 파악이 어렵기 때문에
-                // 완료 항목이 있을 때 헤더 텍스트를 Footer로 대신 표시하지 않고
-                // 완료 섹션 위에 레이블을 렌더링하는 방식으로 처리
-                null
-              ) : null
-            }
           />
         )}
 
@@ -342,6 +345,16 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: colors.border,
     marginLeft: 48,
+  },
+  sectionHeader: {
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    marginTop: 8,
+  },
+  sectionHeaderText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   // ── 항목 행 ─────────────────────────────────────────────
   item: {
