@@ -1,22 +1,28 @@
 /**
  * 빈 상태 컴포넌트 (Empty State)
  *
- * 데이터가 없을 때 안내 메시지와 함께 표시합니다.
+ * 데이터가 없을 때 아이콘 + 안내 메시지와 함께 표시합니다.
  */
 
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors';
 
 interface EmptyStateProps {
   message: string;
+  /** Ionicons 아이콘 이름 (기본: clipboard-outline) */
+  icon?: keyof typeof Ionicons.glyphMap;
   /** 액션 버튼 텍스트 (없으면 버튼 미표시) */
   actionLabel?: string;
   onAction?: () => void;
 }
 
-export function EmptyState({ message, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ message, icon = 'clipboard-outline', actionLabel, onAction }: EmptyStateProps) {
   return (
     <View style={styles.container}>
+      <View style={styles.iconWrapper}>
+        <Ionicons name={icon} size={48} color={colors.border} />
+      </View>
       <Text style={styles.message}>{message}</Text>
       {actionLabel && onAction && (
         <TouchableOpacity style={styles.button} onPress={onAction}>
@@ -33,6 +39,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 32,
+    paddingVertical: 40,
+  },
+  iconWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   message: {
     fontSize: 15,

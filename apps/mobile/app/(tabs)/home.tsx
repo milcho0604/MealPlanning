@@ -252,6 +252,7 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
           <EmptyState
+            icon="restaurant-outline"
             message={`${formatDateHeader(selectedDateObj)}에\n등록된 식단이 없습니다.\n+ 버튼을 눌러 추가해보세요!`}
           />
         }

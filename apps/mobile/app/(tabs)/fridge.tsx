@@ -164,6 +164,7 @@ export default function FridgeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
         ListEmptyComponent={
           <EmptyState
+            icon="nutrition-outline"
             message={
               activeTab === 'all'
                 ? '냉장고가 비어있습니다.\n+ 버튼을 눌러 재료를 추가해보세요!'

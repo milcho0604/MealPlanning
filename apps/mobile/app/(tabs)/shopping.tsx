@@ -235,6 +235,7 @@ export default function ShoppingScreen() {
         {/* 항목 목록 */}
         {allItems.length === 0 ? (
           <EmptyState
+            icon="cart-outline"
             message={'쇼핑 목록이 비어있습니다.\n아래 입력창에서 항목을 추가해보세요!'}
           />
         ) : (
