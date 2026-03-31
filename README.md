@@ -8,6 +8,97 @@
 
 ---
 
+## 🏗 시스템 아키텍처
+
+```mermaid
+graph TB
+    subgraph Client["📱 Client (Mobile App)"]
+        EXPO["Expo SDK 55 + React Native"]
+        ROUTER["Expo Router (File-based)"]
+        AUTH_SCREEN["Auth Screens"]
+        TAB_SCREEN["Tab Screens"]
+        ZUSTAND["Zustand Store"]
+        RQ["React Query v5"]
+        AXIOS["Axios HTTP Client (JWT)"]
+        GOOGLE_SDK["Google SDK"]
+        KAKAO_SDK["Kakao SDK"]
+        SECURE["SecureStore (Token)"]
+
+        EXPO --> ROUTER
+        ROUTER --> AUTH_SCREEN
+        ROUTER --> TAB_SCREEN
+        TAB_SCREEN --> ZUSTAND
+        TAB_SCREEN --> RQ
+        ZUSTAND --> AXIOS
+        RQ --> AXIOS
+        AUTH_SCREEN --> GOOGLE_SDK
+        AUTH_SCREEN --> KAKAO_SDK
+        AXIOS --> SECURE
+    end
+
+    subgraph Server["⚙️ Backend (Render.com)"]
+        NEST["NestJS v11 (TypeScript)"]
+        JWT["JWT Guard"]
+        MOD_AUTH["Auth Module"]
+        MOD_MEAL["MealPlan Module"]
+        MOD_GROUP["Group Module"]
+        MOD_INGR["Ingredient Module"]
+        MOD_SHOP["Shopping Module"]
+        MOD_NOTIF["Notification Module"]
+        MOD_MAIL["Mail Module"]
+        PRISMA["Prisma ORM v5"]
+        CRON["Cron (7:30/9:00 KST)"]
+
+        NEST --> JWT
+        JWT --> MOD_AUTH
+        JWT --> MOD_MEAL
+        JWT --> MOD_GROUP
+        JWT --> MOD_INGR
+        JWT --> MOD_SHOP
+        NEST --> MOD_NOTIF
+        NEST --> MOD_MAIL
+        MOD_AUTH --> PRISMA
+        MOD_MEAL --> PRISMA
+        MOD_GROUP --> PRISMA
+        MOD_INGR --> PRISMA
+        MOD_SHOP --> PRISMA
+        CRON --> MOD_NOTIF
+    end
+
+    subgraph Data["🗄 Data & Services"]
+        SUPABASE[("Supabase PostgreSQL")]
+        SENDGRID["SendGrid (Email)"]
+        EXPO_PUSH["Expo Push Service"]
+        GOOGLE_OAUTH["Google OAuth"]
+        KAKAO_API["Kakao API"]
+    end
+
+    subgraph Infra["🔧 Infrastructure"]
+        TURBO["Turborepo (Monorepo)"]
+        SHARED["@mealplan/shared"]
+        GITHUB["GitHub"]
+        EAS["EAS Build"]
+    end
+
+    AXIOS -- "REST API" --> NEST
+    PRISMA --> SUPABASE
+    MOD_MAIL -- "HTTP API" --> SENDGRID
+    MOD_NOTIF --> EXPO_PUSH
+    MOD_AUTH --> GOOGLE_OAUTH
+    MOD_AUTH --> KAKAO_API
+    SHARED -.-> Client
+    SHARED -.-> Server
+    TURBO --> GITHUB
+    GITHUB --> EAS
+
+    style Client fill:#dbe4ff,stroke:#4a9eed
+    style Server fill:#e5dbff,stroke:#8b5cf6
+    style Data fill:#d3f9d8,stroke:#22c55e
+    style Infra fill:#fff3bf,stroke:#f59e0b
+```
+
+---
+
 ## ✨ 주요 기능
 
 ### 🍽 식단 관리
