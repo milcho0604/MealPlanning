@@ -177,7 +177,7 @@ export function MealPlanFormModal({
       if (!templateName?.trim()) return;
       try {
         await saveTemplate({
-          groupId: currentGroupId!,
+          groupId: currentGroupId ?? '',
           name: templateName.trim(),
           mealType,
           menuName: menuName.trim(),

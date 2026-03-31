@@ -13,7 +13,7 @@ export function useShopping() {
 
   return useQuery({
     queryKey: ['shopping', currentGroupId],
-    queryFn: () => shoppingService.getList(currentGroupId!),
+    queryFn: () => shoppingService.getList(currentGroupId ?? ''),
     enabled: !!currentGroupId,
   });
 }

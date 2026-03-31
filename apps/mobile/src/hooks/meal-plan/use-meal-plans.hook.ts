@@ -28,7 +28,7 @@ export function useMealPlans(year: number, month: number) {
     // queryKey: 그룹/연월이 바뀌면 자동으로 새 데이터 요청
     queryKey: ['meal-plans', currentGroupId, year, month],
     queryFn: () =>
-      mealPlanService.getList({ groupId: currentGroupId!, from, to }),
+      mealPlanService.getList({ groupId: currentGroupId ?? '', from, to }),
     // 그룹이 선택된 경우에만 쿼리 실행
     enabled: !!currentGroupId,
   });

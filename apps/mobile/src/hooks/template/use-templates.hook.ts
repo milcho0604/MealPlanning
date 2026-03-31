@@ -13,7 +13,7 @@ export function useTemplates() {
 
   return useQuery({
     queryKey: ['templates', currentGroupId],
-    queryFn: () => templateService.getList(currentGroupId!),
+    queryFn: () => templateService.getList(currentGroupId ?? ''),
     enabled: !!currentGroupId,
   });
 }

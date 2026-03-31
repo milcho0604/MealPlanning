@@ -506,7 +506,7 @@ export default function SettingsScreen() {
                           { text: '취소', style: 'cancel' },
                           { text: '변경', onPress: async () => {
                             try {
-                              await groupService.changeRole(selectedGroupId!, m.userId, nextRole);
+                              await groupService.changeRole(selectedGroupId ?? '', m.userId, nextRole);
                               setMembers(prev => prev.map(x => x.userId === m.userId ? { ...x, role: nextRole } : x));
                             } catch { Alert.alert('오류', '역할 변경에 실패했습니다.'); }
                           }},
@@ -522,7 +522,7 @@ export default function SettingsScreen() {
                           { text: '취소', style: 'cancel' },
                           { text: '내보내기', style: 'destructive', onPress: async () => {
                             try {
-                              await groupService.removeMember(selectedGroupId!, m.userId);
+                              await groupService.removeMember(selectedGroupId ?? '', m.userId);
                               setMembers(prev => prev.filter(x => x.userId !== m.userId));
                               loadGroups();
                             } catch { Alert.alert('오류', '멤버 내보내기에 실패했습니다.'); }

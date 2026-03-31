@@ -18,7 +18,7 @@ export function useIngredients(expiringOnly = false) {
     // queryKey: 그룹 및 expiringOnly 파라미터가 바뀌면 자동으로 새 데이터 요청
     queryKey: ['ingredients', currentGroupId, expiringOnly],
     queryFn: () =>
-      ingredientService.getList({ groupId: currentGroupId!, expiringOnly }),
+      ingredientService.getList({ groupId: currentGroupId ?? '', expiringOnly }),
     enabled: !!currentGroupId,
   });
 }

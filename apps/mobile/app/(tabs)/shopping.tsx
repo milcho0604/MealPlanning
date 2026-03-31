@@ -76,7 +76,7 @@ export default function ShoppingScreen() {
           onPress: async () => {
             try {
               const result = await generateShoppingItems({
-                groupId: currentGroupId!,
+                groupId: currentGroupId ?? '',
                 weekStartDate: getWeekStartDate(),
               });
               if (result.created === 0) {

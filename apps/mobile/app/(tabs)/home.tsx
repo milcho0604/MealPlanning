@@ -141,7 +141,8 @@ export default function HomeScreen() {
     if (!text.trim()) { setSearchResults([]); return; }
     searchTimeout.current = setTimeout(async () => {
       try {
-        const results = await mealPlanService.search(currentGroupId!, text.trim());
+        if (!currentGroupId) return;
+        const results = await mealPlanService.search(currentGroupId, text.trim());
         setSearchResults(results);
       } catch { setSearchResults([]); }
     }, 300);

@@ -57,7 +57,10 @@ apiClient.interceptors.response.use(
             const rt = await SecureStore.getItem(STORAGE_KEYS.REFRESH_TOKEN);
             if (!rt) throw new Error('리프레시 토큰 없음');
             const { data: resp } = await axios.post(`${BASE_URL}/v1/auth/refresh`, { refreshToken: rt });
-            const tokens = resp.data;
+            const tokens = resp?.data;
+            if (!tokens?.accessToken || !tokens?.refreshToken) {
+              throw new Error('토큰 갱신 응답 형식 오류');
+            }
             await SecureStore.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
             await SecureStore.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
             return tokens;

@@ -99,10 +99,10 @@ export default function CalendarScreen() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) =>
-        Math.abs(gestureState.dx) > 30 && Math.abs(gestureState.dy) < 30,
+        Math.abs(gestureState.dx) > 50 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 2,
       onPanResponderRelease: (_, gestureState) => {
-        if (gestureState.dx < -50) goNextMonth();
-        else if (gestureState.dx > 50) goPrevMonth();
+        if (gestureState.dx < -80) goNextMonth();
+        else if (gestureState.dx > 80) goPrevMonth();
       },
     }),
   ).current;
