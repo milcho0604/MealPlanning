@@ -150,7 +150,7 @@ export default function ShoppingScreen() {
       {
         text: '삭제',
         style: 'destructive',
-        onPress: () => clearCheckedItems(currentGroupId),
+        onPress: () => clearCheckedItems(currentGroupId ?? ''),
       },
     ]);
   };
