@@ -174,7 +174,10 @@ export class AuthService {
       data: { verifyToken, verifyTokenExpiry },
     });
 
-    await this.mailService.sendVerificationEmail(email, user.name, verifyToken);
+    // 메일 발송 (백그라운드 - signUp/forgotPassword와 동일 패턴)
+    this.mailService.sendVerificationEmail(email, user.name, verifyToken).catch(() => {
+      this.logger.error(`인증 메일 재발송 실패: ${email}`);
+    });
   }
 
   /**
