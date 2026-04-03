@@ -5,7 +5,7 @@
  * 홈 화면과 캘린더 화면에서 공통으로 사용합니다.
  */
 
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
@@ -60,6 +60,11 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* 식단 사진 */}
+      {mealPlan.photoUrl && (
+        <Image source={{ uri: mealPlan.photoUrl }} style={styles.photo} />
+      )}
 
       {/* 메뉴 이름 */}
       <Text style={styles.menuName} numberOfLines={2}>{mealPlan.menuName}</Text>
@@ -133,6 +138,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: colors.errorLight,
+  },
+  photo: {
+    width: '100%',
+    height: 160,
+    borderRadius: 8,
+    marginBottom: 10,
   },
   menuName: {
     fontSize: 17,

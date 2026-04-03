@@ -26,6 +26,7 @@ import { IngredientsModule } from './modules/ingredients/ingredients.module';
 import { ShoppingModule } from './modules/shopping/shopping.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { MealTemplatesModule } from './modules/meal-templates/meal-templates.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   controllers: [AppController],
@@ -50,6 +51,7 @@ import { MealTemplatesModule } from './modules/meal-templates/meal-templates.mod
     ShoppingModule,
     NotificationsModule,
     MealTemplatesModule,
+    UploadModule,
   ],
 })
 export class AppModule {}

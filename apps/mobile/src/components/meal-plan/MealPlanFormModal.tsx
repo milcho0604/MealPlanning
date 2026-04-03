@@ -16,7 +16,9 @@
 
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -35,6 +37,7 @@ import type { MealPlanWithUser } from '../../services/meal-plan.service';
 import { useMealPlanMutation } from '../../hooks/meal-plan/use-meal-plan-mutation.hook';
 import { useTemplateMutation } from '../../hooks/template/use-template-mutation.hook';
 import { useGroupStore } from '../../stores/group.store';
+import { useImageUpload } from '../../hooks/use-image-upload.hook';
 import { TemplatePickerModal } from './TemplatePickerModal';
 import { colors } from '../../constants/colors';
 
@@ -84,6 +87,16 @@ export function MealPlanFormModal({
   const { currentGroupId } = useGroupStore();
   const { createMealPlan, updateMealPlan, isCreating, isUpdating } = useMealPlanMutation();
   const { saveTemplate, isSaving } = useTemplateMutation();
+  const {
+    imageUri,
+    imageUrl,
+    uploading,
+    error: imageError,
+    pickImage,
+    takePhoto,
+    clearImage,
+    setExistingUrl,
+  } = useImageUpload({ folder: 'meal-photos' });
 
   const [mealType, setMealType] = useState<MealType>(initialMealType);
   const [menuName, setMenuName] = useState('');
@@ -105,6 +118,7 @@ export function MealPlanFormModal({
         setRecipeUrl(mealPlan.recipeUrl ?? '');
         setIsRecurring(mealPlan.isRecurring);
         setRecurRule((mealPlan.recurRule as RecurRule) ?? 'weekly');
+        setExistingUrl(mealPlan.photoUrl ?? null);
       } else {
         setMealType(initialMealType);
         setMenuName('');
@@ -113,6 +127,7 @@ export function MealPlanFormModal({
         setIsRecurring(false);
         setRecurRule('weekly');
         setCustomDates([]);
+        clearImage();
       }
     }
   }, [visible, mealPlan, initialMealType]);
@@ -128,6 +143,9 @@ export function MealPlanFormModal({
     }
 
     try {
+      // photoUrl: 새로 업로드한 URL, 삭제한 경우 null, 변경 없으면 기존값 유지
+      const photoUrl = imageUrl ?? undefined;
+
       if (mealPlan) {
         await updateMealPlan({
           id: mealPlan.id,
@@ -135,6 +153,7 @@ export function MealPlanFormModal({
             menuName: menuName.trim(),
             memo: memo.trim() || undefined,
             recipeUrl: recipeUrl.trim() || undefined,
+            photoUrl: imageUri === null && mealPlan.photoUrl ? null : photoUrl,
             isRecurring,
             recurRule: isRecurring ? recurRule : undefined,
           },
@@ -147,6 +166,7 @@ export function MealPlanFormModal({
           menuName: menuName.trim(),
           memo: memo.trim() || undefined,
           recipeUrl: recipeUrl.trim() || undefined,
+          photoUrl,
           isRecurring,
           recurRule: isRecurring ? recurRule : undefined,
           dates: isRecurring && recurRule === 'custom' && customDates.length > 0 ? customDates : undefined,
@@ -199,7 +219,7 @@ export function MealPlanFormModal({
     }
   };
 
-  const isLoading = isCreating || isUpdating;
+  const isLoading = isCreating || isUpdating || uploading;
   const isEditMode = !!mealPlan;
 
   return (
@@ -308,6 +328,45 @@ export function MealPlanFormModal({
             autoCapitalize="none"
             maxLength={500}
           />
+
+          {/* 식단 사진 */}
+          <Text style={styles.label}>식단 사진 (선택)</Text>
+          {imageUri ? (
+            <View style={styles.photoPreviewContainer}>
+              <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+              {uploading && (
+                <View style={styles.photoUploadingOverlay}>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <Text style={styles.photoUploadingText}>업로드 중...</Text>
+                </View>
+              )}
+              <TouchableOpacity style={styles.photoRemoveBtn} onPress={clearImage}>
+                <Ionicons name="close-circle" size={26} color={colors.error} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.photoButtonRow}>
+              <TouchableOpacity
+                style={styles.photoBtn}
+                onPress={pickImage}
+                disabled={uploading}
+              >
+                <Ionicons name="image-outline" size={22} color={colors.primary} />
+                <Text style={styles.photoBtnText}>갤러리</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.photoBtn}
+                onPress={takePhoto}
+                disabled={uploading}
+              >
+                <Ionicons name="camera-outline" size={22} color={colors.primary} />
+                <Text style={styles.photoBtnText}>카메라</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {imageError && (
+            <Text style={styles.photoErrorText}>{imageError}</Text>
+          )}
 
           {/* 반복 설정 */}
           <View style={styles.recurRow}>
@@ -536,6 +595,70 @@ const styles = StyleSheet.create({
   dateChipTextSelected: {
     color: colors.primary,
     fontWeight: '600',
+  },
+  // ── 식단 사진 ─────────────────────────────────────────────
+  photoPreviewContainer: {
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  photoPreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 12,
+  },
+  photoUploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  photoUploadingText: {
+    color: '#fff',
+    fontSize: 13,
+    marginTop: 6,
+    fontWeight: '600',
+  },
+  photoRemoveBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#fff',
+    borderRadius: 13,
+  },
+  photoButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  photoBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  photoBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  photoErrorText: {
+    fontSize: 12,
+    color: colors.error,
+    marginTop: 6,
   },
   // ── 템플릿 버튼 ───────────────────────────────────────────
   templateRow: {

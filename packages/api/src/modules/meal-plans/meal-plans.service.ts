@@ -15,13 +15,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UploadService } from '../upload/upload.service';
 import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
 import { UpdateMealPlanDto } from './dto/update-meal-plan.dto';
 import { GetMealPlansDto } from './dto/get-meal-plans.dto';
 
 @Injectable()
 export class MealPlansService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly uploadService: UploadService,
+  ) {}
 
   /**
    * 기간별 식단 목록 조회
@@ -217,6 +221,11 @@ export class MealPlansService {
 
     await this.validateGroupEditor(userId, mealPlan.groupId);
 
+    // 사진이 교체되는 경우 기존 S3 파일 삭제
+    if (dto.photoUrl !== undefined && mealPlan.photoUrl && dto.photoUrl !== mealPlan.photoUrl) {
+      await this.uploadService.deleteFile(mealPlan.photoUrl);
+    }
+
     const updated = await this.prisma.mealPlan.update({
       where: { id },
       data: {
@@ -248,6 +257,11 @@ export class MealPlansService {
     }
 
     await this.validateGroupEditor(userId, mealPlan.groupId);
+
+    // S3에 저장된 사진이 있으면 함께 삭제
+    if (mealPlan.photoUrl) {
+      await this.uploadService.deleteFile(mealPlan.photoUrl);
+    }
 
     await this.prisma.mealPlan.delete({ where: { id } });
 
