@@ -81,6 +81,8 @@ export default function HomeScreen() {
   const today = getTodayString();
   const weekDates = getWeekDates();
   const { groups, currentGroupId, setCurrentGroupId } = useGroupStore();
+  const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+  const currentGroup = groups.find((g) => g.id === currentGroupId);
 
   // 선택된 날짜 (기본값: 오늘, 없으면 이번 주 월요일)
   const defaultDate = weekDates.find((d) => toDateString(d) === today) ? today : toDateString(weekDates[0]);
@@ -178,35 +180,52 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* 그룹 필터 칩 */}
+      {/* 그룹 드롭다운 선택 */}
       {groups.length > 1 && (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.groupFilterRow}
-        >
+        <View style={styles.groupDropdownWrapper}>
           <TouchableOpacity
-            style={[styles.groupChip, !currentGroupId && { backgroundColor: colors.text, borderColor: colors.text }]}
-            onPress={() => setCurrentGroupId(null)}
+            style={styles.groupDropdownBtn}
+            onPress={() => setShowGroupDropdown(!showGroupDropdown)}
           >
-            <Text style={[styles.groupChipText, !currentGroupId && { color: '#fff' }]}>전체</Text>
+            {currentGroup ? (
+              <View style={[styles.groupDropdownDot, { backgroundColor: currentGroup.color ?? colors.primary }]} />
+            ) : (
+              <Ionicons name="apps" size={14} color={colors.text} />
+            )}
+            <Text style={styles.groupDropdownBtnText} numberOfLines={1}>
+              {currentGroup?.name ?? '전체 그룹'}
+            </Text>
+            <Ionicons name={showGroupDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
           </TouchableOpacity>
-          {groups.map((g) => {
-            const isSelected = g.id === currentGroupId;
-            return (
+
+          {showGroupDropdown && (
+            <View style={styles.groupDropdownList}>
               <TouchableOpacity
-                key={g.id}
-                style={[styles.groupChip, isSelected && { backgroundColor: g.color ?? colors.primary, borderColor: g.color ?? colors.primary }]}
-                onPress={() => setCurrentGroupId(g.id)}
+                style={[styles.groupDropdownItem, !currentGroupId && styles.groupDropdownItemActive]}
+                onPress={() => { setCurrentGroupId(null); setShowGroupDropdown(false); }}
               >
-                <View style={[styles.groupChipDot, { backgroundColor: isSelected ? '#fff' : (g.color ?? colors.primary) }]} />
-                <Text style={[styles.groupChipText, isSelected && { color: '#fff' }]} numberOfLines={1}>
-                  {g.name}
-                </Text>
+                <Ionicons name="apps" size={14} color={!currentGroupId ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.groupDropdownItemText, !currentGroupId && { color: colors.primary, fontWeight: '700' }]}>전체 그룹</Text>
               </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              {groups.map((g) => {
+                const isSelected = g.id === currentGroupId;
+                return (
+                  <TouchableOpacity
+                    key={g.id}
+                    style={[styles.groupDropdownItem, isSelected && styles.groupDropdownItemActive]}
+                    onPress={() => { setCurrentGroupId(g.id); setShowGroupDropdown(false); }}
+                  >
+                    <View style={[styles.groupDropdownDot, { backgroundColor: g.color ?? colors.primary }]} />
+                    <Text style={[styles.groupDropdownItemText, isSelected && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                      {g.name}
+                    </Text>
+                    {isSelected && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
+        </View>
       )}
 
       {/* 검색바 */}
@@ -415,33 +434,66 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  // ── 그룹 필터 ───────────────────────────────────────────
-  groupFilterRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    gap: 8,
+  // ── 그룹 드롭다운 ───────────────────────────────────────
+  groupDropdownWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 4,
+    zIndex: 10,
   },
-  groupChip: {
+  groupDropdownBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     backgroundColor: colors.surface,
-    borderWidth: 1.5,
+    borderRadius: 12,
+    borderWidth: 1,
     borderColor: colors.border,
   },
-  groupChipDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  groupChipText: {
-    fontSize: 13,
+  groupDropdownBtnText: {
+    flex: 1,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text,
-    maxWidth: 100,
+  },
+  groupDropdownDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  groupDropdownList: {
+    position: 'absolute',
+    top: 46,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  groupDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: colors.border,
+  },
+  groupDropdownItemActive: {
+    backgroundColor: colors.primaryLight,
+  },
+  groupDropdownItemText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
   },
   // ── 검색 ────────────────────────────────────────────────
   searchBar: {
