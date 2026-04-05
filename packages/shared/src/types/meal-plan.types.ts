@@ -42,10 +42,12 @@ export interface CreateMealPlanRequest {
   dates?: string[];
 }
 
-/** 식단 수정 요청 바디 - 모든 필드 선택적 */
+/** 식단 수정 요청 바디 - 모든 필드 선택적, photoUrl은 null 허용 (사진 삭제) */
 export type UpdateMealPlanRequest = Partial<
-  Pick<CreateMealPlanRequest, 'menuName' | 'memo' | 'recipeUrl' | 'photoUrl' | 'isRecurring' | 'recurRule'>
->;
+  Pick<CreateMealPlanRequest, 'menuName' | 'memo' | 'recipeUrl' | 'isRecurring' | 'recurRule'>
+> & {
+  photoUrl?: string | null;
+};
 
 /** 식단 템플릿 */
 export interface MealTemplate {

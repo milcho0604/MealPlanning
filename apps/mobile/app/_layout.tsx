@@ -10,6 +10,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
+import { initializeKakaoSDK } from '@react-native-kakao/core';
 import { useAuthStore } from '../src/stores/auth.store';
 import {
   registerForPushNotificationsAsync,
@@ -24,8 +26,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 3,
-      staleTime: 1000 * 60 * 5,
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5분간 fresh 상태 유지 (재호출 안 함)
+      gcTime: 1000 * 60 * 30,   // 30분간 캐시 유지 (탭 전환 시 즉시 표시)
+      refetchOnMount: false,     // 마운트 시 자동 재호출 방지 (캐시 우선)
     },
   },
 });
@@ -33,9 +37,16 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   const { initialize, isInitialized, isAuthenticated } = useAuthStore();
 
-  // 앱 시작 시 저장된 토큰으로 인증 상태 복원
+  // 앱 시작 시 저장된 토큰으로 인증 상태 복원 + 카카오 SDK 초기화
   useEffect(() => {
     initialize();
+
+    // 카카오 SDK 초기화 (네이티브에서만 실행, 웹은 불필요)
+    if (Platform.OS !== 'web') {
+      initializeKakaoSDK('e853e6f283f75a8256546445c2add6d1').catch((err) =>
+        console.warn('카카오 SDK 초기화 실패:', err),
+      );
+    }
   }, [initialize]);
 
   // 인증 상태 초기화 완료 후 스플래시 화면 숨기기

@@ -292,18 +292,39 @@ cd apps/mobile && npx expo start --web
 ## 알려진 이슈 / TODO
 
 ### 빌드 후 테스트 필요 (4월 1일 EAS 무료 리셋)
-- [ ] 앱 크래시 해결 확인 (metro.config.js + App.js 제거 완료)
-- [ ] 카카오 로그인 네이티브 크래시 확인
+- [x] 앱 크래시 해결 확인 (metro.config.js + App.js 제거 완료)
+- [x] 카카오 로그인 네이티브 크래시 → `initializeKakaoSDK()` 미호출이 원인, `_layout.tsx`에서 앱 시작 시 초기화 추가로 수정
 - [ ] 전체 기능 QA
 
-### Render 환경변수 추가 필요
-- [ ] `GOOGLE_IOS_CLIENT_ID` = `88190697802-1ukeekh66h57e8e62q79lec1no9oscjp.apps.googleusercontent.com`
-- [ ] `GOOGLE_ANDROID_CLIENT_ID` = `88190697802-un49mjuvlq36mmkfjcksqfj3q25kieti.apps.googleusercontent.com`
+### Render 환경변수
+- [x] `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `AWS_S3_BUCKET` (S3 사진 업로드용)
+- [x] `GOOGLE_IOS_CLIENT_ID` = `88190697802-1ukeekh66h57e8e62q79lec1no9oscjp.apps.googleusercontent.com`
+- [x] `GOOGLE_ANDROID_CLIENT_ID` = `88190697802-un49mjuvlq36mmkfjcksqfj3q25kieti.apps.googleusercontent.com`
+
+### 완료된 기능
+- [x] 식단 사진 업로드 (S3 Presigned URL + 모바일 리사이즈/압축 + 카드 미리보기)
+- [x] 키보드가 입력창 가리는 이슈 수정 (reactivate, sign-in, sign-up)
+- [x] SafeAreaView 적용 (상단 노치/상태바 겹침 수정)
+- [x] 캘린더 헤더 레이아웃 수정 (`< 2026년 4월 >` 한 줄)
+
+### 성능 최적화 (완료)
+- [x] React Query 캐시 최적화: `gcTime` 30분, `refetchOnMount: false` → 탭 전환 시 캐시된 데이터 즉시 표시
+- [x] API 토큰 메모리 캐싱: 매 요청마다 SecureStore I/O 제거 → 요청 지연 감소
+- [x] FlatList 최적화: `removeClippedSubviews`, `maxToRenderPerBatch`, `windowSize` 추가 → 리스트 스크롤 버벅임 개선
+- [x] 캘린더 `useMemo` 적용: 그리드 셀/식단맵 메모이제이션 → 월 이동 시 불필요한 재계산 방지
+- [x] API 타임아웃 60초→90초 (Render 무료 플랜 콜드 스타트 대응)
+
+#### 속도 관련 참고 (Render 무료 플랜 한계)
+> Render 무료 플랜은 15분 비활성 시 서버가 슬립 모드로 전환되며,
+> 다음 요청 시 콜드 스타트에 **20~40초**가 소요됩니다.
+> 이는 코드 최적화로 해결 불가하며, 다음 방법으로만 개선 가능:
+> - **keep-alive 핑**: `.github/workflows/keep-alive.yml`로 4분마다 핑 전송 중 (슬립 방지)
+> - **Render 유료 플랜** ($7/월): 서버 항상 활성 상태 유지
+> - 첫 요청 후에는 정상 속도 (50~200ms)
 
 ### 미완료 기능
 - [ ] 다크 모드 전체 적용 (`useColors()` 훅으로 각 화면 전환)
 - [ ] 햅틱 피드백 (삭제/체크/저장 시 진동)
-- [ ] 식단 사진 업로드 UI (백엔드 photoUrl 준비 완료, 이미지 호스팅 필요)
 - [ ] 프로필 사진 변경 (PATCH /auth/profile API 준비 완료)
 
 ### 배포
