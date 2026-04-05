@@ -16,10 +16,18 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
 /** 토큰 갱신 중복 방지: 진행 중인 refresh Promise를 공유 */
 let refreshPromise: Promise<{ accessToken: string; refreshToken: string }> | null = null;
 
+/** 메모리 토큰 캐시 - 매 요청마다 SecureStore I/O를 방지 */
+let cachedAccessToken: string | null = null;
+
+/** 토큰 캐시 설정 (로그인/갱신 시 호출) */
+export function setCachedToken(token: string | null) {
+  cachedAccessToken = token;
+}
+
 /** Axios 인스턴스 생성 */
 export const apiClient = axios.create({
   baseURL: `${BASE_URL}/v1`,
-  timeout: 60000, // 60초 타임아웃 (Render 무료 플랜 콜드 스타트 대응)
+  timeout: 90000, // 90초 타임아웃 (Render 무료 플랜 콜드 스타트 대응)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,10 +35,12 @@ export const apiClient = axios.create({
 
 // ── 요청 인터셉터 ──────────────────────────────────────────────────────────────
 // 모든 요청에 저장된 액세스 토큰을 Authorization 헤더에 첨부
+// 메모리 캐시를 우선 사용하여 I/O 지연 방지
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    const accessToken = await SecureStore.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    const accessToken = cachedAccessToken ?? await SecureStore.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (accessToken) {
+      cachedAccessToken = accessToken;
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
@@ -61,6 +71,7 @@ apiClient.interceptors.response.use(
             if (!tokens?.accessToken || !tokens?.refreshToken) {
               throw new Error('토큰 갱신 응답 형식 오류');
             }
+            cachedAccessToken = tokens.accessToken;
             await SecureStore.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
             await SecureStore.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
             return tokens;
@@ -72,6 +83,7 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch {
         // 토큰 갱신 실패 시 저장된 인증 정보 삭제 (로그아웃 처리)
+        cachedAccessToken = null;
         await SecureStore.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
         await SecureStore.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
       }
