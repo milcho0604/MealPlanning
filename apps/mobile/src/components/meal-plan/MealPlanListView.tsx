@@ -88,6 +88,10 @@ export function MealPlanListView({
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [tempFrom, setTempFrom] = useState('');
   const [tempTo, setTempTo] = useState('');
+  /** 캘린더 선택 대상: 'from' 또는 'to' */
+  const [calendarTarget, setCalendarTarget] = useState<'from' | 'to' | null>(null);
+  const [calYear, setCalYear] = useState(new Date().getFullYear());
+  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1);
 
   /** 기간 + 검색어로 필터링된 식단 목록 */
   const filteredMealPlans = useMemo(() => {
@@ -281,45 +285,133 @@ export function MealPlanListView({
         visible={showCustomModal}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCustomModal(false)}
+        onRequestClose={() => { setShowCustomModal(false); setCalendarTarget(null); }}
       >
         <View style={styles.overlay}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>기간 직접 설정</Text>
-            <Text style={styles.dialogLabel}>시작일 (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.dialogInput}
-              value={tempFrom}
-              onChangeText={setTempFrom}
-              placeholder="2026-01-01"
-              placeholderTextColor={colors.textSecondary}
-              maxLength={10}
-              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-            />
-            <Text style={styles.dialogLabel}>종료일 (YYYY-MM-DD)</Text>
-            <TextInput
-              style={styles.dialogInput}
-              value={tempTo}
-              onChangeText={setTempTo}
-              placeholder="2026-12-31"
-              placeholderTextColor={colors.textSecondary}
-              maxLength={10}
-              keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-            />
-            <View style={styles.dialogButtons}>
-              <TouchableOpacity
-                style={styles.dialogCancelBtn}
-                onPress={() => setShowCustomModal(false)}
-              >
-                <Text style={styles.dialogCancelText}>취소</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.dialogConfirmBtn}
-                onPress={handleCustomConfirm}
-              >
-                <Text style={styles.dialogConfirmText}>적용</Text>
-              </TouchableOpacity>
-            </View>
+
+            {/* 캘린더 선택기가 열린 상태 */}
+            {calendarTarget ? (
+              <View>
+                <Text style={styles.dialogLabel}>
+                  {calendarTarget === 'from' ? '시작일 선택' : '종료일 선택'}
+                </Text>
+                {/* 미니 캘린더 헤더 */}
+                <View style={styles.miniCalHeader}>
+                  <TouchableOpacity onPress={() => {
+                    if (calMonth === 1) { setCalYear(y => y - 1); setCalMonth(12); }
+                    else setCalMonth(m => m - 1);
+                  }}>
+                    <Ionicons name="chevron-back" size={20} color={colors.text} />
+                  </TouchableOpacity>
+                  <Text style={styles.miniCalTitle}>{calYear}년 {calMonth}월</Text>
+                  <TouchableOpacity onPress={() => {
+                    if (calMonth === 12) { setCalYear(y => y + 1); setCalMonth(1); }
+                    else setCalMonth(m => m + 1);
+                  }}>
+                    <Ionicons name="chevron-forward" size={20} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+                {/* 요일 헤더 */}
+                <View style={styles.miniCalWeekRow}>
+                  {['일','월','화','수','목','금','토'].map(d => (
+                    <Text key={d} style={styles.miniCalWeekLabel}>{d}</Text>
+                  ))}
+                </View>
+                {/* 날짜 그리드 */}
+                <View style={styles.miniCalGrid}>
+                  {(() => {
+                    const firstDay = new Date(calYear, calMonth - 1, 1).getDay();
+                    const lastDay = new Date(calYear, calMonth, 0).getDate();
+                    const cells: (number | null)[] = [
+                      ...Array(firstDay).fill(null),
+                      ...Array.from({ length: lastDay }, (_, i) => i + 1),
+                    ];
+                    const rem = cells.length % 7;
+                    if (rem !== 0) cells.push(...Array(7 - rem).fill(null));
+                    return cells.map((day, idx) => {
+                      if (day === null) return <View key={`e-${idx}`} style={styles.miniCalCell} />;
+                      const dateStr = `${calYear}-${String(calMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                      const isSelected = (calendarTarget === 'from' ? tempFrom : tempTo) === dateStr;
+                      return (
+                        <TouchableOpacity
+                          key={dateStr}
+                          style={[styles.miniCalCell, isSelected && styles.miniCalCellSelected]}
+                          onPress={() => {
+                            if (calendarTarget === 'from') setTempFrom(dateStr);
+                            else setTempTo(dateStr);
+                            setCalendarTarget(null);
+                          }}
+                        >
+                          <Text style={[styles.miniCalDayText, isSelected && styles.miniCalDayTextSelected]}>{day}</Text>
+                        </TouchableOpacity>
+                      );
+                    });
+                  })()}
+                </View>
+                <TouchableOpacity style={styles.miniCalBackBtn} onPress={() => setCalendarTarget(null)}>
+                  <Text style={styles.miniCalBackText}>돌아가기</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View>
+                {/* 시작일 */}
+                <Text style={styles.dialogLabel}>시작일</Text>
+                <View style={styles.dateInputRow}>
+                  <TextInput
+                    style={[styles.dialogInput, { flex: 1, marginBottom: 0 }]}
+                    value={tempFrom}
+                    onChangeText={setTempFrom}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={colors.textSecondary}
+                    maxLength={10}
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+                  />
+                  <TouchableOpacity
+                    style={styles.calendarPickBtn}
+                    onPress={() => { setCalendarTarget('from'); setCalYear(new Date().getFullYear()); setCalMonth(new Date().getMonth() + 1); }}
+                  >
+                    <Ionicons name="calendar" size={20} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+
+                {/* 종료일 */}
+                <Text style={[styles.dialogLabel, { marginTop: 12 }]}>종료일</Text>
+                <View style={styles.dateInputRow}>
+                  <TextInput
+                    style={[styles.dialogInput, { flex: 1, marginBottom: 0 }]}
+                    value={tempTo}
+                    onChangeText={setTempTo}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor={colors.textSecondary}
+                    maxLength={10}
+                    keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
+                  />
+                  <TouchableOpacity
+                    style={styles.calendarPickBtn}
+                    onPress={() => { setCalendarTarget('to'); setCalYear(new Date().getFullYear()); setCalMonth(new Date().getMonth() + 1); }}
+                  >
+                    <Ionicons name="calendar" size={20} color={colors.primary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.dialogButtons, { marginTop: 16 }]}>
+                  <TouchableOpacity
+                    style={styles.dialogCancelBtn}
+                    onPress={() => setShowCustomModal(false)}
+                  >
+                    <Text style={styles.dialogCancelText}>취소</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.dialogConfirmBtn}
+                    onPress={handleCustomConfirm}
+                  >
+                    <Text style={styles.dialogConfirmText}>적용</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -480,6 +572,75 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text,
     marginBottom: 12,
+  },
+  dateInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  calendarPickBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // ── 미니 캘린더 ────────────────────────────────────────
+  miniCalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  miniCalTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  miniCalWeekRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  miniCalWeekLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  miniCalGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  miniCalCell: {
+    width: `${100 / 7}%`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+  },
+  miniCalCellSelected: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+  },
+  miniCalDayText: {
+    fontSize: 13,
+    color: colors.text,
+  },
+  miniCalDayTextSelected: {
+    color: '#fff',
+    fontWeight: '700',
+  },
+  miniCalBackBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 8,
+  },
+  miniCalBackText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '600',
   },
   dialogButtons: {
     flexDirection: 'row',
