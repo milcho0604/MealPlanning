@@ -16,7 +16,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  SafeAreaView,
   ScrollView,
   Share,
   StyleSheet,
@@ -26,6 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
 import { useAuthStore } from '../../src/stores/auth.store';

@@ -18,7 +18,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
-  SafeAreaView,
   Share,
   StyleSheet,
   Text,
@@ -26,6 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { ShoppingItem } from '@mealplan/shared';
 import { useShopping } from '../../src/hooks/shopping/use-shopping.hook';

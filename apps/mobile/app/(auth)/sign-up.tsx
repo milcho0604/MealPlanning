@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSignUp } from '../../src/hooks/auth/use-sign-up.hook';
 import { colors } from '../../src/constants/colors';
 

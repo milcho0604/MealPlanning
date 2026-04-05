@@ -8,7 +8,8 @@
  */
 
 import { useState } from 'react';
-import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { authService } from '../../src/services/auth.service';

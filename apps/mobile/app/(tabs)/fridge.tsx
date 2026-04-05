@@ -12,13 +12,13 @@ import { useState } from 'react';
 import {
   FlatList,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { EXPIRY_WARNING_DAYS, INGREDIENT_CATEGORY_LABELS } from '@mealplan/shared';
 import type { Ingredient, IngredientCategory } from '@mealplan/shared';

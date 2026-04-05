@@ -12,7 +12,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -20,6 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { mealPlanService } from '../../src/services/meal-plan.service';

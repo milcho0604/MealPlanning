@@ -18,7 +18,6 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -26,6 +25,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSignIn } from '../../src/hooks/auth/use-sign-in.hook';
 import { useSocialSignIn } from '../../src/hooks/auth/use-social-sign-in.hook';
 import { initGoogleSignIn } from '../../src/services/social-auth.service';
