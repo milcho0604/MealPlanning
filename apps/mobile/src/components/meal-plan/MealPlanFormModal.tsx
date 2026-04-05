@@ -44,8 +44,6 @@ import { colors } from '../../constants/colors';
 
 const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 const RECUR_OPTIONS: { value: RecurRule; label: string }[] = [
-  { value: 'weekly', label: '매주' },
-  { value: 'monthly', label: '매월' },
   { value: 'custom', label: '날짜 선택' },
 ];
 
@@ -108,7 +106,7 @@ export function MealPlanFormModal({
   const [memo, setMemo] = useState('');
   const [recipeUrl, setRecipeUrl] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
-  const [recurRule, setRecurRule] = useState<RecurRule>('weekly');
+  const [recurRule, setRecurRule] = useState<RecurRule>('custom');
   const [customDates, setCustomDates] = useState<string[]>([]);
 
   // 템플릿 관련 상태
@@ -124,7 +122,7 @@ export function MealPlanFormModal({
         setMemo(mealPlan.memo ?? '');
         setRecipeUrl(mealPlan.recipeUrl ?? '');
         setIsRecurring(mealPlan.isRecurring);
-        setRecurRule((mealPlan.recurRule as RecurRule) ?? 'weekly');
+        setRecurRule((mealPlan.recurRule as RecurRule) ?? 'custom');
         setExistingUrl(mealPlan.photoUrl ?? null);
       } else {
         setMealType(initialMealType);
@@ -132,7 +130,7 @@ export function MealPlanFormModal({
         setMemo('');
         setRecipeUrl('');
         setIsRecurring(false);
-        setRecurRule('weekly');
+        setRecurRule('custom');
         setCustomDates([]);
         clearImage();
       }
@@ -451,8 +449,8 @@ export function MealPlanFormModal({
           {/* 반복 설정 */}
           <View style={styles.recurRow}>
             <View>
-              <Text style={styles.recurTitle}>반복 식단</Text>
-              <Text style={styles.recurSub}>매주 또는 매월 자동으로 반복됩니다</Text>
+              <Text style={styles.recurTitle}>여러 날짜에 등록</Text>
+              <Text style={styles.recurSub}>선택한 날짜에 같은 식단을 한 번에 등록합니다</Text>
             </View>
             <Switch
               value={isRecurring}
@@ -462,25 +460,8 @@ export function MealPlanFormModal({
             />
           </View>
 
-          {/* 반복 규칙 선택 (반복 ON일 때만 표시) */}
+          {/* 날짜 선택 UI (여러 날짜 등록 ON일 때 표시) */}
           {isRecurring && (
-            <View style={styles.recurRuleRow}>
-              {RECUR_OPTIONS.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[styles.recurRuleBtn, recurRule === opt.value && styles.recurRuleBtnActive]}
-                  onPress={() => { setRecurRule(opt.value); if (opt.value !== 'custom') setCustomDates([]); }}
-                >
-                  <Text style={[styles.recurRuleBtnText, recurRule === opt.value && styles.recurRuleBtnTextActive]}>
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          {/* 특정 날짜 선택 UI (custom 선택 시) */}
-          {isRecurring && recurRule === 'custom' && (
             <View style={styles.customDatesSection}>
               <Text style={styles.customDatesLabel}>
                 추가할 날짜를 선택하세요 ({customDates.length}개 선택됨)
