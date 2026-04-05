@@ -8,7 +8,7 @@
  * - Phase 2: 반복 식단, 레시피 URL 지원 (MealPlanFormModal에서 처리)
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
   RefreshControl,
@@ -105,6 +105,13 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MealPlanWithUser[]>([]);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // 검색 타이머 정리 (컴포넌트 언마운트 시 메모리 누수 방지)
+  useEffect(() => {
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, []);
 
   // 그룹이 없으면 안내 화면 표시 (훅 호출 이후에 체크)
   if (!currentGroupId) return <NoGroupView />;

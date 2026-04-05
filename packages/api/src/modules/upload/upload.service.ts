@@ -61,11 +61,21 @@ export class UploadService {
     this.region = this.config.get<string>('AWS_REGION', 'ap-northeast-2');
     this.bucket = this.config.get<string>('AWS_S3_BUCKET', '');
 
+    const accessKeyId = this.config.get<string>('AWS_ACCESS_KEY_ID', '');
+    const secretAccessKey = this.config.get<string>('AWS_SECRET_ACCESS_KEY', '');
+
+    // AWS 설정이 없으면 경고만 출력 (서버 기동은 정상 진행, 업로드 요청 시 에러 반환)
+    if (!this.bucket || !accessKeyId || !secretAccessKey) {
+      console.warn(
+        '⚠️ AWS S3 환경변수가 설정되지 않았습니다. 사진 업로드 기능이 비활성화됩니다.',
+      );
+    }
+
     this.s3 = new S3Client({
       region: this.region,
       credentials: {
-        accessKeyId: this.config.get<string>('AWS_ACCESS_KEY_ID', ''),
-        secretAccessKey: this.config.get<string>('AWS_SECRET_ACCESS_KEY', ''),
+        accessKeyId,
+        secretAccessKey,
       },
     });
   }
@@ -79,6 +89,11 @@ export class UploadService {
     request: PresignedUrlRequest,
   ): Promise<PresignedUrlResponse> {
     const { contentType, folder } = request;
+
+    // S3 설정 확인
+    if (!this.bucket) {
+      throw new BadRequestException('사진 업로드 기능이 설정되지 않았습니다. 관리자에게 문의하세요.');
+    }
 
     // 허용된 MIME 타입 검증
     if (!ALLOWED_CONTENT_TYPES.includes(contentType)) {

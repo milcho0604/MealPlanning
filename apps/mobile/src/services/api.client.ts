@@ -64,18 +64,23 @@ apiClient.interceptors.response.use(
         // 이미 갱신 중이면 기존 Promise 재사용 (race condition 방지)
         if (!refreshPromise) {
           refreshPromise = (async () => {
-            const rt = await SecureStore.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-            if (!rt) throw new Error('리프레시 토큰 없음');
-            const { data: resp } = await axios.post(`${BASE_URL}/v1/auth/refresh`, { refreshToken: rt });
-            const tokens = resp?.data;
-            if (!tokens?.accessToken || !tokens?.refreshToken) {
-              throw new Error('토큰 갱신 응답 형식 오류');
+            try {
+              const rt = await SecureStore.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+              if (!rt) throw new Error('리프레시 토큰 없음');
+              const { data: resp } = await axios.post(`${BASE_URL}/v1/auth/refresh`, { refreshToken: rt });
+              const tokens = resp?.data;
+              if (!tokens?.accessToken || !tokens?.refreshToken) {
+                throw new Error('토큰 갱신 응답 형식 오류');
+              }
+              cachedAccessToken = tokens.accessToken;
+              await SecureStore.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
+              await SecureStore.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+              return tokens;
+            } finally {
+              // 성공/실패 모두 Promise 해제 (다음 401에서 새로 갱신 시도 가능)
+              refreshPromise = null;
             }
-            cachedAccessToken = tokens.accessToken;
-            await SecureStore.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
-            await SecureStore.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
-            return tokens;
-          })().finally(() => { refreshPromise = null; });
+          })();
         }
 
         const tokens = await refreshPromise;
