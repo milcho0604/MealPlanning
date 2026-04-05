@@ -181,7 +181,7 @@ export default function HomeScreen() {
       </View>
 
       {/* 그룹 드롭다운 선택 */}
-      {groups.length > 1 && (
+      {groups.length >= 1 && (
         <View style={styles.groupDropdownWrapper}>
           <TouchableOpacity
             style={styles.groupDropdownBtn}

@@ -164,7 +164,7 @@ export default function CalendarScreen() {
       </View>
 
       {/* ── 그룹 드롭다운 선택 ── */}
-      {groups.length > 1 && (
+      {groups.length >= 1 && (
         <View style={styles.groupDropdownWrapper}>
           <TouchableOpacity
             style={styles.groupDropdownBtn}
@@ -433,21 +433,20 @@ const styles = StyleSheet.create({
   monthHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: colors.background,
   },
   monthArrow: {
-    padding: 12,
-    borderRadius: 20,
+    padding: 8,
   },
   monthTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
-    flex: 1,
+    marginHorizontal: 16,
   },
   // ── 요일 헤더 ────────────────────────────────────────────
   weekdayRow: {
