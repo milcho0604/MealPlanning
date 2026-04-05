@@ -44,7 +44,17 @@ export async function signInWithGoogle(): Promise<SocialAuthResult> {
 
 /** ── Kakao 로그인 ─────────────────────────────────────── */
 export async function signInWithKakao(): Promise<SocialAuthResult> {
-  const tokenInfo = await kakaoLogin();
+  let tokenInfo;
+  try {
+    tokenInfo = await kakaoLogin();
+  } catch (err) {
+    // 사용자 취소 시 에러 전파 (useSocialSignIn에서 무시 처리됨)
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('cancelled') || msg.includes('cancel')) {
+      throw new Error('ERR_CANCELED');
+    }
+    throw new Error(`카카오 로그인 중 오류가 발생했습니다: ${msg}`);
+  }
   const accessToken = tokenInfo.accessToken;
   if (!accessToken) throw new Error('Kakao 액세스 토큰을 받지 못했습니다.');
 
