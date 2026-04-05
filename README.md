@@ -46,6 +46,7 @@ graph TB
         MOD_SHOP["Shopping Module"]
         MOD_NOTIF["Notification Module"]
         MOD_MAIL["Mail Module"]
+        MOD_UPLOAD["Upload Module"]
         PRISMA["Prisma ORM v5"]
         CRON["Cron (7:30/9:00 KST)"]
 
@@ -67,6 +68,7 @@ graph TB
 
     subgraph Data["🗄 Data & Services"]
         SUPABASE[("Supabase PostgreSQL")]
+        S3["AWS S3 (Images)"]
         SENDGRID["SendGrid (Email)"]
         EXPO_PUSH["Expo Push Service"]
         GOOGLE_OAUTH["Google OAuth"]
@@ -82,6 +84,7 @@ graph TB
 
     AXIOS -- "REST API" --> NEST
     PRISMA --> SUPABASE
+    MOD_UPLOAD -- "Presigned URL" --> S3
     MOD_MAIL -- "HTTP API" --> SENDGRID
     MOD_NOTIF --> EXPO_PUSH
     MOD_AUTH --> GOOGLE_OAUTH
@@ -107,6 +110,7 @@ graph TB
 - 주간 홈 뷰 + 메뉴명 검색
 - 반복 등록 (매주/매월/특정 날짜 선택)
 - 식단 템플릿 저장 및 불러오기
+- 식단 사진 첨부 (S3 업로드, 자동 리사이즈/압축)
 - 자주 먹는 메뉴 TOP 5 통계
 
 ### 🥕 냉장고 (재료 관리)
@@ -150,6 +154,7 @@ graph TB
 | **ORM** | Prisma v5 |
 | **상태관리** | Zustand + TanStack Query v5 |
 | **모노레포** | Turborepo + npm workspaces |
+| **이미지 저장소** | AWS S3 (Presigned URL) |
 | **이메일** | SendGrid (우선) / Resend / Gmail SMTP (폴백) |
 | **빌드** | Expo EAS Build |
 | **배포** | Render.com (백엔드) |
@@ -173,7 +178,7 @@ MealPlanning/
 │           └── constants/   # 색상, 키 상수
 ├── packages/
 │   ├── api/                 # NestJS 백엔드
-│   │   ├── src/modules/     # auth, meal-plans, groups, ingredients, shopping, notifications, mail
+│   │   ├── src/modules/     # auth, meal-plans, groups, ingredients, shopping, notifications, mail, upload
 │   │   └── prisma/          # 스키마 + 마이그레이션
 │   └── shared/              # 공유 타입/상수
 └── .github/workflows/       # CI/CD
@@ -217,6 +222,10 @@ GOOGLE_CLIENT_ID=your-google-client-id
 SENDGRID_API_KEY=your-sendgrid-key
 MAIL_USER=your-email@gmail.com
 APP_URL=https://your-api-url.com
+AWS_ACCESS_KEY_ID=your-aws-key
+AWS_SECRET_ACCESS_KEY=your-aws-secret
+AWS_REGION=ap-northeast-2
+AWS_S3_BUCKET=your-bucket-name
 ```
 
 **`apps/mobile/.env`** (모바일 앱)
@@ -279,6 +288,11 @@ cd apps/mobile && npx expo start --web
 | GET | /expiring | 유통기한 임박 |
 | POST | / | 추가 |
 | PATCH | /:id/consume | 소진 |
+
+### Upload (`/v1/upload`)
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | /presigned-url | S3 업로드용 Presigned URL 발급 |
 
 ### Shopping (`/v1/shopping`)
 | Method | Path | 설명 |
