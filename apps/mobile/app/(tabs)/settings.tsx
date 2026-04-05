@@ -36,6 +36,7 @@ import { apiClient } from '../../src/services/api.client';
 import { storage } from '../../src/utils/storage';
 import { STORAGE_KEYS } from '../../src/constants/storage-keys';
 import { colors } from '../../src/constants/colors';
+import { GROUP_COLORS } from '../../src/constants/group-colors';
 
 /** 테마 모드 */
 type ThemeMode = 'light' | 'dark' | 'system';
@@ -73,6 +74,7 @@ export default function SettingsScreen() {
   // ── 모달 상태 ──────────────────────────────────────────
   const [modalType, setModalType] = useState<GroupModalType>(null);
   const [groupNameInput, setGroupNameInput] = useState('');
+  const [groupColorInput, setGroupColorInput] = useState(GROUP_COLORS[0]);
   const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
@@ -119,9 +121,10 @@ export default function SettingsScreen() {
     if (!name) { Alert.alert('입력 오류', '그룹 이름을 입력해주세요.'); return; }
     setIsSubmitting(true);
     try {
-      await createGroup(name);
+      await createGroup(name, groupColorInput);
       setModalType(null);
       setGroupNameInput('');
+      setGroupColorInput(GROUP_COLORS[0]);
     } catch (e: any) {
       Alert.alert('오류', e?.response?.data?.error?.message ?? '그룹 생성에 실패했습니다.');
     } finally {
@@ -216,8 +219,8 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.groupItemLeft}>
-                  {/* 현재 그룹 인디케이터 */}
-                  <View style={[styles.groupDot, isActive && styles.groupDotActive]} />
+                  {/* 그룹 색상 인디케이터 */}
+                  <View style={[styles.groupDot, { backgroundColor: group.color ?? colors.primary }]} />
                   <View>
                     <Text style={[styles.groupName, isActive && styles.groupNameActive]} numberOfLines={1}>
                       {group.name}
@@ -227,6 +230,18 @@ export default function SettingsScreen() {
                     </Text>
                   </View>
                 </View>
+
+                {/* 기본 그룹 설정 */}
+                <TouchableOpacity
+                  style={styles.defaultBadge}
+                  onPress={() => {
+                    setCurrentGroupId(group.id);
+                    useGroupStore.getState().setDefaultGroupId(group.id);
+                    Alert.alert('기본 그룹 설정', `"${group.name}"이(가) 기본 그룹으로 설정되었습니다.`);
+                  }}
+                >
+                  <Ionicons name="star" size={14} color={isActive ? colors.primary : colors.textSecondary} />
+                </TouchableOpacity>
 
                 {/* 초대 + 멤버 관리 */}
                 <View style={styles.inviteBtns}>
@@ -364,6 +379,16 @@ export default function SettingsScreen() {
               maxLength={30}
               autoFocus
             />
+            <Text style={styles.dialogLabel}>그룹 색상</Text>
+            <View style={styles.colorPicker}>
+              {GROUP_COLORS.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.colorDot, { backgroundColor: c }, groupColorInput === c && styles.colorDotSelected]}
+                  onPress={() => setGroupColorInput(c)}
+                />
+              ))}
+            </View>
             <View style={styles.dialogButtons}>
               <TouchableOpacity
                 style={styles.dialogCancelBtn}
@@ -720,6 +745,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.primary,
   },
+  defaultBadge: {
+    padding: 6,
+  },
   // ── 그룹 추가 버튼 ───────────────────────────────────────
   groupActions: {
     flexDirection: 'row',
@@ -841,6 +869,27 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     letterSpacing: 6,
+  },
+  dialogLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  colorPicker: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 16,
+  },
+  colorDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
+  colorDotSelected: {
+    borderWidth: 3,
+    borderColor: colors.text,
   },
   dialogButtons: {
     flexDirection: 'row',

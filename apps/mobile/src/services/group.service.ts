@@ -27,8 +27,8 @@ export const groupService = {
   /**
    * 그룹 생성
    */
-  create: async (name: string): Promise<MyGroup> => {
-    const { data } = await apiClient.post<{ success: true; data: MyGroup }>('/groups', { name });
+  create: async (name: string, color?: string): Promise<MyGroup> => {
+    const { data } = await apiClient.post<{ success: true; data: MyGroup }>('/groups', { name, color });
     return data.data;
   },
 

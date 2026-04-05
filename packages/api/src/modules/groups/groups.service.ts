@@ -86,6 +86,7 @@ export class GroupsService {
       const group = await tx.group.create({
         data: {
           name: dto.name,
+          color: dto.color ?? '#4CAF50',
           ownerId: userId,
           inviteCode,
         },

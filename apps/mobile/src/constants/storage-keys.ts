@@ -16,4 +16,6 @@ export const STORAGE_KEYS = {
   THEME_MODE: 'mealplan_theme_mode',
   /** 알림 활성화 여부 (true/false) */
   NOTIFICATIONS_ENABLED: 'mealplan_notifications_enabled',
+  /** 기본 그룹 ID */
+  DEFAULT_GROUP_ID: 'mealplan_default_group_id',
 } as const;

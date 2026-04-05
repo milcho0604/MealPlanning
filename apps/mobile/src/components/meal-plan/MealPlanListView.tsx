@@ -7,7 +7,7 @@
  * - 가상 스크롤(FlatList)로 대량 데이터 대응
  */
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -24,6 +24,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
 import { useMealPlansRange } from '../../hooks/meal-plan/use-meal-plans-range.hook';
+import { useGroupStore } from '../../stores/group.store';
+import { groupService } from '../../services/group.service';
 import { MealPlanCard } from './MealPlanCard';
 import { colors } from '../../constants/colors';
 
@@ -79,6 +81,18 @@ export function MealPlanListView({
 }: MealPlanListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [period, setPeriod] = useState<PeriodFilter>('1m');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [showUserFilter, setShowUserFilter] = useState(false);
+  const [members, setMembers] = useState<{ userId: string; name: string }[]>([]);
+  const { currentGroupId } = useGroupStore();
+
+  // 그룹 멤버 목록 로드
+  useEffect(() => {
+    if (!currentGroupId) return;
+    groupService.getMembers(currentGroupId).then((m) => {
+      setMembers(m.map((mem: any) => ({ userId: mem.userId ?? mem.user?.id, name: mem.user?.name ?? '알 수 없음' })));
+    }).catch(() => {});
+  }, [currentGroupId]);
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
 
@@ -97,9 +111,14 @@ export function MealPlanListView({
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1);
 
-  /** 검색어로 필터링된 식단 목록 (기간은 API에서 처리) */
+  /** 검색어 + 사용자 필터링된 식단 목록 (기간은 API에서 처리) */
   const filteredMealPlans = useMemo(() => {
     let filtered = [...mealPlans];
+
+    // 사용자 필터
+    if (selectedUserId) {
+      filtered = filtered.filter((mp) => mp.createdBy === selectedUserId);
+    }
 
     // 검색 필터 (메뉴명, 메모)
     if (searchQuery.trim()) {
@@ -115,7 +134,7 @@ export function MealPlanListView({
     filtered.sort((a, b) => b.date.localeCompare(a.date));
 
     return filtered;
-  }, [mealPlans, searchQuery]);
+  }, [mealPlans, searchQuery, selectedUserId]);
 
   /** FlatList에 넘길 데이터: 날짜 헤더 + 식단 카드 */
   const listItems = useMemo(() => {
@@ -229,6 +248,29 @@ export function MealPlanListView({
           </TouchableOpacity>
         ))}
       </View>
+
+      {/* 사용자(등록자) 필터 */}
+      {members.length > 1 && (
+        <View style={styles.periodRow}>
+          <TouchableOpacity
+            style={[styles.periodBtn, !selectedUserId && styles.periodBtnActive]}
+            onPress={() => setSelectedUserId(null)}
+          >
+            <Text style={[styles.periodBtnText, !selectedUserId && styles.periodBtnTextActive]}>전체</Text>
+          </TouchableOpacity>
+          {members.map((m) => (
+            <TouchableOpacity
+              key={m.userId}
+              style={[styles.periodBtn, selectedUserId === m.userId && styles.periodBtnActive]}
+              onPress={() => setSelectedUserId(selectedUserId === m.userId ? null : m.userId)}
+            >
+              <Text style={[styles.periodBtnText, selectedUserId === m.userId && styles.periodBtnTextActive]}>
+                {m.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {/* 직접 설정 기간 표시 */}
       {period === 'custom' && (customFrom || customTo) && (

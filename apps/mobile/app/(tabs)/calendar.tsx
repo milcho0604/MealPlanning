@@ -32,6 +32,7 @@ import { useGroupStore } from '../../src/stores/group.store';
 import { useViewModeStore } from '../../src/stores/view-mode.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
+import type { MyGroup } from '../../src/services/group.service';
 
 /** 요일 헤더 레이블 (일요일 시작) */
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
@@ -48,8 +49,11 @@ const TODAY = new Date().toISOString().split('T')[0];
 
 export default function CalendarScreen() {
   const now = new Date();
-  const { currentGroupId } = useGroupStore();
+  const { groups, currentGroupId, setCurrentGroupId } = useGroupStore();
   const { viewMode, setViewMode } = useViewModeStore();
+
+  /** 현재 선택된 그룹의 색상 */
+  const currentGroup = groups.find((g) => g.id === currentGroupId);
 
   // ── 현재 보여주는 연/월 상태 ───────────────────────────
   const [year, setYear] = useState(now.getFullYear());
@@ -158,6 +162,31 @@ export default function CalendarScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* ── 그룹 필터 칩 ── */}
+      {groups.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.groupFilterRow}
+        >
+          {groups.map((g) => {
+            const isSelected = g.id === currentGroupId;
+            return (
+              <TouchableOpacity
+                key={g.id}
+                style={[styles.groupChip, isSelected && { backgroundColor: g.color ?? colors.primary, borderColor: g.color ?? colors.primary }]}
+                onPress={() => setCurrentGroupId(g.id)}
+              >
+                <View style={[styles.groupChipDot, { backgroundColor: isSelected ? '#fff' : (g.color ?? colors.primary) }]} />
+                <Text style={[styles.groupChipText, isSelected && { color: '#fff' }]} numberOfLines={1}>
+                  {g.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
+
       {/* ── 리스트 뷰 ── */}
       {viewMode === 'list' ? (
         <MealPlanListView
@@ -231,7 +260,7 @@ export default function CalendarScreen() {
                 </View>
                 {/* 식단 등록 여부 점 표시 */}
                 {hasMeals && (
-                  <View style={[styles.dot, isSelected && styles.dotSelected]} />
+                  <View style={[styles.dot, { backgroundColor: currentGroup?.color ?? '#66BB6A' }, isSelected && styles.dotSelected]} />
                 )}
               </TouchableOpacity>
             );
@@ -314,6 +343,34 @@ const styles = StyleSheet.create({
   },
   viewToggleTextActive: {
     color: '#fff',
+  },
+  // ── 그룹 필터 칩 ─────────────────────────────────────────
+  groupFilterRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 8,
+  },
+  groupChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  groupChipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  groupChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    maxWidth: 100,
   },
   // ── 월 헤더 ─────────────────────────────────────────────
   monthHeader: {

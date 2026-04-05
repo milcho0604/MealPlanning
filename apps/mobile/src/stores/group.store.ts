@@ -13,6 +13,8 @@
 import { create } from 'zustand';
 import type { MyGroup } from '../services/group.service';
 import { groupService } from '../services/group.service';
+import { storage } from '../utils/storage';
+import { STORAGE_KEYS } from '../constants/storage-keys';
 
 interface GroupState {
   /** 내가 속한 그룹 목록 */
@@ -28,7 +30,9 @@ interface GroupState {
   /** 활성 그룹 변경 */
   setCurrentGroupId: (groupId: string) => void;
   /** 그룹 생성 후 목록 갱신 및 새 그룹 선택 */
-  createGroup: (name: string) => Promise<MyGroup>;
+  createGroup: (name: string, color?: string) => Promise<MyGroup>;
+  /** 기본 그룹 설정 (앱 시작 시 자동 선택) */
+  setDefaultGroupId: (groupId: string) => void;
   /** 초대 코드로 참여 후 목록 갱신 */
   joinGroup: (inviteCode: string) => Promise<MyGroup>;
   /** 로그아웃 시 상태 초기화 */
@@ -49,9 +53,15 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       const groups = await groupService.getMyGroups();
       const currentId = get().currentGroupId;
 
-      // 현재 선택 그룹이 목록에 없으면 첫 번째 그룹으로 초기화
+      // 현재 선택 그룹이 목록에 없으면 기본 그룹 또는 첫 번째 그룹으로 초기화
       const isCurrentValid = groups.some((g) => g.id === currentId);
-      const nextGroupId = isCurrentValid ? currentId : (groups[0]?.id ?? null);
+      let nextGroupId = isCurrentValid ? currentId : null;
+
+      if (!nextGroupId) {
+        const defaultId = await storage.getItem(STORAGE_KEYS.DEFAULT_GROUP_ID);
+        const hasDefault = defaultId && groups.some((g) => g.id === defaultId);
+        nextGroupId = hasDefault ? defaultId : (groups[0]?.id ?? null);
+      }
 
       set({ groups, currentGroupId: nextGroupId });
     } catch {
@@ -66,8 +76,12 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   /**
    * 그룹 생성 후 목록 갱신 및 새 그룹으로 전환
    */
-  createGroup: async (name) => {
-    const newGroup = await groupService.create(name);
+  setDefaultGroupId: (groupId) => {
+    storage.setItem(STORAGE_KEYS.DEFAULT_GROUP_ID, groupId);
+  },
+
+  createGroup: async (name, color) => {
+    const newGroup = await groupService.create(name, color);
     set((state) => ({
       groups: [...state.groups, newGroup],
       currentGroupId: newGroup.id,
