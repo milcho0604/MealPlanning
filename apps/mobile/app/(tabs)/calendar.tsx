@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
     paddingVertical: 12,
     backgroundColor: colors.background,
   },
@@ -271,6 +271,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.text,
+    textAlign: 'center',
+    flex: 1,
   },
   // ── 요일 헤더 ────────────────────────────────────────────
   weekdayRow: {
