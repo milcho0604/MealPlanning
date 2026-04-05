@@ -229,6 +229,7 @@ export class MealPlansService {
     const updated = await this.prisma.mealPlan.update({
       where: { id },
       data: {
+        ...(dto.mealType !== undefined && { mealType: dto.mealType }),
         ...(dto.menuName !== undefined && { menuName: dto.menuName }),
         ...(dto.memo !== undefined && { memo: dto.memo }),
         ...(dto.recipeUrl !== undefined && { recipeUrl: dto.recipeUrl }),

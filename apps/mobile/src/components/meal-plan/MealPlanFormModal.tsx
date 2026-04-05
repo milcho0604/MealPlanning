@@ -151,6 +151,7 @@ export function MealPlanFormModal({
         await updateMealPlan({
           id: mealPlan.id,
           body: {
+            mealType,
             menuName: menuName.trim(),
             memo: memo.trim() || undefined,
             recipeUrl: recipeUrl.trim() || undefined,
@@ -281,10 +282,8 @@ export function MealPlanFormModal({
                 style={[
                   styles.mealTypeBtn,
                   mealType === type && styles.mealTypeBtnActive,
-                  isEditMode && styles.mealTypeBtnDisabled,
                 ]}
-                onPress={() => !isEditMode && setMealType(type)}
-                disabled={isEditMode}
+                onPress={() => setMealType(type)}
               >
                 <Text style={[styles.mealTypeBtnText, mealType === type && styles.mealTypeBtnTextActive]}>
                   {MEAL_TYPE_LABELS[type]}

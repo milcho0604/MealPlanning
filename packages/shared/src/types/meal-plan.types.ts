@@ -44,7 +44,7 @@ export interface CreateMealPlanRequest {
 
 /** 식단 수정 요청 바디 - 모든 필드 선택적, photoUrl은 null 허용 (사진 삭제) */
 export type UpdateMealPlanRequest = Partial<
-  Pick<CreateMealPlanRequest, 'menuName' | 'memo' | 'recipeUrl' | 'isRecurring' | 'recurRule'>
+  Pick<CreateMealPlanRequest, 'mealType' | 'menuName' | 'memo' | 'recipeUrl' | 'isRecurring' | 'recurRule'>
 > & {
   photoUrl?: string | null;
 };
