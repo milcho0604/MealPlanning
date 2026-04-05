@@ -5,7 +5,7 @@
  */
 
 import { useState } from 'react';
-import { Alert, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiClient } from '../../src/services/api.client';
@@ -41,38 +41,48 @@ export default function ReactivateScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.iconWrapper}>
-        <Ionicons name="refresh-circle" size={64} color={colors.warning} />
-      </View>
-
-      <Text style={styles.title}>탈퇴한 계정입니다</Text>
-      <Text style={styles.desc}>
-        탈퇴 후 90일 이내에는 계정을 복구할 수 있습니다.{'\n'}
-        비밀번호를 입력하면 즉시 복구됩니다.
-      </Text>
-
-      <Text style={styles.emailLabel}>{email}</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="비밀번호"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        autoFocus
-      />
-
-      <TouchableOpacity
-        style={[styles.reactivateBtn, isLoading && styles.btnDisabled]}
-        onPress={handleReactivate}
-        disabled={isLoading || !password}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Text style={styles.reactivateBtnText}>{isLoading ? '복구 중...' : '계정 복구하기'}</Text>
-      </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.iconWrapper}>
+            <Ionicons name="refresh-circle" size={64} color={colors.warning} />
+          </View>
 
-      <TouchableOpacity style={styles.cancelBtn} onPress={() => router.replace('/(auth)/sign-in')}>
-        <Text style={styles.cancelBtnText}>로그인 화면으로</Text>
-      </TouchableOpacity>
+          <Text style={styles.title}>탈퇴한 계정입니다</Text>
+          <Text style={styles.desc}>
+            탈퇴 후 90일 이내에는 계정을 복구할 수 있습니다.{'\n'}
+            비밀번호를 입력하면 즉시 복구됩니다.
+          </Text>
+
+          <Text style={styles.emailLabel}>{email}</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="비밀번호"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            autoFocus
+          />
+
+          <TouchableOpacity
+            style={[styles.reactivateBtn, isLoading && styles.btnDisabled]}
+            onPress={handleReactivate}
+            disabled={isLoading || !password}
+          >
+            <Text style={styles.reactivateBtnText}>{isLoading ? '복구 중...' : '계정 복구하기'}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.cancelBtn} onPress={() => router.replace('/(auth)/sign-in')}>
+            <Text style={styles.cancelBtnText}>로그인 화면으로</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -81,6 +91,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  flex: { flex: 1 },
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
