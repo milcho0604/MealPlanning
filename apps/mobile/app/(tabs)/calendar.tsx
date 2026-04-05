@@ -8,7 +8,7 @@
  * - FAB: 선택 날짜에 식단 추가
  */
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   PanResponder,
@@ -66,34 +66,32 @@ export default function CalendarScreen() {
   const { removeMealPlan } = useMealPlanMutation();
 
   // 날짜별 식단 맵 생성: { 'YYYY-MM-DD': MealPlanWithUser[] }
-  const mealPlansByDate = (mealPlans ?? []).reduce<Record<string, MealPlanWithUser[]>>(
+  const mealPlansByDate = useMemo(() => (mealPlans ?? []).reduce<Record<string, MealPlanWithUser[]>>(
     (acc, mp) => {
       if (!acc[mp.date]) acc[mp.date] = [];
       acc[mp.date].push(mp);
       return acc;
     },
     {},
-  );
+  ), [mealPlans]);
 
   // 선택된 날짜의 식단 목록
   const selectedDateMealPlans = mealPlansByDate[selectedDate] ?? [];
 
-  // ── 캘린더 그리드 데이터 생성 ─────────────────────────
-  // 해당 월의 1일이 무슨 요일인지 (0=일 ~ 6=토)
-  const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
-  // 해당 월의 마지막 날짜
-  const lastDay = new Date(year, month, 0).getDate();
-
-  // 그리드 셀 배열: null은 빈 셀(이전 달 날짜 자리), number는 날짜
-  const calendarCells: (number | null)[] = [
-    ...Array(firstDayOfWeek).fill(null),
-    ...Array.from({ length: lastDay }, (_, i) => i + 1),
-  ];
-  // 7의 배수로 맞추기
-  const remainder = calendarCells.length % 7;
-  if (remainder !== 0) {
-    calendarCells.push(...Array(7 - remainder).fill(null));
-  }
+  // ── 캘린더 그리드 데이터 생성 (메모이제이션) ──────────────
+  const calendarCells = useMemo(() => {
+    const firstDayOfWeek = new Date(year, month - 1, 1).getDay();
+    const lastDay = new Date(year, month, 0).getDate();
+    const cells: (number | null)[] = [
+      ...Array(firstDayOfWeek).fill(null),
+      ...Array.from({ length: lastDay }, (_, i) => i + 1),
+    ];
+    const remainder = cells.length % 7;
+    if (remainder !== 0) {
+      cells.push(...Array(7 - remainder).fill(null));
+    }
+    return cells;
+  }, [year, month]);
 
   // ── 스와이프로 월 이동 ──────────────────────────────────
   const panResponder = useRef(
