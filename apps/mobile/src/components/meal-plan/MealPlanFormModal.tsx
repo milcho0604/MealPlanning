@@ -100,6 +100,10 @@ export function MealPlanFormModal({
   } = useImageUpload({ folder: 'meal-photos' });
 
   const [mealType, setMealType] = useState<MealType>(initialMealType);
+  const [selectedDate, setSelectedDate] = useState(date);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [dpYear, setDpYear] = useState(new Date().getFullYear());
+  const [dpMonth, setDpMonth] = useState(new Date().getMonth() + 1);
   const [menuName, setMenuName] = useState('');
   const [memo, setMemo] = useState('');
   const [recipeUrl, setRecipeUrl] = useState('');
@@ -112,6 +116,8 @@ export function MealPlanFormModal({
 
   useEffect(() => {
     if (visible) {
+      setSelectedDate(mealPlan?.date ?? date);
+      setShowDatePicker(false);
       if (mealPlan) {
         setMealType(mealPlan.mealType);
         setMenuName(mealPlan.menuName);
@@ -163,7 +169,7 @@ export function MealPlanFormModal({
       } else {
         await createMealPlan({
           groupId: currentGroupId,
-          date,
+          date: selectedDate,
           mealType,
           menuName: menuName.trim(),
           memo: memo.trim() || undefined,
@@ -250,17 +256,78 @@ export function MealPlanFormModal({
         </View>
 
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
-          {/* 등록 날짜 표시 */}
-          <View style={styles.dateBadge}>
+          {/* 등록 날짜 표시 (탭하면 캘린더 선택) */}
+          <TouchableOpacity
+            style={styles.dateBadge}
+            onPress={() => {
+              const d = new Date(selectedDate + 'T00:00:00');
+              setDpYear(d.getFullYear());
+              setDpMonth(d.getMonth() + 1);
+              setShowDatePicker(!showDatePicker);
+            }}
+          >
             <Ionicons name="calendar-outline" size={16} color={colors.primary} />
             <Text style={styles.dateBadgeText}>
               {(() => {
-                const d = new Date(date + 'T00:00:00');
+                const d = new Date(selectedDate + 'T00:00:00');
                 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
                 return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
               })()}
             </Text>
-          </View>
+            <Ionicons name={showDatePicker ? 'chevron-up' : 'chevron-down'} size={16} color={colors.primary} />
+          </TouchableOpacity>
+
+          {/* 미니 캘린더 날짜 선택기 */}
+          {showDatePicker && (
+            <View style={styles.datePickerContainer}>
+              <View style={styles.dpHeader}>
+                <TouchableOpacity onPress={() => {
+                  if (dpMonth === 1) { setDpYear(y => y - 1); setDpMonth(12); }
+                  else setDpMonth(m => m - 1);
+                }}>
+                  <Ionicons name="chevron-back" size={20} color={colors.text} />
+                </TouchableOpacity>
+                <Text style={styles.dpTitle}>{dpYear}년 {dpMonth}월</Text>
+                <TouchableOpacity onPress={() => {
+                  if (dpMonth === 12) { setDpYear(y => y + 1); setDpMonth(1); }
+                  else setDpMonth(m => m + 1);
+                }}>
+                  <Ionicons name="chevron-forward" size={20} color={colors.text} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.dpWeekRow}>
+                {['일','월','화','수','목','금','토'].map(d => (
+                  <Text key={d} style={styles.dpWeekLabel}>{d}</Text>
+                ))}
+              </View>
+              <View style={styles.dpGrid}>
+                {(() => {
+                  const firstDay = new Date(dpYear, dpMonth - 1, 1).getDay();
+                  const lastDay = new Date(dpYear, dpMonth, 0).getDate();
+                  const cells: (number | null)[] = [
+                    ...Array(firstDay).fill(null),
+                    ...Array.from({ length: lastDay }, (_, i) => i + 1),
+                  ];
+                  const rem = cells.length % 7;
+                  if (rem !== 0) cells.push(...Array(7 - rem).fill(null));
+                  return cells.map((day, idx) => {
+                    if (day === null) return <View key={`e-${idx}`} style={styles.dpCell} />;
+                    const dateStr = `${dpYear}-${String(dpMonth).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const isSelected = selectedDate === dateStr;
+                    return (
+                      <TouchableOpacity
+                        key={dateStr}
+                        style={[styles.dpCell, isSelected && styles.dpCellSelected]}
+                        onPress={() => { setSelectedDate(dateStr); setShowDatePicker(false); }}
+                      >
+                        <Text style={[styles.dpDayText, isSelected && styles.dpDayTextSelected]}>{day}</Text>
+                      </TouchableOpacity>
+                    );
+                  });
+                })()}
+              </View>
+            </View>
+          )}
 
           {/* 템플릿 버튼 영역 (추가 모드에서만 표시) */}
           {!isEditMode && (
@@ -625,6 +692,59 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.primary,
+  },
+  // ── 날짜 선택 캘린더 ──────────────────────────────────────
+  datePickerContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 12,
+    marginBottom: 8,
+  },
+  dpHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  dpTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  dpWeekRow: {
+    flexDirection: 'row',
+    marginBottom: 4,
+  },
+  dpWeekLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  dpGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  dpCell: {
+    width: `${100 / 7}%`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 7,
+  },
+  dpCellSelected: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+  },
+  dpDayText: {
+    fontSize: 13,
+    color: colors.text,
+  },
+  dpDayTextSelected: {
+    color: '#fff',
+    fontWeight: '700',
   },
   // ── 식단 사진 ─────────────────────────────────────────────
   photoPreviewContainer: {
