@@ -27,7 +27,7 @@ interface PresignedUrlRequest {
 }
 
 /** Presigned URL 발급 응답 */
-interface PresignedUrlResponse {
+export interface PresignedUrlResponse {
   /** S3에 PUT 요청할 Presigned URL */
   uploadUrl: string;
   /** 업로드 완료 후 사용할 공개 접근 URL */
