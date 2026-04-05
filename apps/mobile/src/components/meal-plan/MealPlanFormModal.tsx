@@ -30,6 +30,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
 import type { MealTemplate, MealType, RecurRule } from '@mealplan/shared';
@@ -229,6 +230,7 @@ export function MealPlanFormModal({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
+      <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -447,6 +449,7 @@ export function MealPlanFormModal({
           <View style={{ height: 40 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+      </SafeAreaView>
 
       {/* 템플릿 선택 모달 */}
       <TemplatePickerModal
