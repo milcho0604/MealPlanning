@@ -11,12 +11,12 @@ import {
   Alert,
   FlatList,
   Modal,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { MealTemplate } from '@mealplan/shared';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
