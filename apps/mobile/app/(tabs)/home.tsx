@@ -113,8 +113,8 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // 그룹이 없으면 안내 화면 표시 (훅 호출 이후에 체크)
-  if (!currentGroupId) return <NoGroupView />;
+  // 그룹이 하나도 없으면 안내 화면 표시
+  if (groups.length === 0) return <NoGroupView />;
 
   // 선택된 날짜의 식단만 필터링
   const selectedMealPlans = (allMealPlans ?? []).filter((mp) => mp.date === selectedDate);
@@ -185,6 +185,12 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.groupFilterRow}
         >
+          <TouchableOpacity
+            style={[styles.groupChip, !currentGroupId && { backgroundColor: colors.text, borderColor: colors.text }]}
+            onPress={() => setCurrentGroupId(null)}
+          >
+            <Text style={[styles.groupChipText, !currentGroupId && { color: '#fff' }]}>전체</Text>
+          </TouchableOpacity>
           {groups.map((g) => {
             const isSelected = g.id === currentGroupId;
             return (

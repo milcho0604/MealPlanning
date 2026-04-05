@@ -83,7 +83,7 @@ export function MealPlanFormModal({
   initialMealType = 'breakfast',
   mealPlan,
 }: MealPlanFormModalProps) {
-  const { currentGroupId } = useGroupStore();
+  const { currentGroupId, groups } = useGroupStore();
   const { createMealPlan, updateMealPlan, isCreating, isUpdating } = useMealPlanMutation();
   const { saveTemplate, isSaving } = useTemplateMutation();
   const {
@@ -143,8 +143,9 @@ export function MealPlanFormModal({
       Alert.alert('입력 오류', '메뉴 이름을 입력해주세요.');
       return;
     }
-    if (!currentGroupId) {
-      Alert.alert('오류', '그룹을 선택해주세요.');
+    const targetGroupId = currentGroupId ?? groups[0]?.id;
+    if (!targetGroupId) {
+      Alert.alert('오류', '그룹을 먼저 생성해주세요.');
       return;
     }
 
@@ -167,7 +168,7 @@ export function MealPlanFormModal({
         });
       } else {
         await createMealPlan({
-          groupId: currentGroupId,
+          groupId: targetGroupId,
           date: selectedDate,
           mealType,
           menuName: menuName.trim(),

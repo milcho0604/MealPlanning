@@ -28,7 +28,7 @@ interface GroupState {
   /** 내 그룹 목록 로드 (로그인 후, 그룹 변경 후 호출) */
   loadGroups: () => Promise<void>;
   /** 활성 그룹 변경 */
-  setCurrentGroupId: (groupId: string) => void;
+  setCurrentGroupId: (groupId: string | null) => void;
   /** 그룹 생성 후 목록 갱신 및 새 그룹 선택 */
   createGroup: (name: string, color?: string) => Promise<MyGroup>;
   /** 기본 그룹 설정 (앱 시작 시 자동 선택) */

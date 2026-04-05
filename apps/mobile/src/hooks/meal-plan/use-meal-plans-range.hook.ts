@@ -18,16 +18,23 @@ function toDateString(date: Date): string {
 }
 
 export function useMealPlansRange(from: string | null, to: string | null) {
-  const { currentGroupId } = useGroupStore();
+  const { currentGroupId, groups } = useGroupStore();
 
-  // 기본값: from이 없으면 2년 전부터, to가 없으면 오늘까지
   const actualFrom = from ?? toDateString(new Date(new Date().setFullYear(new Date().getFullYear() - 2)));
   const actualTo = to ?? toDateString(new Date());
 
   return useQuery({
-    queryKey: ['meal-plans-range', currentGroupId, actualFrom, actualTo],
-    queryFn: () =>
-      mealPlanService.getList({ groupId: currentGroupId ?? '', from: actualFrom, to: actualTo }),
-    enabled: !!currentGroupId,
+    queryKey: ['meal-plans-range', currentGroupId ?? 'all', actualFrom, actualTo],
+    queryFn: async () => {
+      if (currentGroupId) {
+        return mealPlanService.getList({ groupId: currentGroupId, from: actualFrom, to: actualTo });
+      }
+      // 전체 그룹 병렬 조회 후 합치기
+      const results = await Promise.all(
+        groups.map((g) => mealPlanService.getList({ groupId: g.id, from: actualFrom, to: actualTo })),
+      );
+      return results.flat();
+    },
+    enabled: groups.length > 0,
   });
 }

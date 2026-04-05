@@ -139,7 +139,7 @@ export default function CalendarScreen() {
     setEditingMealPlan(null);
   };
 
-  if (!currentGroupId) return <NoGroupView />;
+  if (groups.length === 0) return <NoGroupView />;
   if (isLoading) return <SkeletonLoader rows={5} />;
 
   return (
@@ -169,6 +169,13 @@ export default function CalendarScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.groupFilterRow}
         >
+          {/* 전체 그룹 */}
+          <TouchableOpacity
+            style={[styles.groupChip, !currentGroupId && { backgroundColor: colors.text, borderColor: colors.text }]}
+            onPress={() => setCurrentGroupId(null)}
+          >
+            <Text style={[styles.groupChipText, !currentGroupId && { color: '#fff' }]}>전체</Text>
+          </TouchableOpacity>
           {groups.map((g) => {
             const isSelected = g.id === currentGroupId;
             return (
