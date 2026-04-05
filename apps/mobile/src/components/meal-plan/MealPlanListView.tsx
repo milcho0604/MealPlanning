@@ -22,6 +22,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
+import { useMealPlansRange } from '../../hooks/meal-plan/use-meal-plans-range.hook';
 import { MealPlanCard } from './MealPlanCard';
 import { colors } from '../../constants/colors';
 
@@ -62,11 +63,8 @@ function getStartDate(period: PeriodFilter): string | null {
 }
 
 interface MealPlanListViewProps {
-  mealPlans: MealPlanWithUser[];
   onEdit: (mealPlan: MealPlanWithUser) => void;
   onDelete: (id: string) => void;
-  refreshing: boolean;
-  onRefresh: () => void;
 }
 
 /** 날짜 섹션 헤더 + 식단 카드를 하나의 리스트로 표현하기 위한 타입 */
@@ -75,16 +73,21 @@ type ListItem =
   | { type: 'meal'; data: MealPlanWithUser };
 
 export function MealPlanListView({
-  mealPlans,
   onEdit,
   onDelete,
-  refreshing,
-  onRefresh,
 }: MealPlanListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [period, setPeriod] = useState<PeriodFilter>('all');
+  const [period, setPeriod] = useState<PeriodFilter>('1m');
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
+
+  /** 기간 필터에 따른 API 조회 범위 계산 */
+  const queryFrom = period === 'custom' ? (customFrom || null) : getStartDate(period);
+  const queryTo = period === 'custom' ? (customTo || null) : null;
+
+  const { data: mealPlans = [], isLoading, refetch } = useMealPlansRange(queryFrom, queryTo);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [tempFrom, setTempFrom] = useState('');
   const [tempTo, setTempTo] = useState('');
@@ -93,23 +96,9 @@ export function MealPlanListView({
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1);
 
-  /** 기간 + 검색어로 필터링된 식단 목록 */
+  /** 검색어로 필터링된 식단 목록 (기간은 API에서 처리) */
   const filteredMealPlans = useMemo(() => {
     let filtered = [...mealPlans];
-
-    // 기간 필터
-    if (period === 'custom' && customFrom) {
-      filtered = filtered.filter((mp) => mp.date >= customFrom);
-    }
-    if (period === 'custom' && customTo) {
-      filtered = filtered.filter((mp) => mp.date <= customTo);
-    }
-    if (period !== 'all' && period !== 'custom') {
-      const startDate = getStartDate(period);
-      if (startDate) {
-        filtered = filtered.filter((mp) => mp.date >= startDate);
-      }
-    }
 
     // 검색 필터 (메뉴명, 메모)
     if (searchQuery.trim()) {
@@ -125,7 +114,7 @@ export function MealPlanListView({
     filtered.sort((a, b) => b.date.localeCompare(a.date));
 
     return filtered;
-  }, [mealPlans, searchQuery, period, customFrom, customTo]);
+  }, [mealPlans, searchQuery]);
 
   /** FlatList에 넘길 데이터: 날짜 헤더 + 식단 카드 */
   const listItems = useMemo(() => {

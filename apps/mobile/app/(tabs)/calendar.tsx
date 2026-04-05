@@ -161,11 +161,8 @@ export default function CalendarScreen() {
       {/* ── 리스트 뷰 ── */}
       {viewMode === 'list' ? (
         <MealPlanListView
-          mealPlans={mealPlans ?? []}
           onEdit={handleEdit}
           onDelete={handleDelete}
-          refreshing={refreshing}
-          onRefresh={onRefresh}
         />
       ) : (
       <ScrollView
