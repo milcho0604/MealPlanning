@@ -24,6 +24,7 @@ Claude Code가 이 프로젝트를 작업할 때 참고하는 설정 및 규칙 
 | ORM | Prisma v5 |
 | 상태관리 | Zustand + React Query v5 |
 | 모노레포 | Turborepo + npm workspaces |
+| 이미지 저장소 | AWS S3 (Presigned URL) |
 | 이메일 | SendGrid HTTP API (우선) / Resend (2순위) / Gmail SMTP (폴백) |
 | 빌드 | Expo EAS |
 | 배포 | Render.com (백엔드) |
@@ -43,14 +44,14 @@ MealPlanning/
 │       │   ├── components/  # 공통/도메인별 컴포넌트
 │       │   ├── hooks/       # React Query 훅, 커스텀 훅
 │       │   ├── services/    # API 서비스 레이어
-│       │   ├── stores/      # Zustand 스토어 (auth, group)
+│       │   ├── stores/      # Zustand 스토어 (auth, group, view-mode)
 │       │   ├── utils/       # 유틸리티
 │       │   └── constants/   # 색상, 스토리지 키 등
 │       └── assets/
 ├── packages/
 │   ├── api/             # NestJS 백엔드
 │   │   ├── src/
-│   │   │   ├── modules/ # auth, meal-plans, ingredients, groups, shopping, notifications, mail
+│   │   │   ├── modules/ # auth, meal-plans, ingredients, groups, shopping, notifications, mail, upload
 │   │   │   ├── common/  # guards, decorators, filters, interceptors
 │   │   │   └── prisma/
 │   │   └── prisma/
@@ -71,12 +72,15 @@ MealPlanning/
 - 회원 탈퇴 (Soft Delete, 90일 이내 복구 가능)
 
 ### 식단 관리
-- 식단 CRUD (아침/점심/저녁/간식)
+- 식단 CRUD (아침/점심/저녁/간식) + 식사 유형 수정 가능
 - 월간 캘린더 뷰 + 좌우 스와이프 월 이동
+- 리스트 뷰 (전체 식단 날짜순 가상 스크롤 + 검색 + 기간 필터)
+- 캘린더/리스트 뷰 전환 탭 (선택 상태 Zustand로 기억)
 - 주간 홈 뷰 + 메뉴명 검색
-- 반복 등록 (매주/매월/특정 날짜 선택)
+- 여러 날짜에 동일 식단 일괄 등록 (날짜 선택)
 - 식단 템플릿 저장/불러오기
-- 식단 사진 첨부 (백엔드 준비 완료, 이미지 호스팅 연결 필요)
+- 식단 사진 첨부 (S3 Presigned URL + 자동 리사이즈 1080px + JPEG 압축)
+- 식단 추가/수정 시 날짜 표시 + 캘린더로 날짜 변경 가능
 - 식단 통계 API (자주 먹는 메뉴 TOP 5, 월별 식사 분포)
 
 ### 냉장고 (재료 관리)
@@ -92,15 +96,20 @@ MealPlanning/
 - 카카오톡/문자 등으로 공유
 
 ### 그룹
-- 그룹 생성 + 6자리 초대 코드
+- 그룹 생성 + 6자리 초대 코드 + 그룹 색상 선택 (10색 팔레트)
 - 초대 코드 공유 (모든 멤버 가능) + 딥링크
 - 멤버 관리 UI (역할 변경, 강퇴)
 - 역할: owner / editor / viewer
+- 그룹별 식단 필터 (드롭다운 셀렉터) + 전체 그룹 보기
+- 기본 그룹 설정 (SecureStore에 저장, 앱 시작 시 자동 선택)
+- 캘린더 dot / 식단 카드에 그룹 색상 표시
+- 리스트 뷰에서 사용자(등록자) 필터
 
 ### 설정
-- 프로필 수정 (이름 변경)
-- 알림 ON/OFF 토글
-- 테마 설정 (라이트/다크/시스템 - UI만, 전체 적용 미완)
+- 프로필 수정 (이름 변경 - iOS/Android 모두 커스텀 모달)
+- 알림 ON/OFF 토글 (SecureStore에 저장, 앱 재시작 시 유지)
+- 테마 설정 (라이트/다크/시스템 - SecureStore에 저장, 전체 적용 미완)
+- 기본 그룹 설정 (별 아이콘)
 
 ### 알림 (Cron)
 - 매일 7:30 KST: 오늘 식단 알림
@@ -161,6 +170,11 @@ MealPlanning/
 | DELETE | /:id | 재료 삭제 | JWT |
 | PATCH | /:id/consume | 소진 처리 | JWT |
 
+### Upload (`/v1/upload`)
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| POST | /presigned-url | S3 업로드용 Presigned URL 발급 | JWT |
+
 ### Shopping (`/v1/shopping`)
 | Method | Path | 설명 | 인증 |
 |--------|------|------|------|
@@ -210,8 +224,12 @@ JWT_EXPIRES_IN=1h
 JWT_REFRESH_EXPIRES_IN=30d
 API_PORT=3300
 GOOGLE_CLIENT_ID        # Google 웹 클라이언트 ID
-GOOGLE_IOS_CLIENT_ID    # Google iOS 클라이언트 ID (⏳ Render에 추가 필요)
-GOOGLE_ANDROID_CLIENT_ID # Google Android 클라이언트 ID (⏳ Render에 추가 필요)
+GOOGLE_IOS_CLIENT_ID    # Google iOS 클라이언트 ID
+GOOGLE_ANDROID_CLIENT_ID # Google Android 클라이언트 ID
+AWS_ACCESS_KEY_ID       # AWS S3 액세스 키
+AWS_SECRET_ACCESS_KEY   # AWS S3 시크릿 키
+AWS_REGION=ap-northeast-2
+AWS_S3_BUCKET           # S3 버킷 이름
 SENDGRID_API_KEY        # SendGrid API 키 (이메일 발송 최우선)
 RESEND_API_KEY          # Resend API 키 (2순위)
 MAIL_USER=hello.mealplan@gmail.com
@@ -291,41 +309,47 @@ cd apps/mobile && npx expo start --web
 
 ## 알려진 이슈 / TODO
 
-### 빌드 후 테스트 필요 (4월 1일 EAS 무료 리셋)
-- [x] 앱 크래시 해결 확인 (metro.config.js + App.js 제거 완료)
-- [x] 카카오 로그인 네이티브 크래시 → `initializeKakaoSDK()` 미호출이 원인, `_layout.tsx`에서 앱 시작 시 초기화 추가로 수정
-- [ ] 전체 기능 QA
-
-### Render 환경변수
-- [x] `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `AWS_S3_BUCKET` (S3 사진 업로드용)
-- [x] `GOOGLE_IOS_CLIENT_ID` = `88190697802-1ukeekh66h57e8e62q79lec1no9oscjp.apps.googleusercontent.com`
-- [x] `GOOGLE_ANDROID_CLIENT_ID` = `88190697802-un49mjuvlq36mmkfjcksqfj3q25kieti.apps.googleusercontent.com`
-
 ### 완료된 기능
-- [x] 식단 사진 업로드 (S3 Presigned URL + 모바일 리사이즈/압축 + 카드 미리보기)
-- [x] 키보드가 입력창 가리는 이슈 수정 (reactivate, sign-in, sign-up)
-- [x] SafeAreaView 적용 (상단 노치/상태바 겹침 수정)
+- [x] 앱 크래시 해결 (metro.config.js + App.js 제거)
+- [x] 카카오 로그인 크래시 수정 (`initializeKakaoSDK()` 추가)
+- [x] 식단 사진 업로드 (S3 Presigned URL + 리사이즈/압축 + 카드 미리보기)
+- [x] 키보드가 입력창 가리는 이슈 수정 (전체 화면 + Android `softwareKeyboardLayoutMode: pan`)
+- [x] SafeAreaView 전체 적용 (`react-native-safe-area-context`로 교체, 모달 포함)
 - [x] 캘린더 헤더 레이아웃 수정 (`< 2026년 4월 >` 한 줄)
+- [x] 캘린더/리스트 뷰 전환 + 리스트 뷰 (가상 스크롤, 검색, 기간 필터, 사용자 필터)
+- [x] 식단 수정 시 식사 유형 변경 가능
+- [x] 식단 추가/수정 시 날짜 표시 + 캘린더로 날짜 변경
+- [x] 그룹 색상 선택 (10색 팔레트)
+- [x] 그룹 드롭다운 필터 (전체 그룹 보기 포함)
+- [x] 기본 그룹 설정 (SecureStore 저장)
+- [x] 프로필 이름 변경 (Android 대응 커스텀 모달)
+- [x] 테마/알림 설정 영속화 (SecureStore 저장)
+- [x] 반복 식단 UI 정리 (매주/매월 미구현 옵션 숨김)
+
+### Render 환경변수 (전체 등록 완료)
+- [x] `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `AWS_S3_BUCKET`
+- [x] `GOOGLE_IOS_CLIENT_ID` / `GOOGLE_ANDROID_CLIENT_ID`
 
 ### 성능 최적화 (완료)
-- [x] React Query 캐시 최적화: `gcTime` 30분, `refetchOnMount: false` → 탭 전환 시 캐시된 데이터 즉시 표시
-- [x] API 토큰 메모리 캐싱: 매 요청마다 SecureStore I/O 제거 → 요청 지연 감소
-- [x] FlatList 최적화: `removeClippedSubviews`, `maxToRenderPerBatch`, `windowSize` 추가 → 리스트 스크롤 버벅임 개선
-- [x] 캘린더 `useMemo` 적용: 그리드 셀/식단맵 메모이제이션 → 월 이동 시 불필요한 재계산 방지
-- [x] API 타임아웃 60초→90초 (Render 무료 플랜 콜드 스타트 대응)
+- [x] React Query 캐시: `gcTime` 30분, `refetchOnMount: false`
+- [x] API 토큰 메모리 캐싱 (SecureStore I/O 제거)
+- [x] FlatList: `removeClippedSubviews`, `maxToRenderPerBatch`, `windowSize`
+- [x] 캘린더 `useMemo` (그리드 셀/식단맵 메모이제이션)
+- [x] API 타임아웃 90초 (Render 콜드 스타트 대응)
+- [x] S3 삭제 실패 시 3회 재시도 (지수 백오프)
 
 #### 속도 관련 참고 (Render 무료 플랜 한계)
 > Render 무료 플랜은 15분 비활성 시 서버가 슬립 모드로 전환되며,
 > 다음 요청 시 콜드 스타트에 **20~40초**가 소요됩니다.
-> 이는 코드 최적화로 해결 불가하며, 다음 방법으로만 개선 가능:
 > - **keep-alive 핑**: `.github/workflows/keep-alive.yml`로 4분마다 핑 전송 중 (슬립 방지)
 > - **Render 유료 플랜** ($7/월): 서버 항상 활성 상태 유지
-> - 첫 요청 후에는 정상 속도 (50~200ms)
 
 ### 미완료 기능
 - [ ] 다크 모드 전체 적용 (`useColors()` 훅으로 각 화면 전환)
 - [ ] 햅틱 피드백 (삭제/체크/저장 시 진동)
 - [ ] 프로필 사진 변경 (PATCH /auth/profile API 준비 완료)
+- [ ] 그룹 색상 수정 (PATCH API 추가 필요)
+- [ ] 반복 식단 자동 생성 (매주/매월 Cron)
 
 ### 배포
 - [ ] APK 설치 후 실제 기기 테스트
