@@ -221,17 +221,6 @@ export default function SettingsScreen() {
                 <View style={styles.groupItemLeft}>
                   {/* 그룹 색상 인디케이터 */}
                   <View style={[styles.groupDot, { backgroundColor: group.color ?? colors.primary }]} />
-                  {/* 기본 그룹 별 표시 */}
-                  <TouchableOpacity
-                    onPress={() => {
-                      setCurrentGroupId(group.id);
-                      useGroupStore.getState().setDefaultGroupId(group.id);
-                      Alert.alert('기본 그룹 설정', `"${group.name}"이(가) 기본 그룹으로 설정되었습니다.`);
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                  >
-                    <Ionicons name={isActive ? 'star' : 'star-outline'} size={16} color={isActive ? colors.primary : colors.border} />
-                  </TouchableOpacity>
                   <View>
                     <Text style={[styles.groupName, isActive && styles.groupNameActive]} numberOfLines={1}>
                       {group.name}
@@ -242,8 +231,18 @@ export default function SettingsScreen() {
                   </View>
                 </View>
 
-                {/* 초대 + 멤버 관리 */}
+                {/* 기본 그룹 설정 + 초대 + 멤버 관리 */}
                 <View style={styles.inviteBtns}>
+                  <TouchableOpacity
+                    style={styles.inviteBtn}
+                    onPress={() => {
+                      setCurrentGroupId(group.id);
+                      useGroupStore.getState().setDefaultGroupId(group.id);
+                      Alert.alert('기본 그룹 설정', `"${group.name}"이(가) 기본 그룹으로 설정되었습니다.`);
+                    }}
+                  >
+                    <Ionicons name={isActive ? 'star' : 'star-outline'} size={15} color={isActive ? colors.primary : colors.border} />
+                  </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.inviteBtn}
                     onPress={async () => {
