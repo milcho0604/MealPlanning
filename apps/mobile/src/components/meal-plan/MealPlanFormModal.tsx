@@ -250,6 +250,18 @@ export function MealPlanFormModal({
         </View>
 
         <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+          {/* 등록 날짜 표시 */}
+          <View style={styles.dateBadge}>
+            <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+            <Text style={styles.dateBadgeText}>
+              {(() => {
+                const d = new Date(date + 'T00:00:00');
+                const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+                return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekdays[d.getDay()]})`;
+              })()}
+            </Text>
+          </View>
+
           {/* 템플릿 버튼 영역 (추가 모드에서만 표시) */}
           {!isEditMode && (
             <View style={styles.templateRow}>
@@ -597,6 +609,22 @@ const styles = StyleSheet.create({
   dateChipTextSelected: {
     color: colors.primary,
     fontWeight: '600',
+  },
+  // ── 등록 날짜 뱃지 ──────────────────────────────────────────
+  dateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+  dateBadgeText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
   },
   // ── 식단 사진 ─────────────────────────────────────────────
   photoPreviewContainer: {
