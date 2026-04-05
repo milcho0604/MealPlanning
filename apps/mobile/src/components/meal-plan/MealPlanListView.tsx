@@ -9,6 +9,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   FlatList,
   Modal,
   Platform,
@@ -30,10 +31,10 @@ import { colors } from '../../constants/colors';
 type PeriodFilter = 'all' | '1m' | '3m' | '6m' | 'custom';
 
 const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
-  { value: 'all', label: '전체' },
   { value: '1m', label: '1개월' },
   { value: '3m', label: '3개월' },
   { value: '6m', label: '6개월' },
+  { value: 'all', label: '전체' },
   { value: 'custom', label: '직접 설정' },
 ];
 
@@ -260,12 +261,19 @@ export function MealPlanListView({
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="document-text-outline" size={48} color={colors.border} />
-            <Text style={styles.emptyText}>
-              {searchQuery ? '검색 결과가 없습니다.' : '등록된 식단이 없습니다.'}
-            </Text>
-          </View>
+          isLoading ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={styles.emptyText}>식단을 불러오는 중...</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="document-text-outline" size={48} color={colors.border} />
+              <Text style={styles.emptyText}>
+                {searchQuery ? '검색 결과가 없습니다.' : '등록된 식단이 없습니다.'}
+              </Text>
+            </View>
+          )
         }
       />
 
