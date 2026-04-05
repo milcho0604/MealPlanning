@@ -10,7 +10,7 @@
  * 4. 계정: 로그아웃
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -33,6 +33,8 @@ import { useGroupStore } from '../../src/stores/group.store';
 import { authService } from '../../src/services/auth.service';
 import { groupService } from '../../src/services/group.service';
 import { apiClient } from '../../src/services/api.client';
+import { storage } from '../../src/utils/storage';
+import { STORAGE_KEYS } from '../../src/constants/storage-keys';
 import { colors } from '../../src/constants/colors';
 
 /** 테마 모드 */
@@ -43,7 +45,7 @@ type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editNa
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
-  const [themeMode, setThemeMode] = useState<ThemeMode>('light');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
     { value: 'light', label: '라이트' },
     { value: 'dark', label: '다크' },
@@ -51,6 +53,22 @@ export default function SettingsScreen() {
   ];
   const { groups, currentGroupId, setCurrentGroupId, createGroup, joinGroup, loadGroups } =
     useGroupStore();
+
+  // 테마/알림 설정을 스토리지에서 불러오기
+  useEffect(() => {
+    (async () => {
+      const savedTheme = await storage.getItem(STORAGE_KEYS.THEME_MODE);
+      if (savedTheme) setThemeModeState(savedTheme as ThemeMode);
+      const savedNotif = await storage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
+      if (savedNotif !== null) setNotificationsEnabled(savedNotif === 'true');
+    })();
+  }, []);
+
+  /** 테마 변경 시 스토리지에 저장 */
+  const setThemeMode = (mode: ThemeMode) => {
+    setThemeModeState(mode);
+    storage.setItem(STORAGE_KEYS.THEME_MODE, mode);
+  };
 
   // ── 모달 상태 ──────────────────────────────────────────
   const [modalType, setModalType] = useState<GroupModalType>(null);
@@ -304,6 +322,7 @@ export default function SettingsScreen() {
             value={notificationsEnabled}
             onValueChange={(val) => {
               setNotificationsEnabled(val);
+              storage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, String(val));
               if (!val) {
                 // 알림 비활성화: pushToken을 null로 설정
                 apiClient.patch('/auth/push-token', { pushToken: '' }).catch(() => {});

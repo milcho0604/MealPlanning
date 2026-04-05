@@ -140,16 +140,24 @@ export class UploadService {
     const key = this.extractKeyFromUrl(fileUrl);
     if (!key) return;
 
-    try {
-      await this.s3.send(
-        new DeleteObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-        }),
-      );
-    } catch {
-      // 삭제 실패 시 로그만 남기고 진행 (사용자 경험에 영향 없도록)
-      console.warn(`S3 파일 삭제 실패: ${key}`);
+    // 최대 3회 재시도 (지수 백오프)
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await this.s3.send(
+          new DeleteObjectCommand({
+            Bucket: this.bucket,
+            Key: key,
+          }),
+        );
+        return; // 성공 시 종료
+      } catch {
+        if (attempt < 2) {
+          // 재시도 전 대기 (500ms, 1000ms)
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        } else {
+          console.warn(`S3 파일 삭제 실패 (3회 시도): ${key}`);
+        }
+      }
     }
   }
 

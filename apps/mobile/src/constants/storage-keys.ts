@@ -12,4 +12,8 @@ export const STORAGE_KEYS = {
   REFRESH_TOKEN: 'mealplan_refresh_token',
   /** 로그인 사용자 정보 (JSON 문자열) */
   USER: 'mealplan_user',
+  /** 테마 모드 (light/dark/system) */
+  THEME_MODE: 'mealplan_theme_mode',
+  /** 알림 활성화 여부 (true/false) */
+  NOTIFICATIONS_ENABLED: 'mealplan_notifications_enabled',
 } as const;

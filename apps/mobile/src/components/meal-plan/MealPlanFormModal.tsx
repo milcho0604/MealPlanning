@@ -135,7 +135,8 @@ export function MealPlanFormModal({
         clearImage();
       }
     }
-  }, [visible, mealPlan, initialMealType]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, mealPlan, initialMealType, date]);
 
   const handleSubmit = async () => {
     if (!menuName.trim()) {

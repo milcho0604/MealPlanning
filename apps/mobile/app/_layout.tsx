@@ -43,9 +43,9 @@ export default function RootLayout() {
 
     // 카카오 SDK 초기화 (네이티브에서만 실행, 웹은 불필요)
     if (Platform.OS !== 'web') {
-      initializeKakaoSDK('e853e6f283f75a8256546445c2add6d1').catch((err) =>
-        console.warn('카카오 SDK 초기화 실패:', err),
-      );
+      initializeKakaoSDK('e853e6f283f75a8256546445c2add6d1').catch(() => {
+        // 카카오 SDK 초기화 실패 시 무시 (로그인 시점에 에러 처리)
+      });
     }
   }, [initialize]);
 
