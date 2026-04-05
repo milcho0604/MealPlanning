@@ -39,7 +39,7 @@ import { colors } from '../../src/constants/colors';
 type ThemeMode = 'light' | 'dark' | 'system';
 
 /** 모달 타입 */
-type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | null;
+type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editName' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
@@ -60,6 +60,7 @@ export default function SettingsScreen() {
   const [newPw, setNewPw] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [nameInput, setNameInput] = useState('');
   const [members, setMembers] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupRole, setSelectedGroupRole] = useState<string>('');
@@ -170,17 +171,8 @@ export default function SettingsScreen() {
           <View style={styles.profileInfo}>
             <TouchableOpacity
               onPress={() => {
-                if (typeof Alert.prompt === 'function') {
-                  Alert.prompt('이름 변경', '새 이름을 입력하세요', async (newName) => {
-                    if (!newName?.trim()) return;
-                    try {
-                      const updated = await authService.updateProfile({ name: newName.trim() });
-                      useAuthStore.setState({ user: updated });
-                    } catch { Alert.alert('오류', '이름 변경에 실패했습니다.'); }
-                  }, 'plain-text', user?.name);
-                } else {
-                  Alert.alert('이름 변경', '설정에서 프로필을 수정할 수 있습니다.');
-                }
+                setNameInput(user?.name ?? '');
+                setModalType('editName');
               }}
             >
               <Text style={styles.profileName}>{user?.name} <Ionicons name="pencil" size={13} color={colors.textSecondary} /></Text>
@@ -341,7 +333,7 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setModalType(null)}
       >
-        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>새 그룹 만들기</Text>
             <TextInput
@@ -381,7 +373,7 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setModalType(null)}
       >
-        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>초대 코드로 참여</Text>
             <TextInput
@@ -422,7 +414,7 @@ export default function SettingsScreen() {
         animationType="fade"
         onRequestClose={() => setModalType(null)}
       >
-        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={styles.dialog}>
             <Text style={styles.dialogTitle}>비밀번호 변경</Text>
             <TextInput
@@ -467,6 +459,52 @@ export default function SettingsScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* ── 이름 변경 모달 ── */}
+      <Modal
+        visible={modalType === 'editName'}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalType(null)}
+      >
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>이름 변경</Text>
+            <TextInput
+              style={styles.dialogInput}
+              value={nameInput}
+              onChangeText={setNameInput}
+              placeholder="새 이름을 입력하세요"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={20}
+              autoFocus
+            />
+            <View style={styles.dialogButtons}>
+              <TouchableOpacity style={styles.dialogCancelBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.dialogCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dialogConfirmBtn, isSubmitting && styles.disabledBtn]}
+                onPress={async () => {
+                  if (!nameInput.trim()) { Alert.alert('입력 오류', '이름을 입력해주세요.'); return; }
+                  setIsSubmitting(true);
+                  try {
+                    const updated = await authService.updateProfile({ name: nameInput.trim() });
+                    useAuthStore.setState({ user: updated });
+                    Alert.alert('완료', '이름이 변경되었습니다.');
+                    setModalType(null);
+                  } catch {
+                    Alert.alert('오류', '이름 변경에 실패했습니다.');
+                  } finally { setIsSubmitting(false); }
+                }}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.dialogConfirmText}>{isSubmitting ? '변경 중...' : '변경'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* ── 멤버 관리 모달 ── */}
       <Modal
         visible={modalType === 'members'}
