@@ -155,7 +155,7 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
     >
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         {/* 헤더 */}
         <View style={styles.header}>
