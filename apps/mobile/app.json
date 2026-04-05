@@ -32,7 +32,6 @@
       "expo-font",
       "expo-apple-authentication",
       "expo-image-picker",
-      "expo-image-manipulator",
       [
         "@react-native-google-signin/google-signin",
         {
