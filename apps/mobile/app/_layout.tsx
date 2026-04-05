@@ -26,8 +26,10 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
-      retry: 3,
-      staleTime: 1000 * 60 * 5,
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5분간 fresh 상태 유지 (재호출 안 함)
+      gcTime: 1000 * 60 * 30,   // 30분간 캐시 유지 (탭 전환 시 즉시 표시)
+      refetchOnMount: false,     // 마운트 시 자동 재호출 방지 (캐시 우선)
     },
   },
 });
