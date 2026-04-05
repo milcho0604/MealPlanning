@@ -257,6 +257,9 @@ export default function ShoppingScreen() {
               return renderItem({ item });
             }}
             contentContainerStyle={styles.listContent}
+            removeClippedSubviews
+            maxToRenderPerBatch={10}
+            windowSize={5}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
             ItemSeparatorComponent={() => <View style={styles.separator} />}
           />
