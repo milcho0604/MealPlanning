@@ -80,7 +80,7 @@ function formatDateHeader(date: Date): string {
 export default function HomeScreen() {
   const today = getTodayString();
   const weekDates = getWeekDates();
-  const { currentGroupId } = useGroupStore();
+  const { groups, currentGroupId, setCurrentGroupId } = useGroupStore();
 
   // 선택된 날짜 (기본값: 오늘, 없으면 이번 주 월요일)
   const defaultDate = weekDates.find((d) => toDateString(d) === today) ? today : toDateString(weekDates[0]);
@@ -177,6 +177,31 @@ export default function HomeScreen() {
           <Ionicons name={isSearching ? 'close' : 'search'} size={22} color={colors.text} />
         </TouchableOpacity>
       </View>
+
+      {/* 그룹 필터 칩 */}
+      {groups.length > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.groupFilterRow}
+        >
+          {groups.map((g) => {
+            const isSelected = g.id === currentGroupId;
+            return (
+              <TouchableOpacity
+                key={g.id}
+                style={[styles.groupChip, isSelected && { backgroundColor: g.color ?? colors.primary, borderColor: g.color ?? colors.primary }]}
+                onPress={() => setCurrentGroupId(g.id)}
+              >
+                <View style={[styles.groupChipDot, { backgroundColor: isSelected ? '#fff' : (g.color ?? colors.primary) }]} />
+                <Text style={[styles.groupChipText, isSelected && { color: '#fff' }]} numberOfLines={1}>
+                  {g.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      )}
 
       {/* 검색바 */}
       {isSearching && (
@@ -383,6 +408,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 6,
+  },
+  // ── 그룹 필터 ───────────────────────────────────────────
+  groupFilterRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 8,
+  },
+  groupChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  groupChipDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  groupChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.text,
+    maxWidth: 100,
   },
   // ── 검색 ────────────────────────────────────────────────
   searchBar: {

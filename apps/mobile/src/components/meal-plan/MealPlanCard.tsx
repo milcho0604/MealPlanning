@@ -23,9 +23,11 @@ interface MealPlanCardProps {
   mealPlan: MealPlanWithUser;
   onEdit: (mealPlan: MealPlanWithUser) => void;
   onDelete: (id: string) => void;
+  /** 그룹 색상 (카드 왼쪽 바에 표시) */
+  groupColor?: string;
 }
 
-export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) {
+export function MealPlanCard({ mealPlan, onEdit, onDelete, groupColor }: MealPlanCardProps) {
   const handleDelete = () => {
     Alert.alert('식단 삭제', `"${mealPlan.menuName}"을(를) 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
@@ -34,7 +36,7 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete }: MealPlanCardProps) 
   };
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, groupColor && { borderLeftWidth: 4, borderLeftColor: groupColor }]}>
       {/* 상단: 뱃지 + 수정 */}
       <View style={styles.header}>
         <View style={styles.badgeRow}>
