@@ -23,11 +23,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
+import { MealPlanListView } from '../../src/components/meal-plan/MealPlanListView';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
 import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
 import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useMealPlanMutation } from '../../src/hooks/meal-plan/use-meal-plan-mutation.hook';
 import { useGroupStore } from '../../src/stores/group.store';
+import { useViewModeStore } from '../../src/stores/view-mode.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 
@@ -47,6 +49,7 @@ const TODAY = new Date().toISOString().split('T')[0];
 export default function CalendarScreen() {
   const now = new Date();
   const { currentGroupId } = useGroupStore();
+  const { viewMode, setViewMode } = useViewModeStore();
 
   // ── 현재 보여주는 연/월 상태 ───────────────────────────
   const [year, setYear] = useState(now.getFullYear());
@@ -137,6 +140,34 @@ export default function CalendarScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* ── 뷰 전환 탭 ── */}
+      <View style={styles.viewToggle}>
+        <TouchableOpacity
+          style={[styles.viewToggleBtn, viewMode === 'calendar' && styles.viewToggleBtnActive]}
+          onPress={() => setViewMode('calendar')}
+        >
+          <Ionicons name="calendar-outline" size={16} color={viewMode === 'calendar' ? '#fff' : colors.textSecondary} />
+          <Text style={[styles.viewToggleText, viewMode === 'calendar' && styles.viewToggleTextActive]}>캘린더</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.viewToggleBtn, viewMode === 'list' && styles.viewToggleBtnActive]}
+          onPress={() => setViewMode('list')}
+        >
+          <Ionicons name="list-outline" size={16} color={viewMode === 'list' ? '#fff' : colors.textSecondary} />
+          <Text style={[styles.viewToggleText, viewMode === 'list' && styles.viewToggleTextActive]}>리스트</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── 리스트 뷰 ── */}
+      {viewMode === 'list' ? (
+        <MealPlanListView
+          mealPlans={mealPlans ?? []}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      ) : (
       <ScrollView
         stickyHeaderIndices={[0]}
         showsVerticalScrollIndicator={false}
@@ -232,6 +263,7 @@ export default function CalendarScreen() {
           <View style={{ height: 80 }} />
         </View>
       </ScrollView>
+      )}
 
       {/* 추가 FAB */}
       <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
@@ -253,6 +285,38 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  // ── 뷰 전환 탭 ──────────────────────────────────────────
+  viewToggle: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 3,
+  },
+  viewToggleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  viewToggleBtnActive: {
+    backgroundColor: colors.primary,
+  },
+  viewToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  viewToggleTextActive: {
+    color: '#fff',
   },
   // ── 월 헤더 ─────────────────────────────────────────────
   monthHeader: {
