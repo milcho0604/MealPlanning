@@ -348,8 +348,8 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 테마 설정 */}
-        <View style={styles.accountActionBtn}>
+        {/* 테마 설정 - 다크 모드 전체 적용 후 활성화 예정 */}
+        {/* <View style={styles.accountActionBtn}>
           <Ionicons name="moon-outline" size={18} color={colors.text} />
           <Text style={styles.accountActionText}>테마</Text>
           <View style={styles.themeToggle}>
@@ -365,7 +365,7 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </View> */}
 
         {/* 알림 설정 */}
         <View style={styles.accountActionBtn}>
