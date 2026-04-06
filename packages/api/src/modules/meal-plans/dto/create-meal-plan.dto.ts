@@ -10,9 +10,12 @@ import {
   IsBoolean,
   IsDateString,
   IsEnum,
+  IsInt,
   IsOptional,
   IsString,
   IsUrl,
+  Max,
+  Min,
   MinLength,
 } from 'class-validator';
 import type { MealType, RecurRule } from '@mealplan/shared';
@@ -50,6 +53,13 @@ export class CreateMealPlanDto {
   @IsOptional()
   @IsUrl({}, { message: '올바른 URL 형식을 입력해주세요.' })
   recipeUrl?: string;
+
+  @ApiPropertyOptional({ example: 320, description: '칼로리 (kcal)' })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(10000)
+  calories?: number;
 
   @ApiPropertyOptional({ description: '식단 사진 URL' })
   @IsOptional()

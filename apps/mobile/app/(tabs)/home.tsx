@@ -121,6 +121,9 @@ export default function HomeScreen() {
   // 선택된 날짜의 식단만 필터링
   const selectedMealPlans = (allMealPlans ?? []).filter((mp) => mp.date === selectedDate);
 
+  // 선택된 날짜의 총 칼로리
+  const totalCalories = selectedMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0);
+
   /** 수정 버튼 핸들러 */
   const handleEdit = (mealPlan: MealPlanWithUser) => {
     setEditingMealPlan(mealPlan);
@@ -168,7 +171,10 @@ export default function HomeScreen() {
           <Text style={styles.headerTitle}>
             {selectedDate === today ? '오늘의 식단' : '식단'}
           </Text>
-          <Text style={styles.headerDate}>{formatDateHeader(selectedDateObj)}</Text>
+          <Text style={styles.headerDate}>
+            {formatDateHeader(selectedDateObj)}
+            {totalCalories > 0 && `  ·  ${totalCalories}kcal`}
+          </Text>
         </View>
         <TouchableOpacity onPress={() => {
           setIsSearching(!isSearching);

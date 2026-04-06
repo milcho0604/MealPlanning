@@ -104,6 +104,7 @@ export function MealPlanFormModal({
   const [dpMonth, setDpMonth] = useState(new Date().getMonth() + 1);
   const [menuName, setMenuName] = useState('');
   const [memo, setMemo] = useState('');
+  const [caloriesText, setCaloriesText] = useState('');
   const [recipeUrl, setRecipeUrl] = useState('');
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurRule, setRecurRule] = useState<RecurRule>('custom');
@@ -120,6 +121,7 @@ export function MealPlanFormModal({
         setMealType(mealPlan.mealType);
         setMenuName(mealPlan.menuName);
         setMemo(mealPlan.memo ?? '');
+        setCaloriesText(mealPlan.calories ? String(mealPlan.calories) : '');
         setRecipeUrl(mealPlan.recipeUrl ?? '');
         setIsRecurring(mealPlan.isRecurring);
         setRecurRule((mealPlan.recurRule as RecurRule) ?? 'custom');
@@ -128,6 +130,7 @@ export function MealPlanFormModal({
         setMealType(initialMealType);
         setMenuName('');
         setMemo('');
+        setCaloriesText('');
         setRecipeUrl('');
         setIsRecurring(false);
         setRecurRule('custom');
@@ -152,6 +155,7 @@ export function MealPlanFormModal({
     try {
       // photoUrl: 새로 업로드한 URL, 삭제한 경우 null, 변경 없으면 기존값 유지
       const photoUrl = imageUrl ?? undefined;
+      const calories = caloriesText.trim() ? parseInt(caloriesText.trim(), 10) : undefined;
 
       if (mealPlan) {
         await updateMealPlan({
@@ -161,6 +165,7 @@ export function MealPlanFormModal({
             menuName: menuName.trim(),
             memo: memo.trim() || undefined,
             recipeUrl: recipeUrl.trim() || undefined,
+            calories,
             photoUrl: imageUri === null && mealPlan.photoUrl ? null : photoUrl,
             isRecurring,
             recurRule: isRecurring ? recurRule : undefined,
@@ -174,6 +179,7 @@ export function MealPlanFormModal({
           menuName: menuName.trim(),
           memo: memo.trim() || undefined,
           recipeUrl: recipeUrl.trim() || undefined,
+          calories,
           photoUrl,
           isRecurring,
           recurRule: isRecurring ? recurRule : undefined,
@@ -394,6 +400,19 @@ export function MealPlanFormModal({
             multiline
             maxLength={200}
             textAlignVertical="top"
+          />
+
+          {/* 칼로리 */}
+          <Text style={styles.label}>칼로리 (선택)</Text>
+          <TextInput
+            style={styles.input}
+            value={caloriesText}
+            onChangeText={(t) => setCaloriesText(t.replace(/[^0-9]/g, ''))}
+            placeholder="예: 320"
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="number-pad"
+            maxLength={5}
+            returnKeyType="next"
           />
 
           {/* 레시피 URL */}

@@ -292,9 +292,15 @@ export default function CalendarScreen() {
 
         {/* ── 선택된 날짜 식단 목록 ── */}
         <View style={styles.panel}>
-          <Text style={styles.panelTitle}>
-            {month}월 {parseInt(selectedDate.split('-')[2], 10)}일 식단
-          </Text>
+          <View style={styles.panelTitleRow}>
+            <Text style={styles.panelTitle}>
+              {month}월 {parseInt(selectedDate.split('-')[2], 10)}일 식단
+            </Text>
+            {(() => {
+              const total = selectedDateMealPlans.reduce((s, mp) => s + (mp.calories ?? 0), 0);
+              return total > 0 ? <Text style={styles.panelCalorie}>{total}kcal</Text> : null;
+            })()}
+          </View>
 
           {selectedDateMealPlans.length === 0 ? (
             <Text style={styles.panelEmpty}>등록된 식단이 없습니다.</Text>
@@ -523,11 +529,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  panelTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   panelTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: 12,
+  },
+  panelCalorie: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FF6B35',
   },
   panelEmpty: {
     fontSize: 14,

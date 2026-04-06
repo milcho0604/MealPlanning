@@ -45,6 +45,7 @@ const mockMealPlan: MealPlanWithUser = {
   menuName: '비빔밥',
   memo: '맛있는 점심',
   recipeUrl: null,
+  calories: null,
   photoUrl: null,
   isRecurring: false,
   recurRule: null,

@@ -19,6 +19,8 @@ export interface MealPlan {
   menuName: string;
   memo: string | null;
   recipeUrl: string | null;
+  /** 칼로리 (kcal, 선택) */
+  calories: number | null;
   /** 식단 사진 URL */
   photoUrl: string | null;
   isRecurring: boolean;
@@ -35,6 +37,8 @@ export interface CreateMealPlanRequest {
   menuName: string;
   memo?: string;
   recipeUrl?: string;
+  /** 칼로리 (kcal, 선택) */
+  calories?: number;
   photoUrl?: string;
   isRecurring?: boolean;
   recurRule?: RecurRule;
@@ -44,7 +48,7 @@ export interface CreateMealPlanRequest {
 
 /** 식단 수정 요청 바디 - 모든 필드 선택적, photoUrl은 null 허용 (사진 삭제) */
 export type UpdateMealPlanRequest = Partial<
-  Pick<CreateMealPlanRequest, 'mealType' | 'menuName' | 'memo' | 'recipeUrl' | 'isRecurring' | 'recurRule'>
+  Pick<CreateMealPlanRequest, 'mealType' | 'menuName' | 'memo' | 'recipeUrl' | 'calories' | 'isRecurring' | 'recurRule'>
 > & {
   photoUrl?: string | null;
 };

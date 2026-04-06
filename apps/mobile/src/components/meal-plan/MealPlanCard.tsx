@@ -76,8 +76,14 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete, groupColor }: MealPla
         <Text style={styles.memo} numberOfLines={2}>{mealPlan.memo}</Text>
       )}
 
-      {/* 하단: 등록자 */}
+      {/* 하단: 칼로리 + 등록자 */}
       <View style={styles.footer}>
+        {mealPlan.calories && (
+          <View style={styles.calorieChip}>
+            <Ionicons name="flame-outline" size={13} color="#FF6B35" />
+            <Text style={styles.calorieText}>{mealPlan.calories}kcal</Text>
+          </View>
+        )}
         <View style={styles.authorChip}>
           <Ionicons name="person-circle-outline" size={14} color={colors.textSecondary} />
           <Text style={styles.authorText}>{mealPlan.createdByUser.name}</Text>
@@ -162,6 +168,16 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     marginTop: 4,
+  },
+  calorieChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  calorieText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF6B35',
   },
   authorChip: {
     flexDirection: 'row',

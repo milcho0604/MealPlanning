@@ -124,6 +124,8 @@ model MealPlan {
   menuName    String    @map("menu_name")
   memo        String?
   recipeUrl   String?   @map("recipe_url")
+  /// 칼로리 (kcal, 선택)
+  calories    Int?
   /// 식단 사진 URL
   photoUrl    String?   @map("photo_url")
   isRecurring Boolean   @default(false) @map("is_recurring")
