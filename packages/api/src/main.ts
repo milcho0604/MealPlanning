@@ -55,22 +55,27 @@ async function bootstrap() {
   });
 
   // ── Swagger API 문서 설정 ─────────────────────────────────────────────────
-  if (process.env.NODE_ENV !== 'production') {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('MealPlan API')
-      .setDescription('MealPlan 식단 계획 앱 REST API 문서')
-      .setVersion('1.0')
-      .addBearerAuth(
-        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-        'access-token', // Swagger UI에서 인증 버튼 클릭 시 사용할 이름
-      )
-      .build();
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('MealPlan API')
+    .setDescription('MealPlan 식단 계획 앱 REST API 문서')
+    .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
+    .addTag('Auth', '인증 (회원가입/로그인/소셜/토큰)')
+    .addTag('Meal Plans', '식단 계획 CRUD + 통계 + 검색')
+    .addTag('Groups', '그룹 생성/참여/멤버 관리')
+    .addTag('Ingredients', '냉장고 재료 관리')
+    .addTag('Shopping', '쇼핑 리스트')
+    .addTag('Upload', 'S3 이미지 업로드')
+    .addTag('Meal Templates', '식단 템플릿')
+    .build();
 
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup('api-docs', app, document);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api-docs', app, document);
 
-    console.log(`📄 Swagger UI: http://localhost:${port}/api-docs`);
-  }
+  console.log(`📄 Swagger UI: http://localhost:${port}/api-docs`);
 
   await app.listen(port);
   console.log(`🚀 MealPlan API 서버 실행 중: http://localhost:${port}`);

@@ -20,6 +20,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { GroupsService } from './groups.service';
@@ -27,43 +28,45 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { JoinGroupDto } from './dto/join-group.dto';
 import type { RequestUser } from '../../modules/auth/strategies/jwt.strategy';
 
+@ApiTags('Groups')
 @Controller('groups')
 @UseGuards(JwtAuthGuard)
+@ApiBearerAuth('access-token')
 export class GroupsController {
   constructor(private readonly groupsService: GroupsService) {}
 
-  /** 내가 속한 그룹 목록 조회 */
   @Get('my')
+  @ApiOperation({ summary: '내 그룹 목록 조회' })
   getMyGroups(@CurrentUser() user: RequestUser) {
     return this.groupsService.getMyGroups(user.id);
   }
 
-  /** 그룹 생성 */
   @Post()
+  @ApiOperation({ summary: '그룹 생성 (이름 + 색상)' })
   create(@CurrentUser() user: RequestUser, @Body() dto: CreateGroupDto) {
     return this.groupsService.create(user.id, dto);
   }
 
-  /** 초대 코드로 그룹 참여 */
   @Post('join')
+  @ApiOperation({ summary: '초대 코드로 그룹 참여' })
   join(@CurrentUser() user: RequestUser, @Body() dto: JoinGroupDto) {
     return this.groupsService.joinByInviteCode(user.id, dto);
   }
 
-  /** 그룹 멤버 목록 조회 */
   @Get(':id/members')
+  @ApiOperation({ summary: '그룹 멤버 목록 조회' })
   getMembers(@Param('id') groupId: string, @CurrentUser() user: RequestUser) {
     return this.groupsService.getMembers(groupId, user.id);
   }
 
-  /** 그룹 탈퇴 */
   @Delete(':id/leave')
+  @ApiOperation({ summary: '그룹 탈퇴' })
   leave(@Param('id') groupId: string, @CurrentUser() user: RequestUser) {
     return this.groupsService.leave(groupId, user.id);
   }
 
-  /** 그룹 정보 수정 (owner 전용) */
   @Patch(':id')
+  @ApiOperation({ summary: '그룹 정보 수정 (이름/색상, owner만)' })
   updateGroup(
     @Param('id') groupId: string,
     @CurrentUser() user: RequestUser,
@@ -72,8 +75,8 @@ export class GroupsController {
     return this.groupsService.updateGroup(groupId, user.id, body);
   }
 
-  /** 멤버 역할 변경 (owner 전용) */
   @Patch(':id/members/:userId/role')
+  @ApiOperation({ summary: '멤버 역할 변경 (owner만)' })
   changeRole(
     @Param('id') groupId: string,
     @Param('userId') targetUserId: string,
@@ -83,8 +86,8 @@ export class GroupsController {
     return this.groupsService.changeRole(groupId, user.id, targetUserId, body.role);
   }
 
-  /** 멤버 내보내기 (owner 전용) */
   @Delete(':id/members/:userId')
+  @ApiOperation({ summary: '멤버 내보내기 (owner만)' })
   removeMember(
     @Param('id') groupId: string,
     @Param('userId') targetUserId: string,
