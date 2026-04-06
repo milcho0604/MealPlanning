@@ -398,6 +398,18 @@ export default function SettingsScreen() {
           />
         </View>
 
+        <TouchableOpacity
+          style={styles.accountActionBtn}
+          onPress={() => {
+            storage.deleteItem(STORAGE_KEYS.ONBOARDING_DONE);
+            Alert.alert('앱 소개', '앱을 다시 시작하면 소개 화면이 표시됩니다.');
+          }}
+        >
+          <Ionicons name="information-circle-outline" size={18} color={colors.text} />
+          <Text style={styles.accountActionText}>앱 소개 다시 보기</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
           <Text style={styles.signOutText}>로그아웃</Text>

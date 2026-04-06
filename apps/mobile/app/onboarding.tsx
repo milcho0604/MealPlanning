@@ -10,7 +10,7 @@
 import { useRef, useState } from 'react';
 import {
   Dimensions,
-  FlatList,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -47,12 +47,12 @@ interface OnboardingScreenProps {
 
 export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
   /** 다음 슬라이드로 이동 */
   const goNext = () => {
     if (currentIndex < SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
+      scrollRef.current?.scrollTo({ x: width * (currentIndex + 1), animated: true });
       setCurrentIndex(currentIndex + 1);
     } else {
       onComplete();
@@ -67,9 +67,8 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
       </TouchableOpacity>
 
       {/* 슬라이드 */}
-      <FlatList
-        ref={flatListRef}
-        data={SLIDES}
+      <ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -78,17 +77,17 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
           const index = Math.round(e.nativeEvent.contentOffset.x / width);
           setCurrentIndex(index);
         }}
-        keyExtractor={(_, i) => String(i)}
-        renderItem={({ item }) => (
-          <View style={styles.slide}>
+      >
+        {SLIDES.map((item, i) => (
+          <View key={i} style={styles.slide}>
             <View style={styles.iconCircle}>
               <Ionicons name={item.icon} size={56} color={colors.primary} />
             </View>
             <Text style={styles.title}>{item.title}</Text>
             <Text style={styles.description}>{item.description}</Text>
           </View>
-        )}
-      />
+        ))}
+      </ScrollView>
 
       {/* 하단: 인디케이터 + 버튼 */}
       <View style={styles.bottom}>
