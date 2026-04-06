@@ -326,6 +326,7 @@ export class MealPlansService {
     menuName: string;
     memo: string | null;
     recipeUrl: string | null;
+    calories?: number | null;
     photoUrl?: string | null;
     isRecurring: boolean;
     recurRule: string | null;
