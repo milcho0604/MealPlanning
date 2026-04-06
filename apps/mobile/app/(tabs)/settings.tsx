@@ -12,7 +12,9 @@
 
 import { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
+  Image,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -30,6 +32,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
+import { useImageUpload } from '../../src/hooks/use-image-upload.hook';
 import { authService } from '../../src/services/auth.service';
 import { groupService } from '../../src/services/group.service';
 import { apiClient } from '../../src/services/api.client';
@@ -46,6 +49,7 @@ type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editNa
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
+  const { imageUri: avatarUri, uploading: avatarUploading, pickImage: pickAvatar, takePhoto: takeAvatar } = useImageUpload({ folder: 'profile' });
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
   const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
     { value: 'light', label: '라이트' },
@@ -182,12 +186,48 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={styles.profileAvatar}
             onPress={() => {
-              Alert.alert('프로필 사진', '프로필 사진 기능은 추후 업데이트에서 지원됩니다.');
+              Alert.alert('프로필 사진', '사진을 어디서 가져올까요?', [
+                { text: '취소', style: 'cancel' },
+                {
+                  text: '갤러리',
+                  onPress: async () => {
+                    try {
+                      const url = await pickAvatar();
+                      if (url) {
+                        const updated = await authService.updateProfile({ avatarUrl: url });
+                        useAuthStore.setState({ user: updated });
+                      }
+                    } catch { Alert.alert('오류', '사진 변경에 실패했습니다.'); }
+                  },
+                },
+                {
+                  text: '카메라',
+                  onPress: async () => {
+                    try {
+                      const url = await takeAvatar();
+                      if (url) {
+                        const updated = await authService.updateProfile({ avatarUrl: url });
+                        useAuthStore.setState({ user: updated });
+                      }
+                    } catch { Alert.alert('오류', '사진 변경에 실패했습니다.'); }
+                  },
+                },
+              ]);
             }}
+            disabled={avatarUploading}
           >
-            <Text style={styles.profileAvatarText}>
-              {user?.name?.[0]?.toUpperCase() ?? '?'}
-            </Text>
+            {avatarUploading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : user?.avatarUrl || avatarUri ? (
+              <Image source={{ uri: avatarUri ?? user?.avatarUrl ?? '' }} style={styles.profileAvatarImage} />
+            ) : (
+              <Text style={styles.profileAvatarText}>
+                {user?.name?.[0]?.toUpperCase() ?? '?'}
+              </Text>
+            )}
+            <View style={styles.profileAvatarBadge}>
+              <Ionicons name="camera" size={12} color="#fff" />
+            </View>
           </TouchableOpacity>
           <View style={styles.profileInfo}>
             <TouchableOpacity
@@ -665,6 +705,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  profileAvatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  profileAvatarBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.surface,
   },
   profileAvatarText: {
     fontSize: 20,
