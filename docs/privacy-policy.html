@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보처리방침 - MealPlan</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f9f9f9;
+      color: #333;
+      line-height: 1.8;
+    }
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 48px 32px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #111;
+    }
+    .updated {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 40px;
+    }
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      margin: 36px 0 12px;
+      color: #111;
+      border-left: 4px solid #4CAF50;
+      padding-left: 12px;
+    }
+    p { font-size: 15px; color: #444; margin-bottom: 12px; }
+    ul { padding-left: 20px; margin-bottom: 12px; }
+    li { font-size: 15px; color: #444; margin-bottom: 6px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0 20px;
+      font-size: 14px;
+    }
+    th {
+      background: #f0f4f0;
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      font-weight: 600;
+    }
+    td {
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      color: #444;
+    }
+    .contact {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin-top: 12px;
+    }
+    .contact p { margin-bottom: 4px; }
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 13px;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>개인정보처리방침</h1>
+    <p class="updated">시행일: 2026년 4월 6일 &nbsp;|&nbsp; 최종 수정: 2026년 4월 6일</p>
+
+    <p>
+      MealPlan(이하 "앱")은 이용자의 개인정보를 중요하게 생각하며,
+      「개인정보 보호법」 및 관련 법령을 준수합니다.
+      본 방침은 앱이 수집하는 정보, 사용 목적, 보관 방법 등을 안내합니다.
+    </p>
+
+    <!-- 1 -->
+    <h2>1. 수집하는 개인정보 항목</h2>
+    <table>
+      <tr><th>구분</th><th>항목</th><th>수집 시점</th></tr>
+      <tr><td>필수</td><td>이메일 주소, 비밀번호(암호화 저장)</td><td>회원가입</td></tr>
+      <tr><td>필수</td><td>이름(닉네임)</td><td>회원가입</td></tr>
+      <tr><td>선택</td><td>프로필 사진</td><td>프로필 설정</td></tr>
+      <tr><td>자동</td><td>푸시 알림 토큰</td><td>알림 허용 시</td></tr>
+      <tr><td>서비스</td><td>식단 정보, 재료 정보, 쇼핑 목록</td><td>서비스 이용 시</td></tr>
+    </table>
+    <p>소셜 로그인(Google, 카카오) 이용 시 해당 플랫폼에서 제공하는 이메일, 이름 정보를 수집합니다.</p>
+
+    <!-- 2 -->
+    <h2>2. 개인정보 수집 및 이용 목적</h2>
+    <ul>
+      <li>회원 식별 및 서비스 제공</li>
+      <li>식단·재료·쇼핑 데이터 저장 및 동기화</li>
+      <li>그룹 기능(초대, 공유) 제공</li>
+      <li>이메일 인증 및 비밀번호 재설정</li>
+      <li>오늘의 식단, 유통기한 임박 등 푸시 알림 발송</li>
+      <li>서비스 오류 진단 및 개선</li>
+    </ul>
+
+    <!-- 3 -->
+    <h2>3. 개인정보 보관 및 파기</h2>
+    <table>
+      <tr><th>구분</th><th>보관 기간</th></tr>
+      <tr><td>회원 정보</td><td>회원 탈퇴 후 90일 보관, 이후 자동 삭제</td></tr>
+      <tr><td>식단·재료·쇼핑 데이터</td><td>회원 탈퇴 후 90일 보관, 이후 자동 삭제</td></tr>
+      <tr><td>업로드 이미지(S3)</td><td>해당 식단 삭제 시 즉시 삭제</td></tr>
+    </table>
+    <p>
+      법령에 의해 보존이 필요한 경우 해당 법령에서 정한 기간 동안 보관 후 파기합니다.
+    </p>
+
+    <!-- 4 -->
+    <h2>4. 개인정보 제3자 제공</h2>
+    <p>앱은 원칙적으로 이용자의 개인정보를 외부에 제공하지 않습니다. 단, 아래의 경우는 예외입니다.</p>
+    <ul>
+      <li>이용자가 사전에 동의한 경우</li>
+      <li>법령에 의거하거나 수사기관의 적법한 요청이 있는 경우</li>
+    </ul>
+
+    <!-- 5 -->
+    <h2>5. 개인정보 처리 위탁</h2>
+    <table>
+      <tr><th>수탁 업체</th><th>위탁 업무</th></tr>
+      <tr><td>Amazon Web Services (AWS)</td><td>이미지 파일 저장 (S3)</td></tr>
+      <tr><td>Supabase</td><td>데이터베이스 호스팅</td></tr>
+      <tr><td>Render.com</td><td>서버 호스팅</td></tr>
+      <tr><td>SendGrid</td><td>이메일 발송</td></tr>
+      <tr><td>Google LLC</td><td>소셜 로그인 인증</td></tr>
+      <tr><td>Kakao Corp.</td><td>소셜 로그인 인증</td></tr>
+    </table>
+
+    <!-- 6 -->
+    <h2>6. 이용자의 권리</h2>
+    <p>이용자는 언제든지 다음 권리를 행사할 수 있습니다.</p>
+    <ul>
+      <li>개인정보 조회·수정: 앱 내 설정 → 프로필 수정</li>
+      <li>회원 탈퇴: 앱 내 설정 → 계정 탈퇴</li>
+      <li>개인정보 처리 정지 요청: 아래 이메일로 문의</li>
+    </ul>
+
+    <!-- 7 -->
+    <h2>7. 아동 개인정보 보호</h2>
+    <p>
+      앱은 만 14세 미만 아동의 개인정보를 수집하지 않습니다.
+      만 14세 미만은 서비스 이용을 제한합니다.
+    </p>
+
+    <!-- 8 -->
+    <h2>8. 개인정보 보호 책임자 및 문의</h2>
+    <div class="contact">
+      <p><strong>서비스명:</strong> MealPlan</p>
+      <p><strong>이메일:</strong> hello.mealplan@gmail.com</p>
+      <p>개인정보 관련 문의사항은 위 이메일로 연락주시면 신속히 답변드리겠습니다.</p>
+    </div>
+
+    <!-- 9 -->
+    <h2>9. 방침 변경 안내</h2>
+    <p>
+      본 개인정보처리방침이 변경될 경우, 앱 내 공지 또는 이메일을 통해 사전 안내합니다.
+    </p>
+
+    <footer>
+      &copy; 2026 MealPlan. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>

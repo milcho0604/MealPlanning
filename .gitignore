@@ -79,5 +79,5 @@ packages/api/node_modules/.prisma/
 # ========================
 # 블로그 / 문서 (개인용)
 # ========================
-docs/
+docs/*.md
 blog-performance-optimization.md
