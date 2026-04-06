@@ -74,7 +74,7 @@ export default function SettingsScreen() {
   // ── 모달 상태 ──────────────────────────────────────────
   const [modalType, setModalType] = useState<GroupModalType>(null);
   const [groupNameInput, setGroupNameInput] = useState('');
-  const [groupColorInput, setGroupColorInput] = useState(GROUP_COLORS[0]);
+  const [groupColorInput, setGroupColorInput] = useState<string>(GROUP_COLORS[0]);
   const [inviteCodeInput, setInviteCodeInput] = useState('');
   const [currentPw, setCurrentPw] = useState('');
   const [newPw, setNewPw] = useState('');
