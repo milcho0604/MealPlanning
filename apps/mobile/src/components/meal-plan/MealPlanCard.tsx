@@ -5,7 +5,7 @@
  * 홈 화면과 캘린더 화면에서 공통으로 사용합니다.
  */
 
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
@@ -74,6 +74,17 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete, groupColor }: MealPla
       {/* 메모 */}
       {mealPlan.memo && (
         <Text style={styles.memo} numberOfLines={2}>{mealPlan.memo}</Text>
+      )}
+
+      {/* 레시피 링크 */}
+      {mealPlan.recipeUrl && (
+        <TouchableOpacity
+          style={styles.recipeBtn}
+          onPress={() => Linking.openURL(mealPlan.recipeUrl!)}
+        >
+          <Ionicons name="link-outline" size={14} color={colors.primary} />
+          <Text style={styles.recipeBtnText}>레시피 보기</Text>
+        </TouchableOpacity>
       )}
 
       {/* 하단: 칼로리 + 등록자 */}
@@ -168,6 +179,22 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     marginTop: 4,
+  },
+  recipeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    marginBottom: 8,
+  },
+  recipeBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
   },
   calorieChip: {
     flexDirection: 'row',
