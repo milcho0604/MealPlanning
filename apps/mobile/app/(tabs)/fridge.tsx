@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import {
+  Alert,
   FlatList,
   RefreshControl,
   ScrollView,
@@ -64,6 +65,8 @@ export default function FridgeScreen() {
   // ── 모달 상태 ──────────────────────────────────────────
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // ── 데이터 ─────────────────────────────────────────────
   const { data: ingredients, isLoading, refetch } = useIngredients();
@@ -102,6 +105,44 @@ export default function FridgeScreen() {
     setIsModalVisible(false);
     setEditingIngredient(null);
   };
+  /** 선택 모드 토글 */
+  const toggleSelectMode = () => {
+    setSelectMode(!selectMode);
+    setSelectedIds(new Set());
+  };
+  /** 개별 항목 선택/해제 */
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  /** 전체 선택/해제 */
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredIngredients.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredIngredients.map((i) => i.id)));
+    }
+  };
+  /** 선택 항목 일괄 삭제 */
+  const handleBulkDelete = () => {
+    if (selectedIds.size === 0) return;
+    Alert.alert('일괄 삭제', `${selectedIds.size}개 재료를 삭제할까요?`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          await Promise.all([...selectedIds].map((id) => removeIngredient(id)));
+          setSelectMode(false);
+          setSelectedIds(new Set());
+        },
+      },
+    ]);
+  };
 
   if (!currentGroupId) return <NoGroupView />;
   if (isLoading) return <SkeletonLoader rows={4} />;
@@ -110,9 +151,36 @@ export default function FridgeScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>냉장고</Text>
-        <Text style={styles.headerSub}>{activeIngredients.length}개 재료</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>냉장고</Text>
+          <Text style={styles.headerSub}>{activeIngredients.length}개 재료</Text>
+        </View>
+        <TouchableOpacity onPress={toggleSelectMode}>
+          <Text style={styles.selectModeBtn}>{selectMode ? '취소' : '선택'}</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* 선택 모드 액션 바 */}
+      {selectMode && (
+        <View style={styles.selectBar}>
+          <TouchableOpacity onPress={toggleSelectAll} style={styles.selectAllBtn}>
+            <Ionicons
+              name={selectedIds.size === filteredIngredients.length && filteredIngredients.length > 0 ? 'checkbox' : 'square-outline'}
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={styles.selectAllText}>전체 선택 ({selectedIds.size}/{filteredIngredients.length})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.bulkDeleteBtn, selectedIds.size === 0 && { opacity: 0.4 }]}
+            onPress={handleBulkDelete}
+            disabled={selectedIds.size === 0}
+          >
+            <Ionicons name="trash-outline" size={16} color="#fff" />
+            <Text style={styles.bulkDeleteText}>삭제</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* 유통기한 임박 경고 배너 */}
       {expiringCount > 0 && (
@@ -153,12 +221,25 @@ export default function FridgeScreen() {
         data={filteredIngredients}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <IngredientCard
-            ingredient={item}
-            onEdit={handleEdit}
-            onConsume={handleConsume}
-            onDelete={handleDelete}
-          />
+          <View style={styles.selectRow}>
+            {selectMode && (
+              <TouchableOpacity onPress={() => toggleSelect(item.id)} style={styles.checkbox}>
+                <Ionicons
+                  name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
+                  size={22}
+                  color={selectedIds.has(item.id) ? colors.primary : colors.border}
+                />
+              </TouchableOpacity>
+            )}
+            <View style={styles.selectRowContent}>
+              <IngredientCard
+                ingredient={item}
+                onEdit={handleEdit}
+                onConsume={handleConsume}
+                onDelete={handleDelete}
+              />
+            </View>
+          </View>
         )}
         contentContainerStyle={styles.listContent}
         removeClippedSubviews
@@ -200,11 +281,65 @@ const styles = StyleSheet.create({
   // ── 헤더 ────────────────────────────────────────────────
   header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 8,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
     gap: 8,
+  },
+  selectModeBtn: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  // ── 선택 모드 바 ──────────────────────────────────────
+  selectBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  selectAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  selectAllText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  bulkDeleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.error,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  bulkDeleteText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  selectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    paddingRight: 8,
+  },
+  selectRowContent: {
+    flex: 1,
   },
   headerTitle: {
     fontSize: 26,

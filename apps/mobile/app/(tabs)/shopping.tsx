@@ -53,6 +53,8 @@ export default function ShoppingScreen() {
 
   // ── 입력바 상태 ──────────────────────────────────────────
   const [inputText, setInputText] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   /** 이번 주 월요일 날짜를 YYYY-MM-DD 형식으로 반환 */
   function getWeekStartDate(): string {
@@ -159,16 +161,34 @@ export default function ShoppingScreen() {
   const renderItem = ({ item }: { item: ShoppingItem }) => (
     <TouchableOpacity
       style={[styles.item, item.isChecked && styles.itemChecked]}
-      onPress={() => toggleShoppingItem(item.id)}
+      onPress={() => {
+        if (selectMode) {
+          setSelectedIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(item.id)) next.delete(item.id);
+            else next.add(item.id);
+            return next;
+          });
+        } else {
+          toggleShoppingItem(item.id);
+        }
+      }}
       onLongPress={() => handleDelete(item)}
       activeOpacity={0.7}
     >
-      {/* 체크 아이콘 */}
-      <View style={[styles.checkbox, item.isChecked && styles.checkboxChecked]}>
-        {item.isChecked && (
-          <Ionicons name="checkmark" size={14} color="#fff" />
-        )}
-      </View>
+      {/* 체크 아이콘 (선택 모드에서는 선택 표시) */}
+      {selectMode ? (
+        <Ionicons
+          name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
+          size={22}
+          color={selectedIds.has(item.id) ? colors.primary : colors.border}
+          style={{ marginRight: 10 }}
+        />
+      ) : (
+        <View style={[styles.checkboxIcon, item.isChecked && styles.checkboxChecked]}>
+          {item.isChecked && <Ionicons name="checkmark" size={14} color="#fff" />}
+        </View>
+      )}
 
       {/* 항목명 + 수량 */}
       <View style={styles.itemContent}>
@@ -204,6 +224,9 @@ export default function ShoppingScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>쇼핑 리스트</Text>
           <View style={styles.headerActions}>
+            <TouchableOpacity onPress={() => { setSelectMode(!selectMode); setSelectedIds(new Set()); }} style={styles.headerActionBtn}>
+              <Text style={styles.clearBtn}>{selectMode ? '취소' : '선택'}</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={handleShareList} style={styles.headerActionBtn}>
               <Ionicons name="share-outline" size={16} color={colors.primary} />
             </TouchableOpacity>
@@ -214,6 +237,48 @@ export default function ShoppingScreen() {
             )}
           </View>
         </View>
+
+        {/* 선택 모드 액션 바 */}
+        {selectMode && (
+          <View style={styles.selectBar}>
+            <TouchableOpacity
+              onPress={() => {
+                if (selectedIds.size === uncheckedItems.length) setSelectedIds(new Set());
+                else setSelectedIds(new Set(uncheckedItems.map((i) => i.id)));
+              }}
+              style={styles.selectAllBtn}
+            >
+              <Ionicons
+                name={selectedIds.size === uncheckedItems.length && uncheckedItems.length > 0 ? 'checkbox' : 'square-outline'}
+                size={20}
+                color={colors.primary}
+              />
+              <Text style={styles.selectAllText}>전체 선택 ({selectedIds.size})</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.bulkDeleteBtn, selectedIds.size === 0 && { opacity: 0.4 }]}
+              onPress={() => {
+                if (selectedIds.size === 0) return;
+                Alert.alert('일괄 삭제', `${selectedIds.size}개 항목을 삭제할까요?`, [
+                  { text: '취소', style: 'cancel' },
+                  {
+                    text: '삭제',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await Promise.all([...selectedIds].map((id) => removeShoppingItem(id)));
+                      setSelectMode(false);
+                      setSelectedIds(new Set());
+                    },
+                  },
+                ]);
+              }}
+              disabled={selectedIds.size === 0}
+            >
+              <Ionicons name="trash-outline" size={16} color="#fff" />
+              <Text style={styles.bulkDeleteText}>삭제</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* 이번 주 식단으로 자동 생성 배너 */}
         <TouchableOpacity
@@ -313,6 +378,39 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerActionBtn: {},
+  selectBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  selectAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  selectAllText: {
+    fontSize: 14,
+    color: colors.text,
+  },
+  bulkDeleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.error,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
+  },
+  bulkDeleteText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
   clearBtn: {
     fontSize: 14,
     color: colors.error,
@@ -370,7 +468,7 @@ const styles = StyleSheet.create({
   itemChecked: {
     opacity: 0.5,
   },
-  checkbox: {
+  checkboxIcon: {
     width: 28,
     height: 28,
     borderRadius: 11,
