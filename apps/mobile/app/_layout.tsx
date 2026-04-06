@@ -9,7 +9,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { initializeKakaoSDK } from '@react-native-kakao/core';
 import { useAuthStore } from '../src/stores/auth.store';
@@ -17,6 +17,9 @@ import {
   registerForPushNotificationsAsync,
   savePushTokenToServer,
 } from '../src/services/notification.service';
+import { storage } from '../src/utils/storage';
+import { STORAGE_KEYS } from '../src/constants/storage-keys';
+import OnboardingScreen from './onboarding';
 
 // 폰트가 로드될 때까지 스플래시 화면 유지
 SplashScreen.preventAutoHideAsync();
@@ -36,10 +39,16 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const { initialize, isInitialized, isAuthenticated } = useAuthStore();
+  const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
 
-  // 앱 시작 시 저장된 토큰으로 인증 상태 복원 + 카카오 SDK 초기화
+  // 앱 시작 시 저장된 토큰으로 인증 상태 복원 + 카카오 SDK 초기화 + 온보딩 체크
   useEffect(() => {
     initialize();
+
+    // 온보딩 완료 여부 확인
+    storage.getItem(STORAGE_KEYS.ONBOARDING_DONE).then((done) => {
+      setShowOnboarding(done !== 'true');
+    });
 
     // 카카오 SDK 초기화 (네이티브에서만 실행, 웹은 불필요)
     if (Platform.OS !== 'web') {
@@ -65,8 +74,20 @@ export default function RootLayout() {
     }
   }, [isAuthenticated]);
 
-  if (!isInitialized) {
+  if (!isInitialized || showOnboarding === null) {
     return null;
+  }
+
+  // 온보딩 미완료 시 온보딩 화면 표시
+  if (showOnboarding) {
+    return (
+      <OnboardingScreen
+        onComplete={() => {
+          storage.setItem(STORAGE_KEYS.ONBOARDING_DONE, 'true');
+          setShowOnboarding(false);
+        }}
+      />
+    );
   }
 
   return (

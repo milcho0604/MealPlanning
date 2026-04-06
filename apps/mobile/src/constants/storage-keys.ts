@@ -18,4 +18,6 @@ export const STORAGE_KEYS = {
   NOTIFICATIONS_ENABLED: 'mealplan_notifications_enabled',
   /** 기본 그룹 ID */
   DEFAULT_GROUP_ID: 'mealplan_default_group_id',
+  /** 온보딩 완료 여부 */
+  ONBOARDING_DONE: 'mealplan_onboarding_done',
 } as const;
