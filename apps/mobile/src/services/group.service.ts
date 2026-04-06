@@ -59,6 +59,11 @@ export const groupService = {
     await apiClient.delete(`/groups/${groupId}/leave`);
   },
 
+  /** 그룹 정보 수정 (owner만) */
+  updateGroup: async (groupId: string, data: { name?: string; color?: string }): Promise<void> => {
+    await apiClient.patch(`/groups/${groupId}`, data);
+  },
+
   /** 멤버 역할 변경 (owner만) */
   changeRole: async (groupId: string, userId: string, role: string): Promise<void> => {
     await apiClient.patch(`/groups/${groupId}/members/${userId}/role`, { role });

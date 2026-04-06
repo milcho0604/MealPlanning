@@ -62,6 +62,16 @@ export class GroupsController {
     return this.groupsService.leave(groupId, user.id);
   }
 
+  /** 그룹 정보 수정 (owner 전용) */
+  @Patch(':id')
+  updateGroup(
+    @Param('id') groupId: string,
+    @CurrentUser() user: RequestUser,
+    @Body() body: { name?: string; color?: string },
+  ) {
+    return this.groupsService.updateGroup(groupId, user.id, body);
+  }
+
   /** 멤버 역할 변경 (owner 전용) */
   @Patch(':id/members/:userId/role')
   changeRole(

@@ -45,7 +45,7 @@ import { GROUP_COLORS } from '../../src/constants/group-colors';
 type ThemeMode = 'light' | 'dark' | 'system';
 
 /** 모달 타입 */
-type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editName' | null;
+type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editName' | 'editGroupColor' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
@@ -88,6 +88,7 @@ export default function SettingsScreen() {
   const [members, setMembers] = useState<any[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupRole, setSelectedGroupRole] = useState<string>('');
+  const [editGroupColorValue, setEditGroupColorValue] = useState<string>(GROUP_COLORS[0]);
 
   /** 로그아웃 */
   const handleSignOut = () => {
@@ -259,8 +260,18 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.groupItemLeft}>
-                  {/* 그룹 색상 인디케이터 */}
-                  <View style={[styles.groupDot, { backgroundColor: group.color ?? colors.primary }]} />
+                  {/* 그룹 색상 인디케이터 (owner는 탭하여 변경 가능) */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (group.myRole === 'owner') {
+                        setSelectedGroupId(group.id);
+                        setEditGroupColorValue(group.color ?? GROUP_COLORS[0]);
+                        setModalType('editGroupColor');
+                      }
+                    }}
+                  >
+                    <View style={[styles.groupDot, { backgroundColor: group.color ?? colors.primary }]} />
+                  </TouchableOpacity>
                   <View>
                     <Text style={[styles.groupName, isActive && styles.groupNameActive]} numberOfLines={1}>
                       {group.name}
@@ -585,6 +596,52 @@ export default function SettingsScreen() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── 그룹 색상 변경 모달 ── */}
+      <Modal
+        visible={modalType === 'editGroupColor'}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalType(null)}
+      >
+        <View style={styles.overlay}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>그룹 색상 변경</Text>
+            <View style={styles.colorPicker}>
+              {GROUP_COLORS.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.colorDot, { backgroundColor: c }, editGroupColorValue === c && styles.colorDotSelected]}
+                  onPress={() => setEditGroupColorValue(c)}
+                />
+              ))}
+            </View>
+            <View style={styles.dialogButtons}>
+              <TouchableOpacity style={styles.dialogCancelBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.dialogCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dialogConfirmBtn, isSubmitting && styles.disabledBtn]}
+                onPress={async () => {
+                  if (!selectedGroupId) return;
+                  setIsSubmitting(true);
+                  try {
+                    await groupService.updateGroup(selectedGroupId, { color: editGroupColorValue });
+                    await loadGroups();
+                    Alert.alert('완료', '그룹 색상이 변경되었습니다.');
+                    setModalType(null);
+                  } catch {
+                    Alert.alert('오류', '색상 변경에 실패했습니다.');
+                  } finally { setIsSubmitting(false); }
+                }}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.dialogConfirmText}>{isSubmitting ? '변경 중...' : '변경'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* ── 멤버 관리 모달 ── */}

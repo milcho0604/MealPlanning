@@ -108,6 +108,27 @@ export class GroupsService {
    * 초대 코드로 그룹 참여
    * - 이미 참여 중인 그룹이면 ConflictException
    */
+  /**
+   * 그룹 정보 수정 (owner만 가능)
+   */
+  async updateGroup(groupId: string, userId: string, data: { name?: string; color?: string }) {
+    const member = await this.prisma.groupMember.findUnique({
+      where: { groupId_userId: { groupId, userId } },
+    });
+
+    if (!member || member.role !== 'owner') {
+      throw new ForbiddenException('그룹 정보는 관리자만 수정할 수 있습니다.');
+    }
+
+    return this.prisma.group.update({
+      where: { id: groupId },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.color !== undefined && { color: data.color }),
+      },
+    });
+  }
+
   async joinByInviteCode(userId: string, dto: JoinGroupDto) {
     const group = await this.prisma.group.findUnique({
       where: { inviteCode: dto.inviteCode.toUpperCase() },
