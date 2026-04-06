@@ -283,7 +283,7 @@ export default function CalendarScreen() {
                 </View>
                 {/* 식단 등록 여부 점 표시 */}
                 {hasMeals && (
-                  <View style={[styles.dot, { backgroundColor: currentGroup?.color ?? '#66BB6A' }, isSelected && styles.dotSelected]} />
+                  <View style={[styles.dot, { backgroundColor: currentGroup?.color ?? groups[0]?.color ?? '#66BB6A' }, isSelected && styles.dotSelected]} />
                 )}
               </TouchableOpacity>
             );
