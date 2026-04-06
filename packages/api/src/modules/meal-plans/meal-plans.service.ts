@@ -81,10 +81,10 @@ export class MealPlansService {
       take: 5,
     });
 
-    // 월별 식사 유형 분포
+    // 월별 식사 유형 분포 + 칼로리 통계
     const allPlans = await this.prisma.mealPlan.findMany({
       where: { groupId, date: { gte: since } },
-      select: { date: true, mealType: true },
+      select: { date: true, mealType: true, calories: true },
       orderBy: { date: 'asc' },
     });
 
@@ -98,9 +98,20 @@ export class MealPlansService {
         (monthlyDistribution[monthKey][plan.mealType] ?? 0) + 1;
     }
 
+    // 칼로리 통계
+    const plansWithCalories = allPlans.filter((p) => p.calories !== null && p.calories > 0);
+    const totalCalories = plansWithCalories.reduce((s, p) => s + (p.calories ?? 0), 0);
+    const daysWithCalories = new Set(plansWithCalories.map((p) => p.date.toISOString().split('T')[0])).size;
+    const avgDailyCalories = daysWithCalories > 0 ? Math.round(totalCalories / daysWithCalories) : 0;
+
     return {
       topMenus: topMenus.map((m) => ({ menuName: m.menuName, count: m._count.menuName })),
       monthlyDistribution,
+      calorieStats: {
+        totalCalories,
+        avgDailyCalories,
+        daysTracked: daysWithCalories,
+      },
     };
   }
 

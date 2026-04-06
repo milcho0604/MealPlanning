@@ -285,10 +285,22 @@ export function MealPlanListView({
         </View>
       )}
 
-      {/* 결과 건수 */}
-      <Text style={styles.resultCount}>
-        {filteredMealPlans.length}건의 식단
-      </Text>
+      {/* 결과 건수 + 칼로리 요약 */}
+      {(() => {
+        const totalCal = filteredMealPlans.reduce((s, mp) => s + (mp.calories ?? 0), 0);
+        const daysWithMeals = new Set(filteredMealPlans.map((mp) => mp.date)).size;
+        const avgCal = daysWithMeals > 0 ? Math.round(totalCal / daysWithMeals) : 0;
+        return (
+          <View style={styles.summaryRow}>
+            <Text style={styles.resultCount}>{filteredMealPlans.length}건의 식단</Text>
+            {totalCal > 0 && (
+              <Text style={styles.calorieSummary}>
+                총 {totalCal.toLocaleString()}kcal · 일 평균 {avgCal.toLocaleString()}kcal
+              </Text>
+            )}
+          </View>
+        );
+      })()}
 
       {/* 식단 리스트 (가상 스크롤) */}
       <FlatList
@@ -526,12 +538,22 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  // ── 결과 건수 ──────────────────────────────────────────
+  // ── 결과 요약 ──────────────────────────────────────────
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 4,
+  },
   resultCount: {
     fontSize: 12,
     color: colors.textSecondary,
-    paddingHorizontal: 16,
-    marginBottom: 4,
+  },
+  calorieSummary: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FF6B35',
   },
   // ── 리스트 ─────────────────────────────────────────────
   listContent: {
