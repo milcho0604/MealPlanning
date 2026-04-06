@@ -7,6 +7,8 @@ import type { MemberRole, User } from './user.types';
 export interface Group {
     id: string;
     name: string;
+    /** 그룹 색상 (HEX 코드) */
+    color: string;
     ownerId: string;
     /** 초대 코드 (6자리 랜덤 문자열) */
     inviteCode: string;
@@ -22,6 +24,8 @@ export interface GroupMember {
 /** 그룹 생성 요청 바디 */
 export interface CreateGroupRequest {
     name: string;
+    /** 그룹 색상 (HEX 코드) */
+    color?: string;
 }
 /** 그룹 정보 수정 요청 바디 */
 export interface UpdateGroupRequest {

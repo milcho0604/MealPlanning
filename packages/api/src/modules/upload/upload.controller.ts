@@ -29,7 +29,7 @@ interface RequestUser {
 }
 
 @ApiTags('Upload')
-@Controller('v1/upload')
+@Controller('upload')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth('access-token')
 export class UploadController {
