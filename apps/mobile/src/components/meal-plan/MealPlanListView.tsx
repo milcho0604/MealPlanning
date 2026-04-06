@@ -30,9 +30,10 @@ import { MealPlanCard } from './MealPlanCard';
 import { colors } from '../../constants/colors';
 
 /** 기간 필터 옵션 */
-type PeriodFilter = 'all' | '1m' | '3m' | '6m' | 'custom';
+type PeriodFilter = 'thisMonth' | '1m' | '3m' | '6m' | 'all' | 'custom';
 
 const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
+  { value: 'thisMonth', label: '이번 달' },
   { value: '1m', label: '1개월' },
   { value: '3m', label: '3개월' },
   { value: '6m', label: '6개월' },
@@ -59,6 +60,9 @@ function toDateStr(d: Date): string {
 function getStartDate(period: PeriodFilter): string | null {
   if (period === 'all') return null;
   const d = new Date();
+  if (period === 'thisMonth') {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+  }
   if (period === '1m') d.setMonth(d.getMonth() - 1);
   else if (period === '3m') d.setMonth(d.getMonth() - 3);
   else if (period === '6m') d.setMonth(d.getMonth() - 6);
@@ -80,7 +84,7 @@ export function MealPlanListView({
   onDelete,
 }: MealPlanListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [period, setPeriod] = useState<PeriodFilter>('1m');
+  const [period, setPeriod] = useState<PeriodFilter>('thisMonth');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [showUserFilter, setShowUserFilter] = useState(false);
   const [members, setMembers] = useState<{ userId: string; name: string }[]>([]);
@@ -98,7 +102,9 @@ export function MealPlanListView({
 
   /** 기간 필터에 따른 API 조회 범위 계산 */
   const queryFrom = period === 'custom' ? (customFrom || null) : getStartDate(period);
-  const queryTo = period === 'custom' ? (customTo || null) : null;
+  const queryTo = period === 'custom' ? (customTo || null)
+    : period === 'thisMonth' ? toDateStr(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0))
+    : null;
 
   const { data: mealPlans = [], isLoading, refetch } = useMealPlansRange(queryFrom, queryTo);
   const [refreshing, setRefreshing] = useState(false);
