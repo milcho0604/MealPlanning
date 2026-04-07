@@ -124,6 +124,13 @@ export default function HomeScreen() {
   // 선택된 날짜의 총 칼로리
   const totalCalories = selectedMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0);
 
+  // 이번 주 칼로리 요약
+  const weekDateStrings = weekDates.map((d) => toDateString(d));
+  const weekMealPlans = (allMealPlans ?? []).filter((mp) => weekDateStrings.includes(mp.date));
+  const weekTotalCalories = weekMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0);
+  const weekDaysWithCalories = new Set(weekMealPlans.filter((mp) => mp.calories).map((mp) => mp.date)).size;
+  const weekAvgCalories = weekDaysWithCalories > 0 ? Math.round(weekTotalCalories / weekDaysWithCalories) : 0;
+
   /** 수정 버튼 핸들러 */
   const handleEdit = (mealPlan: MealPlanWithUser) => {
     setEditingMealPlan(mealPlan);
@@ -301,6 +308,26 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
+      {/* 주간 칼로리 요약 */}
+      {weekTotalCalories > 0 && (
+        <View style={styles.weekCalorieCard}>
+          <View style={styles.weekCalorieItem}>
+            <Text style={styles.weekCalorieValue}>{totalCalories || '-'}</Text>
+            <Text style={styles.weekCalorieLabel}>오늘 (kcal)</Text>
+          </View>
+          <View style={styles.weekCalorieDivider} />
+          <View style={styles.weekCalorieItem}>
+            <Text style={styles.weekCalorieValue}>{weekTotalCalories.toLocaleString()}</Text>
+            <Text style={styles.weekCalorieLabel}>이번 주 (kcal)</Text>
+          </View>
+          <View style={styles.weekCalorieDivider} />
+          <View style={styles.weekCalorieItem}>
+            <Text style={styles.weekCalorieValue}>{weekAvgCalories.toLocaleString()}</Text>
+            <Text style={styles.weekCalorieLabel}>일 평균 (kcal)</Text>
+          </View>
+        </View>
+      )}
+
       {/* 식단 목록 */}
       <FlatList
         data={selectedMealPlans}
@@ -415,6 +442,37 @@ const styles = StyleSheet.create({
   },
   todayDotSelected: {
     backgroundColor: '#fff',
+  },
+  // ── 주간 칼로리 요약 ──────────────────────────────────────
+  weekCalorieCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingVertical: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  weekCalorieItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  weekCalorieValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FF6B35',
+  },
+  weekCalorieLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  weekCalorieDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: colors.border,
   },
   // ── 리스트 ───────────────────────────────────────────────
   listContent: {
