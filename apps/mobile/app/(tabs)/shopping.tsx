@@ -53,6 +53,8 @@ export default function ShoppingScreen() {
 
   // ── 입력바 상태 ──────────────────────────────────────────
   const [inputText, setInputText] = useState('');
+  const [inputQty, setInputQty] = useState('');
+  const [inputUnit, setInputUnit] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
@@ -107,9 +109,13 @@ export default function ShoppingScreen() {
   const handleAdd = async () => {
     const name = inputText.trim();
     if (!name) return;
+    const quantity = inputQty.trim() ? parseFloat(inputQty.trim()) : undefined;
+    const unit = inputUnit.trim() || undefined;
     setInputText('');
+    setInputQty('');
+    setInputUnit('');
     try {
-      await createShoppingItem({ groupId: currentGroupId, name });
+      await createShoppingItem({ groupId: currentGroupId, name, quantity, unit });
     } catch {
       Alert.alert('오류', '항목 추가에 실패했습니다.');
     }
@@ -336,11 +342,29 @@ export default function ShoppingScreen() {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="항목 추가..."
+            placeholder="항목명"
+            placeholderTextColor={colors.textSecondary}
+            returnKeyType="next"
+            maxLength={50}
+          />
+          <TextInput
+            style={styles.inputQty}
+            value={inputQty}
+            onChangeText={(t) => setInputQty(t.replace(/[^0-9.]/g, ''))}
+            placeholder="수량"
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="numeric"
+            maxLength={6}
+          />
+          <TextInput
+            style={styles.inputUnit}
+            value={inputUnit}
+            onChangeText={setInputUnit}
+            placeholder="단위"
             placeholderTextColor={colors.textSecondary}
             returnKeyType="done"
             onSubmitEditing={handleAdd}
-            maxLength={50}
+            maxLength={5}
           />
           <TouchableOpacity
             style={[styles.addBtn, (!inputText.trim() || isCreating) && styles.addBtnDisabled]}
@@ -514,15 +538,39 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: {
+    flex: 3,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 15,
+    color: colors.text,
+  },
+  inputQty: {
     flex: 1,
     backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingVertical: 10,
-    fontSize: 15,
+    fontSize: 14,
     color: colors.text,
+    textAlign: 'center',
+  },
+  inputUnit: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
   },
   addBtn: {
     width: 42,
