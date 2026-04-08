@@ -103,6 +103,19 @@ export default function HomeScreen() {
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
   const [copyingMealPlan, setCopyingMealPlan] = useState<MealPlanWithUser | null>(null);
 
+  // ── 통계 ──────────────────────────────────────────────
+  const [showStats, setShowStats] = useState(false);
+  const [stats, setStats] = useState<{
+    topMenus: { menuName: string; count: number }[];
+    calorieStats?: { totalCalories: number; avgDailyCalories: number; daysTracked: number };
+  } | null>(null);
+
+  useEffect(() => {
+    if (currentGroupId && showStats) {
+      mealPlanService.getStats(currentGroupId).then(setStats).catch(() => {});
+    }
+  }, [currentGroupId, showStats]);
+
   // ── 검색 ──────────────────────────────────────────────
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -338,6 +351,56 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* 통계 토글 */}
+      <TouchableOpacity
+        style={styles.statsToggle}
+        onPress={() => setShowStats(!showStats)}
+      >
+        <Ionicons name="stats-chart-outline" size={14} color={colors.primary} />
+        <Text style={styles.statsToggleText}>{showStats ? '통계 접기' : '식단 통계 보기'}</Text>
+        <Ionicons name={showStats ? 'chevron-up' : 'chevron-down'} size={14} color={colors.primary} />
+      </TouchableOpacity>
+
+      {/* 통계 내용 */}
+      {showStats && stats && (
+        <View style={styles.statsCard}>
+          {/* TOP 5 메뉴 */}
+          <Text style={styles.statsTitle}>자주 먹는 메뉴 TOP 5</Text>
+          {stats.topMenus.length === 0 ? (
+            <Text style={styles.statsEmpty}>데이터가 부족합니다.</Text>
+          ) : (
+            stats.topMenus.map((m, i) => (
+              <View key={m.menuName} style={styles.statsRow}>
+                <Text style={styles.statsRank}>{i + 1}</Text>
+                <Text style={styles.statsMenuName} numberOfLines={1}>{m.menuName}</Text>
+                <Text style={styles.statsCount}>{m.count}회</Text>
+              </View>
+            ))
+          )}
+
+          {/* 칼로리 요약 */}
+          {stats.calorieStats && stats.calorieStats.totalCalories > 0 && (
+            <View style={styles.statsCalorie}>
+              <Text style={styles.statsTitle}>최근 3개월 칼로리</Text>
+              <View style={styles.statsCalorieRow}>
+                <View style={styles.statsCalorieItem}>
+                  <Text style={styles.statsCalorieValue}>{stats.calorieStats.avgDailyCalories.toLocaleString()}</Text>
+                  <Text style={styles.statsCalorieLabel}>일 평균 (kcal)</Text>
+                </View>
+                <View style={styles.statsCalorieItem}>
+                  <Text style={styles.statsCalorieValue}>{stats.calorieStats.daysTracked}</Text>
+                  <Text style={styles.statsCalorieLabel}>기록일</Text>
+                </View>
+                <View style={styles.statsCalorieItem}>
+                  <Text style={styles.statsCalorieValue}>{stats.calorieStats.totalCalories.toLocaleString()}</Text>
+                  <Text style={styles.statsCalorieLabel}>총 (kcal)</Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+
       {/* 식단 목록 */}
       <FlatList
         data={selectedMealPlans}
@@ -485,6 +548,86 @@ const styles = StyleSheet.create({
     width: 1,
     height: 28,
     backgroundColor: colors.border,
+  },
+  // ── 통계 ────────────────────────────────────────────────
+  statsToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+  },
+  statsToggleText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  statsCard: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statsTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 10,
+  },
+  statsEmpty: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    gap: 10,
+  },
+  statsRank: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.primary,
+    width: 20,
+    textAlign: 'center',
+  },
+  statsMenuName: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+  },
+  statsCount: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  statsCalorie: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  statsCalorieRow: {
+    flexDirection: 'row',
+  },
+  statsCalorieItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statsCalorieValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#FF6B35',
+  },
+  statsCalorieLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   // ── 리스트 ───────────────────────────────────────────────
   listContent: {
