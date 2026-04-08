@@ -72,6 +72,7 @@ function getStartDate(period: PeriodFilter): string | null {
 interface MealPlanListViewProps {
   onEdit: (mealPlan: MealPlanWithUser) => void;
   onDelete: (id: string) => void;
+  onCopy?: (mealPlan: MealPlanWithUser) => void;
 }
 
 /** 날짜 섹션 헤더 + 식단 카드를 하나의 리스트로 표현하기 위한 타입 */
@@ -82,6 +83,7 @@ type ListItem =
 export function MealPlanListView({
   onEdit,
   onDelete,
+  onCopy,
 }: MealPlanListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [period, setPeriod] = useState<PeriodFilter>('thisMonth');
@@ -179,6 +181,7 @@ export function MealPlanListView({
           mealPlan={item.data}
           onEdit={onEdit}
           onDelete={onDelete}
+          onCopy={onCopy}
         />
       );
     },

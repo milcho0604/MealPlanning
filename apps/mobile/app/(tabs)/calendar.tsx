@@ -66,6 +66,7 @@ export default function CalendarScreen() {
   // ── 모달 상태 ──────────────────────────────────────────
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
+  const [copyingMealPlan, setCopyingMealPlan] = useState<MealPlanWithUser | null>(null);
 
   // ── 데이터 ─────────────────────────────────────────────
   const { data: mealPlans, isLoading, refetch } = useMealPlans(year, month);
@@ -131,13 +132,20 @@ export default function CalendarScreen() {
   const handleDelete = async (id: string) => {
     await removeMealPlan(id);
   };
+  const handleCopy = (mealPlan: MealPlanWithUser) => {
+    setCopyingMealPlan(mealPlan);
+    setEditingMealPlan(null);
+    setIsModalVisible(true);
+  };
   const handleAddPress = () => {
     setEditingMealPlan(null);
+    setCopyingMealPlan(null);
     setIsModalVisible(true);
   };
   const handleModalClose = () => {
     setIsModalVisible(false);
     setEditingMealPlan(null);
+    setCopyingMealPlan(null);
   };
 
   if (groups.length === 0) return <NoGroupView />;
@@ -216,6 +224,7 @@ export default function CalendarScreen() {
         <MealPlanListView
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onCopy={handleCopy}
         />
       ) : (
       <ScrollView
@@ -311,6 +320,7 @@ export default function CalendarScreen() {
                 mealPlan={mp}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onCopy={handleCopy}
               />
             ))
           )}
@@ -331,6 +341,7 @@ export default function CalendarScreen() {
         onClose={handleModalClose}
         date={selectedDate}
         mealPlan={editingMealPlan ?? undefined}
+        copyFrom={copyingMealPlan ?? undefined}
       />
     </SafeAreaView>
   );

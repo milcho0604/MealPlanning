@@ -23,11 +23,12 @@ interface MealPlanCardProps {
   mealPlan: MealPlanWithUser;
   onEdit: (mealPlan: MealPlanWithUser) => void;
   onDelete: (id: string) => void;
+  onCopy?: (mealPlan: MealPlanWithUser) => void;
   /** 그룹 색상 (카드 왼쪽 바에 표시) */
   groupColor?: string;
 }
 
-export function MealPlanCard({ mealPlan, onEdit, onDelete, groupColor }: MealPlanCardProps) {
+export function MealPlanCard({ mealPlan, onEdit, onDelete, onCopy, groupColor }: MealPlanCardProps) {
   const handleDelete = () => {
     Alert.alert('식단 삭제', `"${mealPlan.menuName}"을(를) 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
@@ -54,6 +55,11 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete, groupColor }: MealPla
         </View>
 
         <View style={styles.actions}>
+          {onCopy && (
+            <TouchableOpacity onPress={() => onCopy(mealPlan)} style={styles.copyBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="copy-outline" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={() => onEdit(mealPlan)} style={styles.editBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="create-outline" size={16} color={colors.primary} />
           </TouchableOpacity>
@@ -141,6 +147,14 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: 8,
+  },
+  copyBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
   },
   editBtn: {
     width: 36,

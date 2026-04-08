@@ -74,6 +74,8 @@ interface MealPlanFormModalProps {
   date: string;
   initialMealType?: MealType;
   mealPlan?: MealPlanWithUser;
+  /** 복사 모드: 이 식단의 내용을 미리 채움 (새로 생성) */
+  copyFrom?: MealPlanWithUser;
 }
 
 export function MealPlanFormModal({
@@ -82,6 +84,7 @@ export function MealPlanFormModal({
   date,
   initialMealType = 'breakfast',
   mealPlan,
+  copyFrom,
 }: MealPlanFormModalProps) {
   const { currentGroupId, groups } = useGroupStore();
   const { createMealPlan, updateMealPlan, isCreating, isUpdating } = useMealPlanMutation();
@@ -117,15 +120,24 @@ export function MealPlanFormModal({
     if (visible) {
       setSelectedDate(mealPlan?.date ?? date);
       setShowDatePicker(false);
-      if (mealPlan) {
-        setMealType(mealPlan.mealType);
-        setMenuName(mealPlan.menuName);
-        setMemo(mealPlan.memo ?? '');
-        setCaloriesText(mealPlan.calories ? String(mealPlan.calories) : '');
-        setRecipeUrl(mealPlan.recipeUrl ?? '');
-        setIsRecurring(mealPlan.isRecurring);
-        setRecurRule((mealPlan.recurRule as RecurRule) ?? 'custom');
-        setExistingUrl(mealPlan.photoUrl ?? null);
+      // 복사 모드: 기존 식단 내용을 채우되 새로 생성
+      const source = mealPlan ?? copyFrom;
+      if (source) {
+        setMealType(source.mealType);
+        setMenuName(source.menuName);
+        setMemo(source.memo ?? '');
+        setCaloriesText(source.calories ? String(source.calories) : '');
+        setRecipeUrl(source.recipeUrl ?? '');
+        if (mealPlan) {
+          setIsRecurring(mealPlan.isRecurring);
+          setRecurRule((mealPlan.recurRule as RecurRule) ?? 'custom');
+          setExistingUrl(mealPlan.photoUrl ?? null);
+        } else {
+          setIsRecurring(false);
+          setRecurRule('custom');
+          setCustomDates([]);
+          clearImage();
+        }
       } else {
         setMealType(initialMealType);
         setMenuName('');
@@ -253,7 +265,7 @@ export function MealPlanFormModal({
           <TouchableOpacity onPress={onClose} style={styles.headerBtn}>
             <Text style={styles.cancelText}>취소</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{isEditMode ? '식단 수정' : '식단 추가'}</Text>
+          <Text style={styles.headerTitle}>{isEditMode ? '식단 수정' : copyFrom ? '식단 복사' : '식단 추가'}</Text>
           <TouchableOpacity onPress={handleSubmit} style={styles.headerBtn} disabled={isLoading}>
             <Text style={[styles.saveText, isLoading && styles.disabledText]}>
               {isLoading ? '저장 중...' : '저장'}

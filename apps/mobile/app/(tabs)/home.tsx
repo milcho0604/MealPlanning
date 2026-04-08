@@ -101,6 +101,7 @@ export default function HomeScreen() {
   // ── 모달 상태 ──────────────────────────────────────────
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingMealPlan, setEditingMealPlan] = useState<MealPlanWithUser | null>(null);
+  const [copyingMealPlan, setCopyingMealPlan] = useState<MealPlanWithUser | null>(null);
 
   // ── 검색 ──────────────────────────────────────────────
   const [isSearching, setIsSearching] = useState(false);
@@ -142,9 +143,17 @@ export default function HomeScreen() {
     await removeMealPlan(id);
   };
 
+  /** 복사 핸들러 */
+  const handleCopy = (mealPlan: MealPlanWithUser) => {
+    setCopyingMealPlan(mealPlan);
+    setEditingMealPlan(null);
+    setIsModalVisible(true);
+  };
+
   /** 추가 FAB 핸들러 */
   const handleAddPress = () => {
     setEditingMealPlan(null);
+    setCopyingMealPlan(null);
     setIsModalVisible(true);
   };
 
@@ -152,6 +161,7 @@ export default function HomeScreen() {
   const handleModalClose = () => {
     setIsModalVisible(false);
     setEditingMealPlan(null);
+    setCopyingMealPlan(null);
   };
 
   const handleSearch = (text: string) => {
@@ -264,7 +274,7 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <MealPlanCard mealPlan={item} onEdit={handleEdit} onDelete={handleDelete} />
+            <MealPlanCard mealPlan={item} onEdit={handleEdit} onDelete={handleDelete} onCopy={handleCopy} />
           )}
           ListEmptyComponent={<Text style={styles.emptySearch}>검색 결과가 없습니다.</Text>}
         />
@@ -337,6 +347,7 @@ export default function HomeScreen() {
             mealPlan={item}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onCopy={handleCopy}
           />
         )}
         contentContainerStyle={styles.listContent}
@@ -366,6 +377,7 @@ export default function HomeScreen() {
         onClose={handleModalClose}
         date={selectedDate}
         mealPlan={editingMealPlan ?? undefined}
+        copyFrom={copyingMealPlan ?? undefined}
       />
     </SafeAreaView>
   );
