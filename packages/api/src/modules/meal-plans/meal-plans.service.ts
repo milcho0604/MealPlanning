@@ -12,8 +12,10 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { CreateMealPlanDto } from './dto/create-meal-plan.dto';
@@ -22,6 +24,8 @@ import { GetMealPlansDto } from './dto/get-meal-plans.dto';
 
 @Injectable()
 export class MealPlansService {
+  private readonly logger = new Logger(MealPlansService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly uploadService: UploadService,
@@ -351,5 +355,149 @@ export class MealPlansService {
       updatedAt: mealPlan.updatedAt.toISOString(),
       createdByUser: mealPlan.createdByUser,
     };
+  }
+
+  // ── 반복 식단 자동 생성 (Cron) ──────────────────────────────────────────────
+
+  /**
+   * 매주 반복 식단 자동 생성
+   * 매주 일요일 23:00 KST에 실행 → 다음 주(월~일) 식단을 복사 생성
+   *
+   * 동작:
+   * 1. recurRule='weekly'인 식단을 조회
+   * 2. 해당 식단의 요일에 맞춰 다음 주 날짜 계산
+   * 3. 이미 존재하지 않는 경우에만 생성
+   */
+  @Cron('0 14 * * 0') // UTC 14:00 일요일 = KST 23:00 일요일
+  async generateWeeklyRecurring() {
+    this.logger.log('주간 반복 식단 자동 생성 시작');
+
+    try {
+      // weekly 반복 식단 조회
+      const recurringPlans = await this.prisma.mealPlan.findMany({
+        where: { isRecurring: true, recurRule: 'weekly' },
+      });
+
+      if (recurringPlans.length === 0) return;
+
+      let created = 0;
+      for (const plan of recurringPlans) {
+        // 원본 식단의 요일 (0=일 ~ 6=토)
+        const originalDay = plan.date.getDay();
+
+        // 다음 주 같은 요일 날짜 계산
+        const now = new Date();
+        const nextWeekStart = new Date(now);
+        nextWeekStart.setDate(now.getDate() + (7 - now.getDay() + 1)); // 다음 주 월요일
+        nextWeekStart.setHours(0, 0, 0, 0);
+
+        const targetDate = new Date(nextWeekStart);
+        const dayDiff = originalDay === 0 ? 6 : originalDay - 1; // 월요일 기준 offset
+        targetDate.setDate(nextWeekStart.getDate() + dayDiff);
+
+        // 이미 같은 날짜에 같은 메뉴가 있는지 확인
+        const existing = await this.prisma.mealPlan.findFirst({
+          where: {
+            groupId: plan.groupId,
+            date: targetDate,
+            mealType: plan.mealType,
+            menuName: plan.menuName,
+          },
+        });
+
+        if (!existing) {
+          await this.prisma.mealPlan.create({
+            data: {
+              groupId: plan.groupId,
+              createdBy: plan.createdBy,
+              date: targetDate,
+              mealType: plan.mealType,
+              menuName: plan.menuName,
+              memo: plan.memo,
+              recipeUrl: plan.recipeUrl,
+              calories: plan.calories,
+              photoUrl: plan.photoUrl,
+              isRecurring: true,
+              recurRule: 'weekly',
+            },
+          });
+          created++;
+        }
+      }
+
+      this.logger.log(`주간 반복 식단 ${created}건 생성 완료`);
+    } catch (err) {
+      this.logger.error('주간 반복 식단 생성 실패', err);
+    }
+  }
+
+  /**
+   * 매월 반복 식단 자동 생성
+   * 매월 마지막 날 23:00 KST에 실행 → 다음 달 같은 날짜에 식단 복사
+   *
+   * 동작:
+   * 1. recurRule='monthly'인 식단을 조회
+   * 2. 다음 달 같은 날짜 계산 (31일→28/29/30 자동 보정)
+   * 3. 이미 존재하지 않는 경우에만 생성
+   */
+  @Cron('0 14 28-31 * *') // UTC 14:00 = KST 23:00, 매월 28~31일
+  async generateMonthlyRecurring() {
+    // 실제 마지막 날인지 확인
+    const now = new Date();
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    if (now.getDate() !== lastDay) return;
+
+    this.logger.log('월간 반복 식단 자동 생성 시작');
+
+    try {
+      const recurringPlans = await this.prisma.mealPlan.findMany({
+        where: { isRecurring: true, recurRule: 'monthly' },
+      });
+
+      if (recurringPlans.length === 0) return;
+
+      let created = 0;
+      for (const plan of recurringPlans) {
+        const originalDate = plan.date.getDate();
+
+        // 다음 달 같은 날짜 (월말 보정)
+        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const nextMonthLastDay = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+        const targetDay = Math.min(originalDate, nextMonthLastDay);
+        const targetDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), targetDay);
+
+        const existing = await this.prisma.mealPlan.findFirst({
+          where: {
+            groupId: plan.groupId,
+            date: targetDate,
+            mealType: plan.mealType,
+            menuName: plan.menuName,
+          },
+        });
+
+        if (!existing) {
+          await this.prisma.mealPlan.create({
+            data: {
+              groupId: plan.groupId,
+              createdBy: plan.createdBy,
+              date: targetDate,
+              mealType: plan.mealType,
+              menuName: plan.menuName,
+              memo: plan.memo,
+              recipeUrl: plan.recipeUrl,
+              calories: plan.calories,
+              photoUrl: plan.photoUrl,
+              isRecurring: true,
+              recurRule: 'monthly',
+            },
+          });
+          created++;
+        }
+      }
+
+      this.logger.log(`월간 반복 식단 ${created}건 생성 완료`);
+    } catch (err) {
+      this.logger.error('월간 반복 식단 생성 실패', err);
+    }
   }
 }
