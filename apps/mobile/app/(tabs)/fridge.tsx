@@ -26,6 +26,7 @@ import type { Ingredient, IngredientCategory } from '@mealplan/shared';
 import { useIngredients } from '../../src/hooks/ingredient/use-ingredients.hook';
 import { useIngredientMutation } from '../../src/hooks/ingredient/use-ingredient-mutation.hook';
 import { IngredientCard } from '../../src/components/ingredient/IngredientCard';
+import { SwipeToDelete } from '../../src/components/common/SwipeToDelete';
 import { IngredientFormModal } from '../../src/components/ingredient/IngredientFormModal';
 import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
 import { EmptyState } from '../../src/components/common/EmptyState';
@@ -232,12 +233,14 @@ export default function FridgeScreen() {
               </TouchableOpacity>
             )}
             <View style={styles.selectRowContent}>
-              <IngredientCard
-                ingredient={item}
-                onEdit={handleEdit}
-                onConsume={handleConsume}
-                onDelete={handleDelete}
-              />
+              <SwipeToDelete confirmMessage={`"${item.name}"을(를) 삭제할까요?`} onDelete={() => handleDelete(item.id)}>
+                <IngredientCard
+                  ingredient={item}
+                  onEdit={handleEdit}
+                  onConsume={handleConsume}
+                  onDelete={handleDelete}
+                />
+              </SwipeToDelete>
             </View>
           </View>
         )}

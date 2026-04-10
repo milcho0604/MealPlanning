@@ -25,6 +25,7 @@ import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { mealPlanService } from '../../src/services/meal-plan.service';
 import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
+import { SwipeToDelete } from '../../src/components/common/SwipeToDelete';
 import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
 import { EmptyState } from '../../src/components/common/EmptyState';
 import { NoGroupView } from '../../src/components/group/NoGroupView';
@@ -406,12 +407,14 @@ export default function HomeScreen() {
         data={selectedMealPlans}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <MealPlanCard
-            mealPlan={item}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onCopy={handleCopy}
-          />
+          <SwipeToDelete confirmMessage={`"${item.menuName}"을(를) 삭제할까요?`} onDelete={() => handleDelete(item.id)}>
+            <MealPlanCard
+              mealPlan={item}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onCopy={handleCopy}
+            />
+          </SwipeToDelete>
         )}
         contentContainerStyle={styles.listContent}
         removeClippedSubviews

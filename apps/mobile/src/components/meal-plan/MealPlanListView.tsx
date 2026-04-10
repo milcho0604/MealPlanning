@@ -27,6 +27,7 @@ import { useMealPlansRange } from '../../hooks/meal-plan/use-meal-plans-range.ho
 import { useGroupStore } from '../../stores/group.store';
 import { groupService } from '../../services/group.service';
 import { MealPlanCard } from './MealPlanCard';
+import { SwipeToDelete } from '../common/SwipeToDelete';
 import { colors } from '../../constants/colors';
 
 /** 기간 필터 옵션 */
@@ -177,12 +178,14 @@ export function MealPlanListView({
         );
       }
       return (
-        <MealPlanCard
-          mealPlan={item.data}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onCopy={onCopy}
-        />
+        <SwipeToDelete confirmMessage={`"${item.data.menuName}"을(를) 삭제할까요?`} onDelete={() => onDelete(item.data.id)}>
+          <MealPlanCard
+            mealPlan={item.data}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onCopy={onCopy}
+          />
+        </SwipeToDelete>
       );
     },
     [onEdit, onDelete],

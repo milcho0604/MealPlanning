@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { MealPlanCard } from '../../src/components/meal-plan/MealPlanCard';
+import { SwipeToDelete } from '../../src/components/common/SwipeToDelete';
 import { MealPlanListView } from '../../src/components/meal-plan/MealPlanListView';
 import { MealPlanFormModal } from '../../src/components/meal-plan/MealPlanFormModal';
 import { SkeletonLoader } from '../../src/components/common/SkeletonLoader';
@@ -315,13 +316,14 @@ export default function CalendarScreen() {
             <Text style={styles.panelEmpty}>등록된 식단이 없습니다.</Text>
           ) : (
             selectedDateMealPlans.map((mp) => (
-              <MealPlanCard
-                key={mp.id}
-                mealPlan={mp}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onCopy={handleCopy}
-              />
+              <SwipeToDelete key={mp.id} confirmMessage={`"${mp.menuName}"을(를) 삭제할까요?`} onDelete={() => handleDelete(mp.id)}>
+                <MealPlanCard
+                  mealPlan={mp}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onCopy={handleCopy}
+                />
+              </SwipeToDelete>
             ))
           )}
           {/* FAB 공간 확보 */}
