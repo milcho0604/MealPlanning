@@ -203,69 +203,6 @@ MealPlanning/
 
 ---
 
-## 🚀 시작하기
-
-### 사전 요구사항
-- Node.js >= 20
-- npm
-- Expo CLI
-- PostgreSQL (Supabase)
-
-### 설치
-
-```bash
-# 레포 클론
-git clone https://github.com/milcho0604/MealPlanning.git
-cd MealPlanning
-
-# 의존성 설치
-npm install
-
-# 공유 패키지 빌드
-npm run build -w packages/shared
-```
-
-### 환경변수 설정
-
-**루트 `.env`** (API 서버)
-```env
-DATABASE_URL=postgresql://...
-DIRECT_URL=postgresql://...
-JWT_SECRET=your-secret
-JWT_EXPIRES_IN=1h
-JWT_REFRESH_EXPIRES_IN=30d
-API_PORT=3300
-GOOGLE_CLIENT_ID=your-google-client-id
-SENDGRID_API_KEY=your-sendgrid-key
-MAIL_USER=your-email@gmail.com
-APP_URL=https://your-api-url.com
-AWS_ACCESS_KEY_ID=your-aws-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret
-AWS_REGION=ap-northeast-2
-AWS_S3_BUCKET=your-bucket-name
-```
-
-**`apps/mobile/.env`** (모바일 앱)
-```env
-EXPO_PUBLIC_API_URL=https://your-api-url.com
-EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=your-google-web-client-id
-```
-
-### 실행
-
-```bash
-# API 서버
-cd packages/api && npm run dev
-
-# 모바일 앱
-cd apps/mobile && npx expo start
-
-# 웹 브라우저 테스트
-cd apps/mobile && npx expo start --web
-```
-
----
-
 ## 📡 API 엔드포인트
 
 ### Auth (`/v1/auth`)
@@ -400,7 +337,9 @@ eas build --platform ios --profile preview
 
 ## 📄 라이선스
 
-이 프로젝트는 개인 프로젝트입니다.
+이 프로젝트는 **김창현(milcho0604)**의 개인 소유입니다.
+소스 코드의 무단 복제, 배포, 수정, 상업적 이용을 금지합니다.
+사전 서면 동의 없이 이 코드를 사용할 수 없습니다.
 
 ---
 
