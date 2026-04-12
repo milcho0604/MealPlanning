@@ -337,7 +337,7 @@ eas build --platform ios --profile preview
 
 ## 📄 라이선스
 
-All Rights Reserved. Copyright (c) 2026 김창현 (milcho0604)
+All Rights Reserved. Copyright (c) 2026 milcho0604
 
 이 소프트웨어의 소스 코드 및 관련 자료에 대한 모든 권리는 저작권자에게 있습니다.
 저작권자의 사전 서면 동의 없이 본 소프트웨어의 전부 또는 일부를
@@ -347,6 +347,6 @@ All Rights Reserved. Copyright (c) 2026 김창현 (milcho0604)
 
 ## 👤 개발자
 
-**김창현** (milcho0604)
+**milcho0604**
 - GitHub: [@milcho0604](https://github.com/milcho0604)
 - Email: milcho0604@gmail.com
