@@ -1,15 +1,14 @@
 /**
  * 인증 서비스 (Auth Service)
  *
- * 인증 관련 비즈니스 로직을 처리합니다.
- * - 회원가입: Supabase Auth에 계정 생성 후 로컬 DB에 사용자 정보 저장
- * - 로그인: Supabase Auth로 검증 후 JWT 토큰 발급
- * - 토큰 갱신: 리프레시 토큰으로 새 액세스 토큰 발급
- * - 로그아웃: Supabase 세션 종료
+ * ⚠️ 리팩토링 예정: 이 서비스는 6가지 책임을 가지고 있어 분리가 필요합니다.
  *
- * 인증 흐름:
- *   클라이언트 → NestJS → Supabase Auth (검증) → JWT 발급 → 클라이언트
- *   이후 요청: 클라이언트 → NestJS (JWT 검증) → 처리
+ * 분리 계획:
+ * - auth.service.ts          → signUp, signIn, verifyEmail, resendVerification, signOut, getMe, updateProfile
+ * - token.service.ts         → generateTokens, refreshToken, toUserResponse
+ * - social-auth.service.ts   → socialSignIn, verifyProviderToken, verifyGoogleToken, verifyKakaoToken, verifyAppleToken
+ * - password.service.ts      → changePassword, forgotPassword, resetPassword
+ * - account.service.ts       → deleteAccount, reactivateAccount, purgeExpiredAccounts (Cron)
  */
 
 import {
@@ -227,6 +226,7 @@ export class AuthService {
    *
    * @throws UnauthorizedException - 리프레시 토큰이 유효하지 않은 경우
    */
+  // [REFACTOR] → token.service.ts
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     try {
       // 리프레시 토큰 서명 검증
@@ -265,6 +265,7 @@ export class AuthService {
    * 4. 그것도 없으면 신규 사용자 생성
    * 5. JWT 발급 후 반환
    */
+  // [REFACTOR] → social-auth.service.ts
   async socialSignIn(
     provider: SocialProvider,
     token: string,
@@ -323,6 +324,7 @@ export class AuthService {
   /**
    * 소셜 제공자 토큰 검증 및 사용자 정보 추출
    */
+  // [REFACTOR] → social-auth.service.ts
   private async verifyProviderToken(
     provider: SocialProvider,
     token: string,
@@ -335,6 +337,7 @@ export class AuthService {
   }
 
   /** Google ID 토큰 검증 (웹/iOS/Android 클라이언트 ID 모두 허용) */
+  // [REFACTOR] → social-auth.service.ts (또는 providers/google.provider.ts)
   private async verifyGoogleToken(idToken: string): Promise<SocialUserInfo> {
     try {
       const clientId =
@@ -363,6 +366,7 @@ export class AuthService {
   }
 
   /** Kakao 액세스 토큰으로 사용자 정보 조회 */
+  // [REFACTOR] → social-auth.service.ts (또는 providers/kakao.provider.ts)
   private async verifyKakaoToken(accessToken: string): Promise<SocialUserInfo> {
     try {
       const { data } = await axios.get<{
@@ -387,6 +391,7 @@ export class AuthService {
   }
 
   /** Apple Identity 토큰 검증 */
+  // [REFACTOR] → social-auth.service.ts (또는 providers/apple.provider.ts)
   private async verifyAppleToken(
     identityToken: string,
     displayName?: string,
@@ -413,6 +418,7 @@ export class AuthService {
    * 즉시 삭제하지 않고 status_yn = N, deleted_at = now() 으로 표시.
    * 90일 후 Cron이 하드 삭제 처리.
    */
+  // [REFACTOR] → account.service.ts
   async deleteAccount(userId: string): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
@@ -429,6 +435,7 @@ export class AuthService {
    * 탈퇴 후 90일 이내에만 가능.
    * status_yn = Y, deleted_at = null 로 복구.
    */
+  // [REFACTOR] → account.service.ts
   async reactivateAccount(
     email: string,
     password: string,
@@ -464,6 +471,7 @@ export class AuthService {
    * [Cron] 매일 자정 - 탈퇴 후 90일 경과 계정 하드 삭제
    */
   @Cron('0 0 * * *', { timeZone: 'Asia/Seoul' })
+  // [REFACTOR] → account.service.ts (Cron)
   async purgeExpiredAccounts(): Promise<void> {
     const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const expired = await this.prisma.user.findMany({
@@ -512,6 +520,7 @@ export class AuthService {
    * 비밀번호 변경 (로그인 상태)
    * 현재 비밀번호 확인 후 새 비밀번호로 변경
    */
+  // [REFACTOR] → password.service.ts
   async changePassword(
     userId: string,
     currentPassword: string,
@@ -539,6 +548,7 @@ export class AuthService {
    * 비밀번호 재설정 요청 (비로그인)
    * 이메일로 재설정 링크 발송
    */
+  // [REFACTOR] → password.service.ts
   async forgotPassword(email: string): Promise<void> {
     const normalizedEmail = email.toLowerCase().trim();
     const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
@@ -562,6 +572,7 @@ export class AuthService {
   /**
    * 비밀번호 재설정 실행 (토큰 검증 후)
    */
+  // [REFACTOR] → password.service.ts
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.prisma.user.findFirst({
       where: { verifyToken: token, verifyTokenExpiry: { gt: new Date() } },
@@ -603,6 +614,7 @@ export class AuthService {
    * - 액세스 토큰: 짧은 유효기간 (기본 1시간), API 요청 시 사용
    * - 리프레시 토큰: 긴 유효기간 (기본 30일), 액세스 토큰 갱신 시 사용
    */
+  // [REFACTOR] → token.service.ts
   private generateTokens(userId: string, email: string): AuthTokens {
     const expiresIn = this.configService.get<string>('JWT_EXPIRES_IN') ?? '1h';
     const refreshExpiresIn =

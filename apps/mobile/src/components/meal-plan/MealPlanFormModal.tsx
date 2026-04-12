@@ -1,17 +1,14 @@
 /**
  * 식단 추가/수정 모달 컴포넌트 (MealPlanFormModal)
  *
- * 식단을 새로 추가하거나 기존 식단을 수정할 때 사용합니다.
- * - 추가 모드: mealPlan props 없이 날짜(date)와 초기 식사 유형(initialMealType)만 전달
- * - 수정 모드: mealPlan props에 기존 식단 데이터를 전달
+ * ⚠️ 리팩토링 예정: 849줄 → 5개 파일로 분리
  *
- * Phase 2 추가:
- * - 반복 설정: 매주 / 매월 반복 토글
- * - 레시피 URL 입력 필드
- *
- * Phase 2 (템플릿):
- * - 템플릿에서 불러오기 버튼 → TemplatePickerModal
- * - 현재 입력 내용을 템플릿으로 저장 버튼
+ * 분리 계획:
+ * - MealPlanFormModal.tsx         → 모달 껍데기 + 조합 (~200줄)
+ * - hooks/useMealPlanForm.hook.ts → 폼 상태 + 유효성 검사 + submit 로직
+ * - MealPlanDatePicker.tsx        → 날짜 뱃지 + 미니 캘린더 선택기
+ * - MealPlanPhotoSection.tsx      → 사진 선택/업로드/미리보기/삭제
+ * - MealPlanRepeatSection.tsx     → 여러 날짜 등록 토글 + 날짜 선택 그리드
  */
 
 import { useEffect, useState } from 'react';
