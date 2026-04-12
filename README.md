@@ -4,7 +4,13 @@
 
 ## 📱 스크린샷
 
-> 추후 추가 예정
+| 홈 | 캘린더 | 냉장고 |
+|:---:|:---:|:---:|
+| ![홈](docs/screenshot-03-main.png) | ![캘린더](docs/screenshot-04-calendar.png) | ![냉장고](docs/screenshot-05-fridge.png) |
+
+| 쇼핑 리스트 | 설정 |
+|:---:|:---:|
+| ![쇼핑](docs/screenshot-06-shopping.png) | ![설정](docs/screenshot-09-settings-detail.png) |
 
 ---
 
