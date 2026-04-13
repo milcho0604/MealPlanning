@@ -73,7 +73,13 @@ export class IngredientsService {
     const now = new Date();
     const kstOffset = 9 * 60 * 60 * 1000;
     const kstDate = new Date(now.getTime() + kstOffset);
-    const today = new Date(Date.UTC(kstDate.getUTCFullYear(), kstDate.getUTCMonth(), kstDate.getUTCDate()));
+    const today = new Date(
+      Date.UTC(
+        kstDate.getUTCFullYear(),
+        kstDate.getUTCMonth(),
+        kstDate.getUTCDate(),
+      ),
+    );
 
     // 기준일 계산: 오늘 + days일
     const expiryThreshold = new Date(today);

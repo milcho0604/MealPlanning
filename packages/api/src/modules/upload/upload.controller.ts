@@ -5,12 +5,7 @@
  * 인증된 사용자만 업로드 URL을 요청할 수 있습니다.
  */
 
-import {
-  Controller,
-  Post,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiBearerAuth,

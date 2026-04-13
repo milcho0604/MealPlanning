@@ -231,9 +231,7 @@ describe('AuthService', () => {
           email: 'unverified@example.com',
           password: 'password123',
         }),
-      ).rejects.toThrow(
-        new UnauthorizedException('EMAIL_NOT_VERIFIED'),
-      );
+      ).rejects.toThrow(new UnauthorizedException('EMAIL_NOT_VERIFIED'));
     });
 
     it('탈퇴된 계정으로 로그인 시 ACCOUNT_DELETED 에러가 발생해야 한다', async () => {
@@ -253,9 +251,7 @@ describe('AuthService', () => {
           email: 'deleted@example.com',
           password: 'password123',
         }),
-      ).rejects.toThrow(
-        new UnauthorizedException('ACCOUNT_DELETED'),
-      );
+      ).rejects.toThrow(new UnauthorizedException('ACCOUNT_DELETED'));
     });
 
     it('존재하지 않는 이메일로 로그인 시 UnauthorizedException이 발생해야 한다', async () => {
@@ -330,7 +326,10 @@ describe('AuthService', () => {
         verifyToken: 'valid-verify-token',
         verifyTokenExpiry: new Date(Date.now() + 3600 * 1000), // 1시간 후 만료
       });
-      mockPrismaService.user.update.mockResolvedValue({ ...mockUser, isVerified: true });
+      mockPrismaService.user.update.mockResolvedValue({
+        ...mockUser,
+        isVerified: true,
+      });
 
       // when
       const result = await service.verifyEmail('valid-verify-token');
@@ -349,9 +348,9 @@ describe('AuthService', () => {
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
       // when & then
-      await expect(
-        service.verifyEmail('expired-verify-token'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.verifyEmail('expired-verify-token')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

@@ -87,8 +87,14 @@ describe('AuthController', () => {
   describe('POST /auth/signup (회원가입)', () => {
     it('signUp DTO를 AuthService.signUp에 전달하고 결과를 반환해야 한다', async () => {
       // given
-      const dto = { email: 'new@example.com', name: '신규유저', password: 'password123' };
-      const expectedResult = { message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.' };
+      const dto = {
+        email: 'new@example.com',
+        name: '신규유저',
+        password: 'password123',
+      };
+      const expectedResult = {
+        message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.',
+      };
       mockAuthService.signUp.mockResolvedValue(expectedResult);
 
       // when
@@ -147,7 +153,9 @@ describe('AuthController', () => {
       await controller.deleteAccount(mockRequestUser);
 
       // then
-      expect(mockAuthService.deleteAccount).toHaveBeenCalledWith(mockRequestUser.id);
+      expect(mockAuthService.deleteAccount).toHaveBeenCalledWith(
+        mockRequestUser.id,
+      );
       expect(mockAuthService.deleteAccount).toHaveBeenCalledTimes(1);
     });
   });

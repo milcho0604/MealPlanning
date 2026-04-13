@@ -116,9 +116,11 @@ export class AuthService {
     }
 
     // 인증 메일 발송 (백그라운드 - 응답을 기다리지 않음)
-    this.mailService.sendVerificationEmail(email, dto.name, verifyToken).catch(() => {
-      this.logger.error(`회원가입 인증 메일 발송 실패: ${email}`);
-    });
+    this.mailService
+      .sendVerificationEmail(email, dto.name, verifyToken)
+      .catch(() => {
+        this.logger.error(`회원가입 인증 메일 발송 실패: ${email}`);
+      });
 
     return { message: '인증 메일을 발송했습니다. 이메일을 확인해주세요.' };
   }
@@ -162,7 +164,9 @@ export class AuthService {
 
   /** 인증 메일 재발송 */
   async resendVerification(email: string): Promise<void> {
-    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
     if (!user || user.isVerified) return; // 존재하지 않거나 이미 인증된 경우 무시
 
     const verifyToken = randomBytes(32).toString('hex');
@@ -174,9 +178,11 @@ export class AuthService {
     });
 
     // 메일 발송 (백그라운드 - signUp/forgotPassword와 동일 패턴)
-    this.mailService.sendVerificationEmail(email, user.name, verifyToken).catch(() => {
-      this.logger.error(`인증 메일 재발송 실패: ${email}`);
-    });
+    this.mailService
+      .sendVerificationEmail(email, user.name, verifyToken)
+      .catch(() => {
+        this.logger.error(`인증 메일 재발송 실패: ${email}`);
+      });
   }
 
   /**
@@ -440,14 +446,19 @@ export class AuthService {
     email: string,
     password: string,
   ): Promise<AuthResponse> {
-    const user = await this.prisma.user.findUnique({ where: { email: email.toLowerCase().trim() } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
 
     if (!user || user.statusYn !== 'N') {
       throw new UnauthorizedException('탈퇴된 계정을 찾을 수 없습니다.');
     }
 
     // 90일 복구 기간 검증
-    if (!user.deletedAt || user.deletedAt.getTime() < Date.now() - 90 * 24 * 60 * 60 * 1000) {
+    if (
+      !user.deletedAt ||
+      user.deletedAt.getTime() < Date.now() - 90 * 24 * 60 * 60 * 1000
+    ) {
       throw new UnauthorizedException('복구 기간(90일)이 만료되었습니다.');
     }
 
@@ -551,7 +562,9 @@ export class AuthService {
   // [REFACTOR] → password.service.ts
   async forgotPassword(email: string): Promise<void> {
     const normalizedEmail = email.toLowerCase().trim();
-    const user = await this.prisma.user.findUnique({ where: { email: normalizedEmail } });
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
     // 보안: 존재하지 않는 이메일이어도 동일 응답
     if (!user || !user.passwordHash) return;
 
@@ -564,9 +577,11 @@ export class AuthService {
     });
 
     // 메일 발송 (백그라운드 - 응답을 기다리지 않음)
-    this.mailService.sendPasswordResetEmail(normalizedEmail, user.name, resetToken).catch(() => {
-      this.logger.error(`비밀번호 재설정 메일 발송 실패: ${normalizedEmail}`);
-    });
+    this.mailService
+      .sendPasswordResetEmail(normalizedEmail, user.name, resetToken)
+      .catch(() => {
+        this.logger.error(`비밀번호 재설정 메일 발송 실패: ${normalizedEmail}`);
+      });
   }
 
   /**
@@ -587,7 +602,11 @@ export class AuthService {
 
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash: newHash, verifyToken: null, verifyTokenExpiry: null },
+      data: {
+        passwordHash: newHash,
+        verifyToken: null,
+        verifyTokenExpiry: null,
+      },
     });
   }
 

@@ -111,7 +111,11 @@ export class GroupsService {
   /**
    * 그룹 정보 수정 (owner만 가능)
    */
-  async updateGroup(groupId: string, userId: string, data: { name?: string; color?: string }) {
+  async updateGroup(
+    groupId: string,
+    userId: string,
+    data: { name?: string; color?: string },
+  ) {
     const member = await this.prisma.groupMember.findUnique({
       where: { groupId_userId: { groupId, userId } },
     });

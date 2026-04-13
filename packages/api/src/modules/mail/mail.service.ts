@@ -26,7 +26,8 @@ export class MailService {
   constructor(private configService: ConfigService) {
     this.sendgridApiKey = this.configService.get<string>('SENDGRID_API_KEY');
     this.resendApiKey = this.configService.get<string>('RESEND_API_KEY');
-    this.fromEmail = this.configService.get<string>('MAIL_USER') ?? 'hello.mealplan@gmail.com';
+    this.fromEmail =
+      this.configService.get<string>('MAIL_USER') ?? 'hello.mealplan@gmail.com';
 
     // Gmail SMTP 폴백용
     this.transporter = nodemailer.createTransport({
@@ -39,7 +40,11 @@ export class MailService {
   }
 
   /** 이메일 발송 (SendGrid → Resend → Gmail 순서) */
-  private async sendEmail(to: string, subject: string, html: string): Promise<void> {
+  private async sendEmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
     if (this.sendgridApiKey) {
       return this.sendViaSendGrid(to, subject, html);
     }
@@ -50,11 +55,15 @@ export class MailService {
   }
 
   /** SendGrid HTTP API로 이메일 발송 */
-  private async sendViaSendGrid(to: string, subject: string, html: string): Promise<void> {
+  private async sendViaSendGrid(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
     const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.sendgridApiKey}`,
+        Authorization: `Bearer ${this.sendgridApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -73,11 +82,15 @@ export class MailService {
   }
 
   /** Resend HTTP API로 이메일 발송 */
-  private async sendViaResend(to: string, subject: string, html: string): Promise<void> {
+  private async sendViaResend(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${this.resendApiKey}`,
+        Authorization: `Bearer ${this.resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -96,7 +109,11 @@ export class MailService {
   }
 
   /** Gmail SMTP로 이메일 발송 (폴백) */
-  private async sendViaGmail(to: string, subject: string, html: string): Promise<void> {
+  private async sendViaGmail(
+    to: string,
+    subject: string,
+    html: string,
+  ): Promise<void> {
     await this.transporter.sendMail({
       from: `"MealPlan" <${this.fromEmail}>`,
       to,
@@ -106,8 +123,15 @@ export class MailService {
   }
 
   /** 이메일 인증 발송 */
-  async sendVerificationEmail(email: string, name: string, token: string): Promise<void> {
-    const appUrl = this.configService.get<string>('APP_URL', 'http://localhost:3300');
+  async sendVerificationEmail(
+    email: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
+    const appUrl = this.configService.get<string>(
+      'APP_URL',
+      'http://localhost:3300',
+    );
     const verifyUrl = `${appUrl}/v1/auth/verify-email?token=${token}`;
 
     try {
@@ -131,8 +155,15 @@ export class MailService {
   }
 
   /** 비밀번호 재설정 이메일 발송 */
-  async sendPasswordResetEmail(email: string, name: string, token: string): Promise<void> {
-    const appUrl = this.configService.get<string>('APP_URL', 'http://localhost:3300');
+  async sendPasswordResetEmail(
+    email: string,
+    name: string,
+    token: string,
+  ): Promise<void> {
+    const appUrl = this.configService.get<string>(
+      'APP_URL',
+      'http://localhost:3300',
+    );
     const resetUrl = `${appUrl}/v1/auth/reset-password?token=${token}`;
 
     try {

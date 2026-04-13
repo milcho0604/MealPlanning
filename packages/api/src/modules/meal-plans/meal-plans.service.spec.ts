@@ -95,7 +95,9 @@ describe('MealPlansService', () => {
   describe('findByDateRange (날짜 범위 식단 조회)', () => {
     it('그룹 멤버가 날짜 범위로 식단 목록을 성공적으로 조회해야 한다', async () => {
       // given
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.mealPlan.findMany.mockResolvedValue([mockMealPlan]);
 
       const query = {
@@ -144,7 +146,9 @@ describe('MealPlansService', () => {
   describe('create (식단 생성)', () => {
     it('편집 권한이 있는 멤버가 식단을 성공적으로 생성해야 한다', async () => {
       // given
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.mealPlan.create.mockResolvedValue(mockMealPlan);
 
       const createDto = {
@@ -166,7 +170,9 @@ describe('MealPlansService', () => {
 
     it('뷰어 권한인 멤버가 식단 생성 시 ForbiddenException이 발생해야 한다', async () => {
       // given: viewer 권한을 가진 그룹 멤버
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberViewer);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberViewer,
+      );
 
       // when & then
       await expect(
@@ -186,7 +192,9 @@ describe('MealPlansService', () => {
     it('편집 권한이 있는 멤버가 식단을 성공적으로 삭제해야 한다', async () => {
       // given
       mockPrismaService.mealPlan.findUnique.mockResolvedValue(mockMealPlan);
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.mealPlan.delete.mockResolvedValue(mockMealPlan);
 
       // when
@@ -205,7 +213,9 @@ describe('MealPlansService', () => {
         ...mockMealPlan,
         createdBy: TEST_USER_ID, // 다른 사람이 만든 식단
       });
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberViewer);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberViewer,
+      );
 
       // when & then
       await expect(

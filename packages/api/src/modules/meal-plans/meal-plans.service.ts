@@ -96,20 +96,36 @@ export class MealPlansService {
     for (const plan of allPlans) {
       const monthKey = plan.date.toISOString().slice(0, 7); // YYYY-MM
       if (!monthlyDistribution[monthKey]) {
-        monthlyDistribution[monthKey] = { breakfast: 0, lunch: 0, dinner: 0, snack: 0 };
+        monthlyDistribution[monthKey] = {
+          breakfast: 0,
+          lunch: 0,
+          dinner: 0,
+          snack: 0,
+        };
       }
       monthlyDistribution[monthKey][plan.mealType] =
         (monthlyDistribution[monthKey][plan.mealType] ?? 0) + 1;
     }
 
     // 칼로리 통계
-    const plansWithCalories = allPlans.filter((p) => p.calories !== null && p.calories > 0);
-    const totalCalories = plansWithCalories.reduce((s, p) => s + (p.calories ?? 0), 0);
-    const daysWithCalories = new Set(plansWithCalories.map((p) => p.date.toISOString().split('T')[0])).size;
-    const avgDailyCalories = daysWithCalories > 0 ? Math.round(totalCalories / daysWithCalories) : 0;
+    const plansWithCalories = allPlans.filter(
+      (p) => p.calories !== null && p.calories > 0,
+    );
+    const totalCalories = plansWithCalories.reduce(
+      (s, p) => s + (p.calories ?? 0),
+      0,
+    );
+    const daysWithCalories = new Set(
+      plansWithCalories.map((p) => p.date.toISOString().split('T')[0]),
+    ).size;
+    const avgDailyCalories =
+      daysWithCalories > 0 ? Math.round(totalCalories / daysWithCalories) : 0;
 
     return {
-      topMenus: topMenus.map((m) => ({ menuName: m.menuName, count: m._count.menuName })),
+      topMenus: topMenus.map((m) => ({
+        menuName: m.menuName,
+        count: m._count.menuName,
+      })),
       monthlyDistribution,
       calorieStats: {
         totalCalories,
@@ -203,7 +219,11 @@ export class MealPlansService {
         uniqueDates.map((d) =>
           this.prisma.mealPlan.create({
             data: { ...commonData, date: new Date(d) },
-            include: { createdByUser: { select: { id: true, name: true, avatarUrl: true } } },
+            include: {
+              createdByUser: {
+                select: { id: true, name: true, avatarUrl: true },
+              },
+            },
           }),
         ),
       );
@@ -238,7 +258,11 @@ export class MealPlansService {
     await this.validateGroupEditor(userId, mealPlan.groupId);
 
     // 사진이 교체되는 경우 기존 S3 파일 삭제
-    if (dto.photoUrl !== undefined && mealPlan.photoUrl && dto.photoUrl !== mealPlan.photoUrl) {
+    if (
+      dto.photoUrl !== undefined &&
+      mealPlan.photoUrl &&
+      dto.photoUrl !== mealPlan.photoUrl
+    ) {
       await this.uploadService.deleteFile(mealPlan.photoUrl);
     }
 
@@ -444,7 +468,11 @@ export class MealPlansService {
   async generateMonthlyRecurring() {
     // 실제 마지막 날인지 확인
     const now = new Date();
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const lastDay = new Date(
+      now.getFullYear(),
+      now.getMonth() + 1,
+      0,
+    ).getDate();
     if (now.getDate() !== lastDay) return;
 
     this.logger.log('월간 반복 식단 자동 생성 시작');
@@ -462,9 +490,17 @@ export class MealPlansService {
 
         // 다음 달 같은 날짜 (월말 보정)
         const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        const nextMonthLastDay = new Date(nextMonth.getFullYear(), nextMonth.getMonth() + 1, 0).getDate();
+        const nextMonthLastDay = new Date(
+          nextMonth.getFullYear(),
+          nextMonth.getMonth() + 1,
+          0,
+        ).getDate();
         const targetDay = Math.min(originalDate, nextMonthLastDay);
-        const targetDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), targetDay);
+        const targetDate = new Date(
+          nextMonth.getFullYear(),
+          nextMonth.getMonth(),
+          targetDay,
+        );
 
         const existing = await this.prisma.mealPlan.findFirst({
           where: {

@@ -62,7 +62,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     // Prisma 에러 처리 (unique constraint 위반 등)
-    const prismaError = exception as { code?: string; meta?: { target?: string[] } };
+    const prismaError = exception as {
+      code?: string;
+      meta?: { target?: string[] };
+    };
     if (prismaError.code === 'P2002') {
       const target = prismaError.meta?.target?.join(', ') ?? '필드';
       response.status(HttpStatus.CONFLICT).json({
@@ -77,7 +80,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     // 그 외 모든 에러 → 500
     const errorMessage =
-      exception instanceof Error ? exception.message : '서버 내부 오류가 발생했습니다.';
+      exception instanceof Error
+        ? exception.message
+        : '서버 내부 오류가 발생했습니다.';
     this.logger.error(
       `[${request.method}] ${request.url} → 500 ${errorMessage}`,
       exception instanceof Error ? exception.stack : undefined,

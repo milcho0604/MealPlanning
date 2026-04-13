@@ -83,7 +83,12 @@ export class GroupsController {
     @CurrentUser() user: RequestUser,
     @Body() body: { role: string },
   ) {
-    return this.groupsService.changeRole(groupId, user.id, targetUserId, body.role);
+    return this.groupsService.changeRole(
+      groupId,
+      user.id,
+      targetUserId,
+      body.role,
+    );
   }
 
   @Delete(':id/members/:userId')

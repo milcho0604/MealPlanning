@@ -14,7 +14,11 @@
 
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuid } from 'uuid';
 
@@ -62,7 +66,10 @@ export class UploadService {
     this.bucket = this.config.get<string>('AWS_S3_BUCKET', '');
 
     const accessKeyId = this.config.get<string>('AWS_ACCESS_KEY_ID', '');
-    const secretAccessKey = this.config.get<string>('AWS_SECRET_ACCESS_KEY', '');
+    const secretAccessKey = this.config.get<string>(
+      'AWS_SECRET_ACCESS_KEY',
+      '',
+    );
 
     // AWS 설정이 없으면 경고만 출력 (서버 기동은 정상 진행, 업로드 요청 시 에러 반환)
     if (!this.bucket || !accessKeyId || !secretAccessKey) {
@@ -92,7 +99,9 @@ export class UploadService {
 
     // S3 설정 확인
     if (!this.bucket) {
-      throw new BadRequestException('사진 업로드 기능이 설정되지 않았습니다. 관리자에게 문의하세요.');
+      throw new BadRequestException(
+        '사진 업로드 기능이 설정되지 않았습니다. 관리자에게 문의하세요.',
+      );
     }
 
     // 허용된 MIME 타입 검증

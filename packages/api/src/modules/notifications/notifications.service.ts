@@ -58,7 +58,13 @@ export class NotificationsService {
     const now = new Date();
     const kstOffset = 9 * 60 * 60 * 1000;
     const kstDate = new Date(now.getTime() + kstOffset);
-    const today = new Date(Date.UTC(kstDate.getUTCFullYear(), kstDate.getUTCMonth(), kstDate.getUTCDate()));
+    const today = new Date(
+      Date.UTC(
+        kstDate.getUTCFullYear(),
+        kstDate.getUTCMonth(),
+        kstDate.getUTCDate(),
+      ),
+    );
 
     // 오늘 식단이 있는 그룹 조회
     const groupsWithMeals = await this.prisma.mealPlan.findMany({
@@ -104,7 +110,13 @@ export class NotificationsService {
     const now = new Date();
     const kstOffset = 9 * 60 * 60 * 1000;
     const kstDate = new Date(now.getTime() + kstOffset);
-    const today = new Date(Date.UTC(kstDate.getUTCFullYear(), kstDate.getUTCMonth(), kstDate.getUTCDate()));
+    const today = new Date(
+      Date.UTC(
+        kstDate.getUTCFullYear(),
+        kstDate.getUTCMonth(),
+        kstDate.getUTCDate(),
+      ),
+    );
 
     const warningDate = new Date(today);
     warningDate.setDate(warningDate.getDate() + 3); // 3일 후

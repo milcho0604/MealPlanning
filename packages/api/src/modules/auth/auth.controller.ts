@@ -208,8 +208,15 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '비밀번호 변경' })
-  changePassword(@CurrentUser() user: RequestUser, @Body() dto: ChangePasswordDto) {
-    return this.authService.changePassword(user.id, dto.currentPassword, dto.newPassword);
+  changePassword(
+    @CurrentUser() user: RequestUser,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+    );
   }
 
   /** 비밀번호 찾기 (재설정 링크 발송) */

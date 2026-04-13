@@ -102,7 +102,9 @@ describe('IngredientsService', () => {
   describe('findAll (재료 목록 조회)', () => {
     it('그룹 멤버가 재료 목록을 성공적으로 조회해야 한다', async () => {
       // given
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.ingredient.findMany.mockResolvedValue([mockIngredient]);
 
       // when
@@ -114,7 +116,10 @@ describe('IngredientsService', () => {
       expect(result[0].quantity).toBe(2); // Decimal → number 변환 확인
       expect(mockPrismaService.ingredient.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ groupId: TEST_GROUP_ID, isConsumed: false }),
+          where: expect.objectContaining({
+            groupId: TEST_GROUP_ID,
+            isConsumed: false,
+          }),
         }),
       );
     });
@@ -135,7 +140,9 @@ describe('IngredientsService', () => {
   describe('create (재료 추가)', () => {
     it('편집 권한이 있는 멤버가 재료를 성공적으로 추가해야 한다', async () => {
       // given
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.ingredient.create.mockResolvedValue(mockIngredient);
 
       const createDto = {
@@ -162,7 +169,9 @@ describe('IngredientsService', () => {
     it('편집 권한이 있는 멤버가 재료를 성공적으로 삭제해야 한다', async () => {
       // given
       mockPrismaService.ingredient.findUnique.mockResolvedValue(mockIngredient);
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.ingredient.delete.mockResolvedValue(mockIngredient);
 
       // when
@@ -181,7 +190,9 @@ describe('IngredientsService', () => {
         ...mockIngredient,
         addedBy: OTHER_USER_ID, // 다른 사람이 추가한 재료
       });
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberViewer);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberViewer,
+      );
 
       // when & then
       await expect(
@@ -205,8 +216,12 @@ describe('IngredientsService', () => {
   describe('findExpiring (유통기한 임박 재료 조회)', () => {
     it('3일 이내 만료되는 재료만 반환해야 한다', async () => {
       // given: 임박 재료만 반환하도록 mock 설정
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
-      mockPrismaService.ingredient.findMany.mockResolvedValue([mockExpiringIngredient]);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
+      mockPrismaService.ingredient.findMany.mockResolvedValue([
+        mockExpiringIngredient,
+      ]);
 
       // when
       const result = await service.findExpiring(TEST_USER_ID, TEST_GROUP_ID, 3);
@@ -218,7 +233,9 @@ describe('IngredientsService', () => {
 
     it('유통기한 여유 있는 재료는 포함되지 않아야 한다', async () => {
       // given: findMany가 빈 배열 반환 (기준 기간 내 만료 재료 없음)
-      mockPrismaService.groupMember.findUnique.mockResolvedValue(mockGroupMemberEditor);
+      mockPrismaService.groupMember.findUnique.mockResolvedValue(
+        mockGroupMemberEditor,
+      );
       mockPrismaService.ingredient.findMany.mockResolvedValue([]);
 
       // when
