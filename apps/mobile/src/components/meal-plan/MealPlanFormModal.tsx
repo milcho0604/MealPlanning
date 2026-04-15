@@ -441,7 +441,7 @@ export function MealPlanFormModal({
           <Text style={styles.label}>식단 사진 (선택)</Text>
           {imageUri ? (
             <View style={styles.photoPreviewContainer}>
-              <Image source={{ uri: imageUri }} style={styles.photoPreview} />
+              <Image source={{ uri: imageUri, cache: 'force-cache' }} style={styles.photoPreview} />
               {uploading && (
                 <View style={styles.photoUploadingOverlay}>
                   <ActivityIndicator size="small" color="#fff" />

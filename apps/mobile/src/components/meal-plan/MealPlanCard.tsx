@@ -71,7 +71,7 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete, onCopy, groupColor }:
 
       {/* 식단 사진 */}
       {mealPlan.photoUrl && (
-        <Image source={{ uri: mealPlan.photoUrl }} style={styles.photo} />
+        <Image source={{ uri: mealPlan.photoUrl, cache: 'force-cache' }} style={styles.photo} />
       )}
 
       {/* 메뉴 이름 */}
