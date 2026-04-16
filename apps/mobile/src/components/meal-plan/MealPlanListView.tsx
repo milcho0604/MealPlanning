@@ -98,7 +98,10 @@ export function MealPlanListView({
     if (!currentGroupId) return;
     groupService.getMembers(currentGroupId).then((m) => {
       setMembers(m.map((mem: any) => ({ userId: mem.userId ?? mem.user?.id, name: mem.user?.name ?? '알 수 없음' })));
-    }).catch(() => {});
+    }).catch(() => {
+      // 멤버 목록 로딩 실패 시 필터 비활성 (빈 배열 유지)
+      setMembers([]);
+    });
   }, [currentGroupId]);
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');

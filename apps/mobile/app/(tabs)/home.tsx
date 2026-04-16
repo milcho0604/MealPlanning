@@ -113,7 +113,10 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (currentGroupId && showStats) {
-      mealPlanService.getStats(currentGroupId).then(setStats).catch(() => {});
+      mealPlanService.getStats(currentGroupId).then(setStats).catch(() => {
+        // 통계 로딩 실패 시 null 유지 (통계 섹션 미표시)
+        setStats(null);
+      });
     }
   }, [currentGroupId, showStats]);
 

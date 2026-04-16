@@ -393,7 +393,9 @@ export default function SettingsScreen() {
               storage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, String(val));
               if (!val) {
                 // 알림 비활성화: pushToken을 null로 설정
-                apiClient.patch('/auth/push-token', { pushToken: '' }).catch(() => {});
+                apiClient.patch('/auth/push-token', { pushToken: '' }).catch(() => {
+                  // 푸시 토큰 해제 실패 시 무시 (로컬 설정은 이미 반영됨)
+                });
               }
               Alert.alert(val ? '알림 활성화' : '알림 비활성화', val ? '식단/유통기한 알림을 받습니다.' : '알림이 꺼졌습니다.');
             }}
