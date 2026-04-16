@@ -20,6 +20,7 @@ import {
 import { storage } from '../src/utils/storage';
 import { STORAGE_KEYS } from '../src/constants/storage-keys';
 import OnboardingScreen from './onboarding';
+import { NetworkBanner } from '../src/components/common/NetworkBanner';
 
 // 폰트가 로드될 때까지 스플래시 화면 유지
 SplashScreen.preventAutoHideAsync();
@@ -92,6 +93,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <NetworkBanner />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
