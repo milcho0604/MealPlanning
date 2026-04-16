@@ -220,7 +220,11 @@ export default function SettingsScreen() {
             {avatarUploading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : user?.avatarUrl || avatarUri ? (
-              <Image source={{ uri: avatarUri ?? user?.avatarUrl ?? '', cache: 'force-cache' }} style={styles.profileAvatarImage} />
+              <Image
+                source={{ uri: avatarUri ?? user?.avatarUrl ?? '', cache: 'force-cache' }}
+                style={styles.profileAvatarImage}
+                onError={() => {}}
+              />
             ) : (
               <Text style={styles.profileAvatarText}>
                 {user?.name?.[0]?.toUpperCase() ?? '?'}

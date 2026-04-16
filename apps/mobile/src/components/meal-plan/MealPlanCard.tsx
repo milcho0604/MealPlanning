@@ -5,6 +5,7 @@
  * 홈 화면과 캘린더 화면에서 공통으로 사용합니다.
  */
 
+import { useState } from 'react';
 import { Alert, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MEAL_TYPE_LABELS } from '@mealplan/shared';
@@ -29,6 +30,7 @@ interface MealPlanCardProps {
 }
 
 export function MealPlanCard({ mealPlan, onEdit, onDelete, onCopy, groupColor }: MealPlanCardProps) {
+  const [imageError, setImageError] = useState(false);
   const handleDelete = () => {
     Alert.alert('식단 삭제', `"${mealPlan.menuName}"을(를) 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
@@ -69,9 +71,13 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete, onCopy, groupColor }:
         </View>
       </View>
 
-      {/* 식단 사진 */}
-      {mealPlan.photoUrl && (
-        <Image source={{ uri: mealPlan.photoUrl, cache: 'force-cache' }} style={styles.photo} />
+      {/* 식단 사진 (로딩 실패 시 숨김) */}
+      {mealPlan.photoUrl && !imageError && (
+        <Image
+          source={{ uri: mealPlan.photoUrl, cache: 'force-cache' }}
+          style={styles.photo}
+          onError={() => setImageError(true)}
+        />
       )}
 
       {/* 메뉴 이름 */}
