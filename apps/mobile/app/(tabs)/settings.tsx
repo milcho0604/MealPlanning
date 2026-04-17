@@ -10,7 +10,7 @@
  * 4. 계정: 로그아웃
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -27,6 +27,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
@@ -40,6 +41,7 @@ import { storage } from '../../src/utils/storage';
 import { STORAGE_KEYS } from '../../src/constants/storage-keys';
 import { colors } from '../../src/constants/colors';
 import { GROUP_COLORS } from '../../src/constants/group-colors';
+import OnboardingScreen from '../onboarding';
 
 /** 테마 모드 */
 type ThemeMode = 'light' | 'dark' | 'system';
@@ -59,13 +61,16 @@ export default function SettingsScreen() {
   const { groups, currentGroupId, setCurrentGroupId, createGroup, joinGroup, loadGroups } =
     useGroupStore();
 
-  // 테마/알림 설정을 스토리지에서 불러오기
+  // 테마/알림 설정 및 앱 소개 다시 보기 상태를 스토리지에서 불러오기
   useEffect(() => {
     (async () => {
       const savedTheme = await storage.getItem(STORAGE_KEYS.THEME_MODE);
       if (savedTheme) setThemeModeState(savedTheme as ThemeMode);
       const savedNotif = await storage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
       if (savedNotif !== null) setNotificationsEnabled(savedNotif === 'true');
+      // 앱 소개 다시 보기를 이미 1회 시청했으면 버튼 숨김
+      const replayDone = await storage.getItem(STORAGE_KEYS.ONBOARDING_REPLAY_VIEWED);
+      if (replayDone === 'true') setReplayViewed(true);
     })();
   }, []);
 
@@ -89,6 +94,9 @@ export default function SettingsScreen() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupRole, setSelectedGroupRole] = useState<string>('');
   const [editGroupColorValue, setEditGroupColorValue] = useState<string>(GROUP_COLORS[0]);
+  /** 앱 소개 다시 보기 상태 */
+  const [showOnboardingReplay, setShowOnboardingReplay] = useState(false);
+  const [replayViewed, setReplayViewed] = useState(false);
 
   /** 로그아웃 */
   const handleSignOut = () => {
@@ -187,33 +195,30 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={styles.profileAvatar}
             onPress={() => {
-              Alert.alert('프로필 사진', '사진을 어디서 가져올까요?', [
-                { text: '취소', style: 'cancel' },
-                {
-                  text: '갤러리',
-                  onPress: async () => {
-                    try {
-                      const url = await pickAvatar();
-                      if (url) {
-                        const updated = await authService.updateProfile({ avatarUrl: url });
-                        useAuthStore.setState({ user: updated });
-                      }
-                    } catch { Alert.alert('오류', '사진 변경에 실패했습니다.'); }
-                  },
-                },
-                {
-                  text: '카메라',
-                  onPress: async () => {
-                    try {
-                      const url = await takeAvatar();
-                      if (url) {
-                        const updated = await authService.updateProfile({ avatarUrl: url });
-                        useAuthStore.setState({ user: updated });
-                      }
-                    } catch { Alert.alert('오류', '사진 변경에 실패했습니다.'); }
-                  },
-                },
-              ]);
+              // 웹에서는 Alert 콜백 내 파일 선택이 브라우저 보안 정책에 걸려 동작 안 함
+              // → 웹은 바로 갤러리 선택, 네이티브는 Alert로 선택
+              const doUpload = async (picker: () => Promise<string | null>) => {
+                try {
+                  const url = await picker();
+                  if (url) {
+                    const updated = await authService.updateProfile({ avatarUrl: url });
+                    useAuthStore.setState({ user: updated });
+                  }
+                } catch (e: any) {
+                  const msg = e?.response?.data?.error?.message ?? e?.message ?? '사진 변경에 실패했습니다.';
+                  Alert.alert('오류', msg);
+                }
+              };
+
+              if (Platform.OS === 'web') {
+                doUpload(pickAvatar);
+              } else {
+                Alert.alert('프로필 사진', '사진을 어디서 가져올까요?', [
+                  { text: '취소', style: 'cancel' },
+                  { text: '갤러리', onPress: () => doUpload(pickAvatar) },
+                  { text: '카메라', onPress: () => doUpload(takeAvatar) },
+                ]);
+              }
             }}
             disabled={avatarUploading}
           >
@@ -404,17 +409,17 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <TouchableOpacity
-          style={styles.accountActionBtn}
-          onPress={() => {
-            storage.deleteItem(STORAGE_KEYS.ONBOARDING_DONE);
-            Alert.alert('앱 소개', '앱을 다시 시작하면 소개 화면이 표시됩니다.');
-          }}
-        >
-          <Ionicons name="information-circle-outline" size={18} color={colors.text} />
-          <Text style={styles.accountActionText}>앱 소개 다시 보기</Text>
-          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {/* 앱 소개 다시 보기 — 1회 시청 후 자동 숨김 */}
+        {!replayViewed && (
+          <TouchableOpacity
+            style={styles.accountActionBtn}
+            onPress={() => setShowOnboardingReplay(true)}
+          >
+            <Ionicons name="information-circle-outline" size={18} color={colors.text} />
+            <Text style={styles.accountActionText}>앱 소개 다시 보기</Text>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
@@ -426,6 +431,18 @@ export default function SettingsScreen() {
           <Text style={styles.deleteAccountText}>회원 탈퇴</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* ── 앱 소개 다시 보기 모달 ── */}
+      <Modal visible={showOnboardingReplay} animationType="slide">
+        <OnboardingScreen
+          onComplete={async () => {
+            // 1회 시청 완료 → 스토리지에 저장하고 버튼 숨김
+            await storage.setItem(STORAGE_KEYS.ONBOARDING_REPLAY_VIEWED, 'true');
+            setReplayViewed(true);
+            setShowOnboardingReplay(false);
+          }}
+        />
+      </Modal>
 
       {/* ── 그룹 생성 모달 ── */}
       <Modal

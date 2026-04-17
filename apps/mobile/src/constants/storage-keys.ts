@@ -20,4 +20,6 @@ export const STORAGE_KEYS = {
   DEFAULT_GROUP_ID: 'mealplan_default_group_id',
   /** 온보딩 완료 여부 */
   ONBOARDING_DONE: 'mealplan_onboarding_done',
+  /** 설정에서 앱 소개 다시 보기 사용 여부 (1회 제한) */
+  ONBOARDING_REPLAY_VIEWED: 'mealplan_onboarding_replay_viewed',
 } as const;
