@@ -14,6 +14,7 @@ import {
   Modal,
   Platform,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -242,7 +243,12 @@ export function MealPlanListView({
       </View>
 
       {/* 기간 필터 */}
-      <View style={styles.periodRow}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.periodRow}
+        contentContainerStyle={styles.periodRowContent}
+      >
         {PERIOD_OPTIONS.map((opt) => (
           <TouchableOpacity
             key={opt.value}
@@ -262,7 +268,7 @@ export function MealPlanListView({
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       {/* 사용자(등록자) 필터 */}
       {members.length > 1 && (
@@ -510,10 +516,12 @@ const styles = StyleSheet.create({
   },
   // ── 기간 필터 ──────────────────────────────────────────
   periodRow: {
+    marginBottom: 8,
+  },
+  periodRowContent: {
     flexDirection: 'row',
     gap: 6,
     paddingHorizontal: 16,
-    marginBottom: 8,
   },
   periodBtn: {
     paddingHorizontal: 12,
