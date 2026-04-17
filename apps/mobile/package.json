@@ -14,6 +14,7 @@
     "@expo/metro-runtime": "~55.0.6",
     "@expo/vector-icons": "^15.0.2",
     "@mealplan/shared": "*",
+    "@react-native-community/netinfo": "11.5.2",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@react-native-kakao/core": "^2.4.5",
     "@react-native-kakao/user": "^2.4.5",
