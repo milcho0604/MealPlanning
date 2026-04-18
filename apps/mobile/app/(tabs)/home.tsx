@@ -486,6 +486,7 @@ export default function HomeScreen() {
               onEdit={handleEdit}
               onDelete={handleDelete}
               onCopy={handleCopy}
+              groupColor={!currentGroupId ? (groups.find((g) => g.id === item.groupId)?.color ?? undefined) : undefined}
             />
           </SwipeToDelete>
         )}
