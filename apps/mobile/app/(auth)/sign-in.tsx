@@ -113,9 +113,9 @@ export default function SignInScreen() {
         <TouchableOpacity
           style={styles.forgotPassword}
           onPress={() => {
-            if (Alert.prompt) {
+            if (Platform.OS === 'ios') {
               // iOS: 네이티브 prompt 사용
-              Alert.prompt('비밀번호 찾기', '가입한 이메일을 입력하세요', async (email) => {
+              Alert.prompt!('비밀번호 찾기', '가입한 이메일을 입력하세요', async (email) => {
                 if (!email?.trim()) return;
                 try {
                   const { authService: svc } = await import('../../src/services/auth.service');

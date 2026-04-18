@@ -238,8 +238,8 @@ export function MealPlanFormModal({
     }
 
     // Alert.prompt는 iOS 전용 — Android/웹에서는 커스텀 모달 사용
-    if (typeof Alert.prompt === 'function') {
-      Alert.prompt('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?', doSaveTemplate, 'plain-text', menuName.trim());
+    if (Platform.OS === 'ios') {
+      Alert.prompt!('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?', doSaveTemplate, 'plain-text', menuName.trim());
     } else {
       setTemplateNameInput(menuName.trim());
       setTemplateNameModalVisible(true);
