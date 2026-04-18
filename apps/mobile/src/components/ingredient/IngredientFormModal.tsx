@@ -157,7 +157,8 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
       <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
       >
         {/* 헤더 */}
         <View style={styles.header}>
@@ -178,7 +179,11 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.body} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.body}
+          contentContainerStyle={styles.bodyContent}
+          keyboardShouldPersistTaps="handled"
+        >
           {/* 재료명 */}
           <Text style={styles.label}>재료 이름 *</Text>
           <TextInput
@@ -319,7 +324,10 @@ const styles = StyleSheet.create({
   disabledText: { opacity: 0.4 },
   body: {
     flex: 1,
+  },
+  bodyContent: {
     padding: 20,
+    paddingBottom: 40,
   },
   label: {
     fontSize: 13,
