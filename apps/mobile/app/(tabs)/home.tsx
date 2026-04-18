@@ -176,7 +176,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (showStats) {
-      // currentGroupId가 null이면 전체 그룹 합산 통계
+      setStats(null); // 그룹 변경 즉시 이전 데이터 제거
       mealPlanService.getStats(currentGroupId ?? undefined).then(setStats).catch(() => {
         setStats(null);
       });
