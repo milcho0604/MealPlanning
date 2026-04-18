@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   FlatList,
+  PanResponder,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -82,6 +83,19 @@ export default function HomeScreen() {
   const today = getTodayString();
   const [weekOffset, setWeekOffset] = useState(0);
   const weekDates = getWeekDates(weekOffset);
+
+  /** 주간 스트립 스와이프 감지 (좌→다음주 / 우→이전주) */
+  const weekPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gs) =>
+        Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dx < -40) setWeekOffset((o) => o + 1); // 왼쪽 스와이프 → 다음 주
+        else if (gs.dx > 40) setWeekOffset((o) => o - 1); // 오른쪽 스와이프 → 이전 주
+      },
+    })
+  ).current;
   const { groups, currentGroupId, setCurrentGroupId } = useGroupStore();
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
   const currentGroup = groups.find((g) => g.id === currentGroupId);
@@ -307,8 +321,8 @@ export default function HomeScreen() {
         />
       ) : (
       <>
-      {/* 주간 날짜 탭 스트립 */}
-      <View style={styles.weekStrip}>
+      {/* 주간 날짜 탭 스트립 (좌우 스와이프로 주 이동) */}
+      <View style={styles.weekStrip} {...weekPanResponder.panHandlers}>
         {/* 이전 주 버튼 */}
         <TouchableOpacity style={styles.weekNavBtn} onPress={() => setWeekOffset((o) => o - 1)}>
           <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
