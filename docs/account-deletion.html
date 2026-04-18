@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MealPlan - 계정 삭제 안내</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      color: #1a1a1a;
+      line-height: 1.7;
+      background: #fff;
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; color: #111; }
+    h2 { font-size: 1.2rem; margin-top: 36px; color: #333; }
+    .subtitle { color: #666; font-size: 0.95rem; margin-bottom: 32px; }
+    .badge {
+      display: inline-block;
+      background: #4CAF50;
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    .box {
+      background: #f8f8f8;
+      border-left: 4px solid #4CAF50;
+      padding: 20px 24px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+    .box ol { margin: 0; padding-left: 20px; }
+    .box li { margin-bottom: 8px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.95rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    th { background: #f5f5f5; font-weight: 600; }
+    .warn {
+      background: #fff8e1;
+      border-left: 4px solid #FFC107;
+      padding: 14px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+      font-size: 0.95rem;
+    }
+    a { color: #4CAF50; }
+    footer { margin-top: 48px; color: #999; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <span class="badge">MealPlan</span>
+  <h1>계정 삭제 안내</h1>
+  <p class="subtitle">개발자: milcho0604 &nbsp;|&nbsp; 앱: MealPlan (com.mealplanning.app)</p>
+
+  <p>
+    MealPlan은 언제든지 계정과 관련 데이터를 삭제할 수 있는 방법을 제공합니다.
+    아래 안내에 따라 앱 내에서 직접 삭제하거나, 이메일로 요청하실 수 있습니다.
+  </p>
+
+  <h2>방법 1 — 앱 내에서 직접 삭제 (즉시 처리)</h2>
+  <div class="box">
+    <ol>
+      <li>MealPlan 앱을 실행합니다.</li>
+      <li>하단 탭에서 <strong>설정</strong>을 선택합니다.</li>
+      <li>화면 하단의 <strong>"회원 탈퇴"</strong> 버튼을 누릅니다.</li>
+      <li>안내 메시지를 확인한 뒤 <strong>탈퇴</strong>를 선택합니다.</li>
+    </ol>
+  </div>
+  <div class="warn">
+    탈퇴 후 계정은 <strong>90일간 비활성화</strong> 상태로 유지되며, 그 안에 재로그인하면 복구됩니다.
+    90일이 지나면 모든 데이터가 <strong>영구 삭제</strong>됩니다.
+  </div>
+
+  <h2>방법 2 — 이메일 삭제 요청</h2>
+  <p>
+    앱에 접근하기 어려운 경우 아래 이메일로 요청해 주세요.
+    영업일 기준 <strong>3일 이내</strong> 처리됩니다.
+  </p>
+  <div class="box">
+    <strong>이메일:</strong> <a href="mailto:hello.mealplan@gmail.com">hello.mealplan@gmail.com</a><br />
+    <strong>제목:</strong> [계정 삭제 요청] 가입 이메일 주소<br />
+    <strong>내용:</strong> 삭제를 원하는 계정의 이메일 주소를 포함해 주세요.
+  </div>
+
+  <h2>삭제되는 데이터</h2>
+  <table>
+    <thead>
+      <tr><th>데이터 유형</th><th>삭제 여부</th><th>보관 기간</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>계정 정보 (이름, 이메일)</td><td>삭제</td><td>탈퇴 후 90일 이내</td></tr>
+      <tr><td>식단 데이터</td><td>삭제</td><td>탈퇴 후 90일 이내</td></tr>
+      <tr><td>냉장고 재료 / 쇼핑 목록</td><td>삭제</td><td>탈퇴 후 90일 이내</td></tr>
+      <tr><td>그룹 정보</td><td>삭제 (탈퇴 처리)</td><td>탈퇴 후 90일 이내</td></tr>
+      <tr><td>업로드된 프로필/식단 사진</td><td>삭제 (S3 제거)</td><td>탈퇴 후 90일 이내</td></tr>
+      <tr><td>푸시 알림 토큰</td><td>즉시 삭제</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    &copy; 2024 MealPlan &nbsp;|&nbsp;
+    <a href="./privacy-policy.html">개인정보처리방침</a> &nbsp;|&nbsp;
+    문의: <a href="mailto:hello.mealplan@gmail.com">hello.mealplan@gmail.com</a>
+  </footer>
+</body>
+</html>
