@@ -2,16 +2,6 @@
 
 개인/가족 식단을 미리 계획하고 공유하는 모바일 앱
 
-## 📱 스크린샷
-
-| 홈 | 캘린더 | 냉장고 |
-|:---:|:---:|:---:|
-| ![홈](docs/screenshot-03-main.png) | ![캘린더](docs/screenshot-04-calendar.png) | ![냉장고](docs/screenshot-05-fridge.png) |
-
-| 쇼핑 리스트 | 설정 |
-|:---:|:---:|
-| ![쇼핑](docs/screenshot-06-shopping.png) | ![설정](docs/screenshot-09-settings-detail.png) |
-
 ---
 
 ## 🏗 시스템 아키텍처
@@ -86,6 +76,7 @@ graph TB
         SHARED["@mealplan/shared"]
         GITHUB["GitHub"]
         EAS["EAS Build"]
+        PLAY["Google Play Console"]
     end
 
     AXIOS -- "REST API" --> NEST
@@ -99,6 +90,7 @@ graph TB
     SHARED -.-> Server
     TURBO --> GITHUB
     GITHUB --> EAS
+    EAS --> PLAY
 
     style Client fill:#dbe4ff,stroke:#4a9eed
     style Server fill:#e5dbff,stroke:#8b5cf6
@@ -114,21 +106,22 @@ graph TB
 - 아침/점심/저녁/간식 식단 등록 및 관리 (식사 유형 수정 가능)
 - 월간 캘린더 뷰 + 리스트 뷰 전환 (선택 상태 기억)
 - 리스트 뷰: 전체 식단 날짜순 가상 스크롤 + 검색 + 기간 필터 + 사용자 필터
-- 주간 홈 뷰 + 메뉴명 검색
+- 주간 홈 뷰 + 좌우 스와이프 주간 이동 (드래그 애니메이션) + 화살표 버튼
 - 식단 복사 (다른 날짜에 동일 식단 등록)
 - 여러 날짜에 동일 식단 일괄 등록
-- 식단 템플릿 저장 및 불러오기
-- 식단 사진 첨부 (S3 업로드, 자동 리사이즈/압축)
-- 칼로리 수기 입력 + 일간/주간/월간 요약
-- 식단 통계 (TOP 5 메뉴 + 칼로리 요약)
-- 레시피 URL → "레시피 보기" 버튼
+- 식단 템플릿 저장 및 불러오기 (iOS/Android 모두 지원)
+- 식단 사진 첨부 (S3 업로드, 자동 리사이즈 1080px + JPEG 압축)
+- 칼로리 수기 입력 + 일간/주간 요약
+- 식단 통계 (TOP 5 메뉴 + 칼로리 요약, 홈 화면 토글)
+- 전체 그룹 통계 합산 지원
+- 레시피 URL → "레시피 보기" 버튼 (외부 브라우저)
 - 스와이프 삭제
 
 ### 🥕 냉장고 (재료 관리)
 - 재료 추가/수정/삭제/소진 처리
 - 카테고리별 필터 (육류, 채소, 유제품 등)
 - 유통기한 관리 (달력 선택 + 직접 입력)
-- 유통기한 임박 경고 (3일 이내)
+- 유통기한 임박 경고 (3일 이내) + 매일 9:00 KST 푸시 알림
 - 전체 선택 + 일괄 삭제 / 스와이프 삭제
 
 ### 🛒 쇼핑 리스트
@@ -139,25 +132,31 @@ graph TB
 - 카카오톡/문자 등으로 공유
 
 ### 👥 그룹
-- 그룹 생성 + 6자리 초대 코드 + 그룹 색상 선택/수정 (10색 팔레트)
-- 초대 코드 공유 (모든 멤버 가능)
-- 멤버 관리 (역할 변경, 강퇴)
+- 그룹 생성 + 6자리 초대 코드 + 그룹 색상 선택 (10색 팔레트)
+- 그룹 이름/색상 수정 (관리자 전용)
+- 초대 코드 복사/공유 (모든 멤버 가능) + 딥링크
+- 멤버 관리 (역할 변경, 강퇴) + 프로필 사진 표시
 - 역할: 관리자 / 편집자 / 뷰어
 - 그룹별 식단 필터 (드롭다운) + 전체 그룹 보기
 - 기본 그룹 설정 (앱 시작 시 자동 선택)
-- 캘린더/식단 카드에 그룹 색상 표시
+- 캘린더 dot / 식단 카드에 그룹 색상 바 표시 (전체 그룹 뷰)
 
 ### 🔐 인증
-- 이메일/비밀번호 회원가입 + 이메일 인증
+- 이메일/비밀번호 회원가입 + 이메일 인증 (SendGrid)
 - 소셜 로그인 (Google, 카카오, Apple)
-- 비밀번호 변경 / 비밀번호 찾기
-- 회원 탈퇴 (90일 이내 복구 가능)
+- 비밀번호 변경 / 비밀번호 찾기 (iOS/Android 모두 지원)
+- 회원 탈퇴 (Soft Delete, 90일 이내 복구 가능)
+- Play Store 앱 서명 키 기반 SHA-1 등록 (Google/카카오 로그인)
 
 ### ⚙️ 설정
-- 프로필 수정 (이름 변경 + 사진 변경)
-- 알림 ON/OFF 토글 (설정 영속화)
-- 기본 그룹 설정
-- 앱 소개 다시 보기 (온보딩 리셋)
+- 프로필 수정 (이름 변경 커스텀 모달 + 사진 변경)
+- 알림 ON/OFF 토글 (SecureStore 영속화)
+- 기본 그룹 설정 (별 아이콘)
+- 앱 소개 다시 보기 (온보딩 리셋, 1회 시청 후 숨김)
+
+### 🔔 알림 (Cron)
+- 매일 7:30 KST: 오늘 식단 알림
+- 매일 9:00 KST: 유통기한 임박 알림
 
 ---
 
@@ -174,7 +173,7 @@ graph TB
 | **이미지 저장소** | AWS S3 (Presigned URL) |
 | **이메일** | SendGrid (우선) / Resend / Gmail SMTP (폴백) |
 | **빌드** | Expo EAS Build |
-| **배포** | Render.com (백엔드) |
+| **배포** | Render.com (백엔드), Google Play Console (Android) |
 
 ---
 
@@ -185,20 +184,27 @@ MealPlanning/
 ├── apps/
 │   └── mobile/              # Expo React Native 앱
 │       ├── app/             # Expo Router (파일 기반 라우팅)
-│       │   ├── (auth)/      # 인증 화면
-│       │   └── (tabs)/      # 메인 탭 화면
-│       └── src/
-│           ├── components/  # UI 컴포넌트
-│           ├── hooks/       # React Query 훅
-│           ├── services/    # API 서비스
-│           ├── stores/      # Zustand 스토어 (auth, group, view-mode)
-│           └── constants/   # 색상, 키 상수
+│       │   ├── (auth)/      # 인증 화면 (sign-in, sign-up, verify-email, reactivate)
+│       │   ├── (tabs)/      # 메인 탭 (home, calendar, fridge, shopping, settings)
+│       │   └── onboarding.tsx
+│       ├── src/
+│       │   ├── components/  # 공통/도메인별 컴포넌트
+│       │   ├── hooks/       # React Query 훅, 커스텀 훅
+│       │   ├── services/    # API 서비스 레이어
+│       │   ├── stores/      # Zustand 스토어 (auth, group, view-mode)
+│       │   ├── utils/       # 유틸리티
+│       │   └── constants/   # 색상, 스토리지 키 등
+│       └── assets/          # 앱 아이콘, 스플래시, 로고
 ├── packages/
 │   ├── api/                 # NestJS 백엔드
 │   │   ├── src/modules/     # auth, meal-plans, groups, ingredients, shopping, notifications, mail, upload
 │   │   └── prisma/          # 스키마 + 마이그레이션
-│   └── shared/              # 공유 타입/상수
-└── .github/workflows/       # CI/CD
+│   └── shared/              # 공유 타입/상수 (모바일 + API 공통)
+├── docs/                    # 문서 및 스크린샷
+│   └── account-deletion.html  # Google Play 계정 삭제 안내 페이지
+└── .github/
+    └── workflows/
+        └── keep-alive.yml   # Render.com 슬립 방지 핑 (4분마다)
 ```
 
 ---
@@ -206,132 +212,126 @@ MealPlanning/
 ## 📡 API 엔드포인트
 
 ### Auth (`/v1/auth`)
-| Method | Path | 설명 |
-|--------|------|------|
-| POST | /signup | 회원가입 |
-| POST | /login | 로그인 |
-| POST | /refresh | 토큰 갱신 |
-| GET | /me | 프로필 조회 |
-| PATCH | /profile | 프로필 수정 |
-| POST | /change-password | 비밀번호 변경 |
-| POST | /forgot-password | 비밀번호 재설정 링크 |
-| POST | /social/:provider | 소셜 로그인 |
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| POST | /signup | 회원가입 | - |
+| POST | /login | 로그인 | - |
+| POST | /logout | 로그아웃 | JWT |
+| POST | /refresh | 토큰 갱신 | - |
+| GET | /me | 프로필 조회 | JWT |
+| PATCH | /profile | 프로필 수정 | JWT |
+| PATCH | /push-token | 푸시 토큰 등록 | JWT |
+| POST | /change-password | 비밀번호 변경 | JWT |
+| POST | /forgot-password | 비밀번호 재설정 링크 | - |
+| POST | /reset-password | 비밀번호 재설정 | - |
+| POST | /social/:provider | 소셜 로그인 (google/kakao/apple) | - |
+| POST | /reactivate | 탈퇴 계정 복구 | - |
+| GET | /verify-email | 이메일 인증 | - |
+| DELETE | /account | 회원 탈퇴 | JWT |
 
 ### Meal Plans (`/v1/meal-plans`)
-| Method | Path | 설명 |
-|--------|------|------|
-| GET | / | 기간별 조회 |
-| GET | /stats | 통계 |
-| GET | /search | 검색 |
-| POST | / | 생성 (배치 지원) |
-| PUT | /:id | 수정 |
-| DELETE | /:id | 삭제 |
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| GET | / | 기간별 조회 | JWT |
+| GET | /stats | 통계 (groupId 없으면 전체 합산) | JWT |
+| GET | /search | 메뉴명 검색 | JWT |
+| GET | /:id | 단건 조회 | JWT |
+| POST | / | 생성 (배치 지원) | JWT |
+| PUT | /:id | 수정 | JWT |
+| DELETE | /:id | 삭제 | JWT |
 
 ### Groups (`/v1/groups`)
-| Method | Path | 설명 |
-|--------|------|------|
-| GET | /my | 내 그룹 목록 |
-| POST | / | 생성 |
-| POST | /join | 초대 코드 참여 |
-| PATCH | /:id/members/:userId/role | 역할 변경 |
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| GET | /my | 내 그룹 목록 | JWT |
+| POST | / | 그룹 생성 | JWT |
+| POST | /join | 초대 코드 참여 | JWT |
+| PATCH | /:id | 그룹 이름/색상 수정 | JWT |
+| GET | /:id/members | 멤버 목록 | JWT |
+| PATCH | /:id/members/:userId/role | 역할 변경 | JWT |
+| DELETE | /:id/members/:userId | 멤버 내보내기 | JWT |
+| DELETE | /:id/leave | 그룹 탈퇴 | JWT |
 
 ### Ingredients (`/v1/ingredients`)
-| Method | Path | 설명 |
-|--------|------|------|
-| GET | / | 목록 |
-| GET | /expiring | 유통기한 임박 |
-| POST | / | 추가 |
-| PATCH | /:id/consume | 소진 |
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| GET | / | 목록 | JWT |
+| GET | /expiring | 유통기한 임박 목록 | JWT |
+| POST | / | 추가 | JWT |
+| PUT | /:id | 수정 | JWT |
+| DELETE | /:id | 삭제 | JWT |
+| PATCH | /:id/consume | 소진 처리 | JWT |
 
 ### Upload (`/v1/upload`)
-| Method | Path | 설명 |
-|--------|------|------|
-| POST | /presigned-url | S3 업로드용 Presigned URL 발급 |
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| POST | /presigned-url | S3 업로드용 Presigned URL 발급 | JWT |
 
 ### Shopping (`/v1/shopping`)
-| Method | Path | 설명 |
-|--------|------|------|
-| GET | / | 목록 |
-| POST | / | 추가 |
-| POST | /generate | 식단 기반 자동 생성 |
-| PATCH | /:id/toggle | 체크 토글 |
+| Method | Path | 설명 | 인증 |
+|--------|------|------|------|
+| GET | / | 목록 | JWT |
+| POST | / | 추가 | JWT |
+| POST | /generate | 식단 기반 자동 생성 | JWT |
+| PATCH | /:id/toggle | 체크 토글 | JWT |
+| DELETE | /:id | 삭제 | JWT |
+| DELETE | /clear-checked | 완료 항목 일괄 삭제 | JWT |
 
 ---
 
-## 🧪 테스트
-
-### Playwright E2E 테스트 (웹 버전)
-
-브라우저 자동화로 주요 화면 흐름을 자동 테스트합니다.
-
-#### 설치
+## 🚀 개발 서버 실행
 
 ```bash
-# 루트에서
-npm install playwright
-npx playwright install chromium
+# API 서버 (로컬)
+cd packages/api && npm run dev
+
+# 모바일 앱 (네이티브 빌드 필요)
+cd apps/mobile && npx expo start
 ```
 
-#### 실행
-
-```bash
-# 웹 앱 먼저 실행
-cd apps/mobile && npx expo start --web
-
-# 새 터미널에서 테스트 실행 (루트 디렉토리)
-node test-app.js
-```
-
-#### 테스트 항목
-
-| 항목 | 설명 |
-|------|------|
-| 앱 로딩 | 초기 화면 정상 렌더링 |
-| 온보딩 | 건너뛰기 동작 |
-| 로그인 | 이메일/비밀번호 입력 및 인증 |
-| 홈 | 주간 식단 뷰 표시 |
-| 캘린더 | 월간 캘린더 및 식단 목록 |
-| 냉장고 | 재료 목록 및 유통기한 경고 |
-| 쇼핑 | 쇼핑 리스트 표시 |
-| 설정 | 프로필, 그룹, 로그아웃 버튼 |
-
-#### 결과 예시
-
-```
-✅ [PASS] 앱 로딩
-✅ [PASS] 온보딩 건너뛰기
-✅ [PASS] 로그인
-✅ [PASS] 메인 화면 진입
-✅ [PASS] 캘린더 탭
-✅ [PASS] 냉장고 탭
-✅ [PASS] 쇼핑 탭
-✅ [PASS] 설정 탭
-✅ [PASS] 홈 탭 복귀
-✅ [PASS] 설정 화면 로그아웃 버튼 확인
-
-✅ PASS: 10  ❌ FAIL: 0  ⚠️ WARN: 0
-```
-
-> 테스트 완료 후 `docs/screenshot-*.png` 파일로 각 화면 스크린샷이 저장됩니다.
-
-> ⚠️ 소셜 로그인(Google/카카오), 푸시 알림, 카메라 등 네이티브 기능은 실제 기기(APK) 테스트가 필요합니다.
+> ⚠️ Expo Go는 네이티브 모듈(카카오/구글 SDK) 때문에 호환되지 않습니다. EAS 개발 빌드 또는 실제 APK 사용 필요.
 
 ---
 
 ## 🏗 배포
 
 ### 백엔드 (Render.com)
-```
-Build Command: npm install --include=dev && npm run build -w packages/shared && cd packages/api && npx prisma migrate deploy && cd ../.. && npm run build -w packages/api
-Start Command: node packages/api/dist/main.js
-```
+
+| 항목 | 값 |
+|------|-----|
+| URL | `https://mealplan-api-dtx0.onrender.com` |
+| Build Command | `npm install --include=dev && npm run build -w packages/shared && cd packages/api && npx prisma migrate deploy && cd ../.. && npm run build -w packages/api` |
+| Start Command | `node packages/api/dist/main.js` |
+
+> Render 무료 플랜 슬립 방지: `.github/workflows/keep-alive.yml`로 4분마다 핑 전송 중
 
 ### 모바일 (EAS Build)
+
 ```bash
 cd apps/mobile
-eas build --platform android --profile preview
-eas build --platform ios --profile preview
+
+# Android (AAB)
+eas build --platform android --profile production
+
+# iOS
+eas build --platform ios --profile production
 ```
+
+### Google Play
+- 내부 테스트 트랙 배포 완료
+- 계정 삭제 안내 페이지: `https://milcho0604.github.io/MealPlanning/account-deletion.html`
+
+---
+
+## 🔑 소셜 로그인 설정 (운영)
+
+| 제공자 | 비고 |
+|--------|------|
+| Google | Play 앱 서명 키 SHA-1 등록 필요 (업로드 키 ≠ 서명 키) |
+| 카카오 | Play 앱 서명 키 기반 키 해시 등록 필요 |
+| Apple | `usesAppleSignIn: true` (app.json) |
+
+> Play Console → 출시 → 앱 무결성 → "앱 서명 키 인증서"의 SHA-1을 각 제공자 콘솔에 등록
 
 ---
 
