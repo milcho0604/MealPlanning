@@ -10,6 +10,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
+  Dimensions,
   FlatList,
   PanResponder,
   RefreshControl,
@@ -20,6 +22,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
@@ -84,15 +88,50 @@ export default function HomeScreen() {
   const [weekOffset, setWeekOffset] = useState(0);
   const weekDates = getWeekDates(weekOffset);
 
-  /** 주간 스트립 스와이프 감지 (좌→다음주 / 우→이전주) */
+  /** 주간 스트립 슬라이드 애니메이션 */
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  /** 주간 스트립 스와이프 (손가락 따라 드래그 → 슬라이드 아웃 → 주 변경) */
   const weekPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (_, gs) =>
-        Math.abs(gs.dx) > 10 && Math.abs(gs.dx) > Math.abs(gs.dy),
+        Math.abs(gs.dx) > 8 && Math.abs(gs.dx) > Math.abs(gs.dy),
+      onPanResponderMove: (_, gs) => {
+        // 손가락 따라 실시간 이동 (저항감 주기 위해 0.6 감쇠)
+        slideAnim.setValue(gs.dx * 0.6);
+      },
       onPanResponderRelease: (_, gs) => {
-        if (gs.dx < -40) setWeekOffset((o) => o + 1); // 왼쪽 스와이프 → 다음 주
-        else if (gs.dx > 40) setWeekOffset((o) => o - 1); // 오른쪽 스와이프 → 이전 주
+        const THRESHOLD = 50;
+        if (gs.dx < -THRESHOLD) {
+          // 다음 주: 왼쪽으로 슬라이드 아웃 후 주 변경
+          Animated.timing(slideAnim, {
+            toValue: -SCREEN_WIDTH,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(() => {
+            slideAnim.setValue(0);
+            setWeekOffset((o) => o + 1);
+          });
+        } else if (gs.dx > THRESHOLD) {
+          // 이전 주: 오른쪽으로 슬라이드 아웃 후 주 변경
+          Animated.timing(slideAnim, {
+            toValue: SCREEN_WIDTH,
+            duration: 180,
+            useNativeDriver: true,
+          }).start(() => {
+            slideAnim.setValue(0);
+            setWeekOffset((o) => o - 1);
+          });
+        } else {
+          // threshold 미달: 스프링으로 복귀
+          Animated.spring(slideAnim, {
+            toValue: 0,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }).start();
+        }
       },
     })
   ).current;
@@ -328,12 +367,8 @@ export default function HomeScreen() {
           <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.weekScrollContent}
-          style={styles.weekScrollView}
-          scrollEnabled={false}
+        <Animated.View
+          style={[styles.weekScrollContent, styles.weekScrollView, { transform: [{ translateX: slideAnim }] }]}
         >
           {weekDates.map((date) => {
             const dateStr = toDateString(date);
@@ -362,7 +397,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </Animated.View>
 
         {/* 다음 주 버튼 */}
         <TouchableOpacity style={styles.weekNavBtn} onPress={() => setWeekOffset((o) => o + 1)}>
