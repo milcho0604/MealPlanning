@@ -47,7 +47,7 @@ import OnboardingScreen from '../onboarding';
 type ThemeMode = 'light' | 'dark' | 'system';
 
 /** 모달 타입 */
-type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editName' | 'editGroupColor' | null;
+type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editName' | 'editGroupColor' | 'editGroup' | null;
 
 export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
@@ -281,14 +281,25 @@ export default function SettingsScreen() {
                   >
                     <View style={[styles.groupDot, { backgroundColor: group.color ?? colors.primary }]} />
                   </TouchableOpacity>
-                  <View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (group.myRole === 'owner') {
+                        setSelectedGroupId(group.id);
+                        setGroupNameInput(group.name);
+                        setEditGroupColorValue(group.color ?? GROUP_COLORS[0]);
+                        setModalType('editGroup');
+                      }
+                    }}
+                    activeOpacity={group.myRole === 'owner' ? 0.6 : 1}
+                    style={{ flex: 1, minWidth: 0 }}
+                  >
                     <Text style={[styles.groupName, isActive && styles.groupNameActive]} numberOfLines={1}>
                       {group.name}
                     </Text>
                     <Text style={styles.groupMeta}>
-                      {group.myRole === 'owner' ? '관리자' : '멤버'} · {group.memberCount}명
+                      {group.myRole === 'owner' ? '관리자 · 탭하여 수정' : '멤버'} · {group.memberCount}명
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
 
                 {/* 기본 그룹 설정 + 초대 + 멤버 관리 */}
@@ -679,6 +690,64 @@ export default function SettingsScreen() {
         </View>
       </Modal>
 
+      {/* ── 그룹 이름/색상 수정 모달 ── */}
+      <Modal
+        visible={modalType === 'editGroup'}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalType(null)}
+      >
+        <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View style={styles.dialog}>
+            <Text style={styles.dialogTitle}>그룹 수정</Text>
+            <TextInput
+              style={styles.dialogInput}
+              value={groupNameInput}
+              onChangeText={setGroupNameInput}
+              placeholder="그룹 이름"
+              placeholderTextColor={colors.textSecondary}
+              maxLength={30}
+              autoFocus
+            />
+            <Text style={styles.dialogLabel}>그룹 색상</Text>
+            <View style={styles.colorPicker}>
+              {GROUP_COLORS.map((c) => (
+                <TouchableOpacity
+                  key={c}
+                  style={[styles.colorDot, { backgroundColor: c }, editGroupColorValue === c && styles.colorDotSelected]}
+                  onPress={() => setEditGroupColorValue(c)}
+                />
+              ))}
+            </View>
+            <View style={styles.dialogButtons}>
+              <TouchableOpacity style={styles.dialogCancelBtn} onPress={() => setModalType(null)}>
+                <Text style={styles.dialogCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.dialogConfirmBtn, isSubmitting && styles.disabledBtn]}
+                onPress={async () => {
+                  const name = groupNameInput.trim();
+                  if (!name) { Alert.alert('입력 오류', '그룹 이름을 입력해주세요.'); return; }
+                  if (!selectedGroupId) return;
+                  setIsSubmitting(true);
+                  try {
+                    await groupService.updateGroup(selectedGroupId, { name, color: editGroupColorValue });
+                    await loadGroups();
+                    Alert.alert('완료', '그룹 정보가 수정되었습니다.');
+                    setModalType(null);
+                  } catch (e: any) {
+                    Alert.alert('오류', e?.response?.data?.error?.message ?? '수정에 실패했습니다.');
+                  } finally { setIsSubmitting(false); }
+                }}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.dialogConfirmText}>{isSubmitting ? '저장 중...' : '저장'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* ── 멤버 관리 모달 ── */}
       <Modal
         visible={modalType === 'members'}
@@ -698,7 +767,11 @@ export default function SettingsScreen() {
               <View key={m.userId} style={styles.memberItem}>
                 <View style={styles.memberInfo}>
                   <View style={styles.memberAvatar}>
-                    <Text style={styles.memberAvatarText}>{m.user?.name?.[0]?.toUpperCase() ?? '?'}</Text>
+                    {m.user?.avatarUrl ? (
+                      <Image source={{ uri: m.user.avatarUrl }} style={styles.memberAvatarImage} />
+                    ) : (
+                      <Text style={styles.memberAvatarText}>{m.user?.name?.[0]?.toUpperCase() ?? '?'}</Text>
+                    )}
                   </View>
                   <View>
                     <Text style={styles.memberName} numberOfLines={1}>{m.user?.name ?? '알 수 없음'}</Text>
@@ -852,6 +925,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   groupDot: {
     width: 10,
@@ -878,6 +955,7 @@ const styles = StyleSheet.create({
   inviteBtns: {
     flexDirection: 'row',
     gap: 6,
+    flexShrink: 0,
   },
   inviteBtn: {
     flexDirection: 'row',
@@ -1099,6 +1177,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  memberAvatarImage: { width: 36, height: 36, borderRadius: 18 },
   memberAvatarText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   memberName: { fontSize: 15, fontWeight: '600', color: colors.text },
   memberRole: { fontSize: 12, color: colors.textSecondary, marginTop: 2 },
