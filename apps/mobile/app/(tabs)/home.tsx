@@ -45,13 +45,13 @@ function toDateString(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** 이번 주 월요일부터 7일치 날짜 배열 반환 */
-function getWeekDates(): Date[] {
+/** offset 주 기준 월요일부터 7일치 날짜 배열 반환 (0 = 이번 주, -1 = 지난 주, +1 = 다음 주) */
+function getWeekDates(offset = 0): Date[] {
   const now = new Date();
-  const day = now.getDay(); // 0=일, 1=월, ..., 6=토
-  const diff = day === 0 ? -6 : 1 - day; // 이번 주 월요일로
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
   const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
+  monday.setDate(now.getDate() + diff + offset * 7);
   monday.setHours(0, 0, 0, 0);
 
   return Array.from({ length: 7 }, (_, i) => {
@@ -80,7 +80,8 @@ function formatDateHeader(date: Date): string {
 
 export default function HomeScreen() {
   const today = getTodayString();
-  const weekDates = getWeekDates();
+  const [weekOffset, setWeekOffset] = useState(0);
+  const weekDates = getWeekDates(weekOffset);
   const { groups, currentGroupId, setCurrentGroupId } = useGroupStore();
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
   const currentGroup = groups.find((g) => g.id === currentGroupId);
@@ -88,6 +89,15 @@ export default function HomeScreen() {
   // 선택된 날짜 (기본값: 오늘, 없으면 이번 주 월요일)
   const defaultDate = weekDates.find((d) => toDateString(d) === today) ? today : toDateString(weekDates[0]);
   const [selectedDate, setSelectedDate] = useState(defaultDate);
+
+  // 주가 바뀌면 해당 주의 오늘(또는 첫날)로 선택일 이동
+  useEffect(() => {
+    const weekStrings = weekDates.map((d) => toDateString(d));
+    if (!weekStrings.includes(selectedDate)) {
+      const todayInWeek = weekStrings.find((d) => d === today);
+      setSelectedDate(todayInWeek ?? weekStrings[0]);
+    }
+  }, [weekOffset]);
 
   const selectedDateObj = new Date(selectedDate + 'T00:00:00');
   const year = selectedDateObj.getFullYear();
@@ -299,10 +309,16 @@ export default function HomeScreen() {
       <>
       {/* 주간 날짜 탭 스트립 */}
       <View style={styles.weekStrip}>
+        {/* 이전 주 버튼 */}
+        <TouchableOpacity style={styles.weekNavBtn} onPress={() => setWeekOffset((o) => o - 1)}>
+          <Ionicons name="chevron-back" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.weekScrollContent}
+          style={styles.weekScrollView}
         >
           {weekDates.map((date) => {
             const dateStr = toDateString(date);
@@ -325,7 +341,6 @@ export default function HomeScreen() {
                 <Text style={[styles.dayNum, isSelected && styles.dayNumSelected]}>
                   {dayNum}
                 </Text>
-                {/* 오늘 강조 점 */}
                 {isToday && (
                   <View style={[styles.todayDot, isSelected && styles.todayDotSelected]} />
                 )}
@@ -333,6 +348,11 @@ export default function HomeScreen() {
             );
           })}
         </ScrollView>
+
+        {/* 다음 주 버튼 */}
+        <TouchableOpacity style={styles.weekNavBtn} onPress={() => setWeekOffset((o) => o + 1)}>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {/* 주간 칼로리 요약 */}
@@ -482,9 +502,18 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  weekNavBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 12,
+  },
+  weekScrollView: {
+    flex: 1,
   },
   weekScrollContent: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 4,
     paddingVertical: 8,
     gap: 4,
   },
