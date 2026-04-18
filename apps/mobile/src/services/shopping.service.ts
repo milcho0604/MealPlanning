@@ -69,11 +69,12 @@ export const shoppingService = {
   generate: async (
     groupId: string,
     weekStartDate: string,
+    mealPlanGroupId?: string,
   ): Promise<{ created: number; items?: string[]; message?: string }> => {
     const { data } = await apiClient.post<{
       success: true;
       data: { created: number; items?: string[]; message?: string };
-    }>('/shopping/generate', { groupId, weekStartDate });
+    }>('/shopping/generate', { groupId, weekStartDate, mealPlanGroupId });
     return data.data;
   },
 };

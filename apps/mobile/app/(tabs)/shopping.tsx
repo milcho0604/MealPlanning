@@ -2,12 +2,12 @@
  * 쇼핑 리스트 화면 (Shopping Screen)
  *
  * 그룹 쇼핑 목록을 관리합니다.
+ * - 그룹 드롭다운: 보고 싶은 그룹의 쇼핑 목록 전환
  * - 미완료 항목 / 완료 항목 섹션으로 구분
  * - 항목 탭하면 체크 토글 (취소선 + 색상 변경)
- * - 스와이프 대신 롱프레스 → 삭제 컨텍스트 메뉴
  * - 하단 입력바: 항목명 입력 후 즉시 추가
  * - "완료 항목 지우기" 버튼으로 체크된 항목 일괄 삭제
- * - "이번 주 식단으로 생성" 버튼으로 주간 식단 기반 자동 생성
+ * - "이번 주 식단으로 생성" 버튼: 식단 소스 그룹과 추가 대상 그룹을 선택하여 자동 생성
  */
 
 import { useState } from 'react';
@@ -16,6 +16,7 @@ import {
   Alert,
   FlatList,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   RefreshControl,
   Share,
@@ -37,8 +38,14 @@ import { useGroupStore } from '../../src/stores/group.store';
 import { colors } from '../../src/constants/colors';
 
 export default function ShoppingScreen() {
-  const { currentGroupId } = useGroupStore();
-  const { data: items, isLoading, refetch } = useShopping();
+  const { groups, currentGroupId } = useGroupStore();
+
+  // 쇼핑 화면에서 볼 그룹 (전체 없음 — 항목 추가 시 그룹이 명확해야 함)
+  const [shoppingGroupId, setShoppingGroupId] = useState<string | null>(currentGroupId);
+  const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+  const currentGroup = groups.find((g) => g.id === shoppingGroupId);
+
+  const { data: items, isLoading, refetch } = useShopping(shoppingGroupId);
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
   const {
@@ -49,7 +56,7 @@ export default function ShoppingScreen() {
     generateShoppingItems,
     isCreating,
     isGenerating,
-  } = useShoppingMutation();
+  } = useShoppingMutation(shoppingGroupId);
 
   // ── 입력바 상태 ──────────────────────────────────────────
   const [inputText, setInputText] = useState('');
@@ -58,47 +65,54 @@ export default function ShoppingScreen() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  // ── 자동 생성 모달 상태 ──────────────────────────────────
+  const [generateModalVisible, setGenerateModalVisible] = useState(false);
+  // 식단을 가져올 그룹 (소스)
+  const [genSourceGroupId, setGenSourceGroupId] = useState<string>(shoppingGroupId ?? groups[0]?.id ?? '');
+  // 쇼핑 목록에 넣을 그룹 (타겟)
+  const [genTargetGroupId, setGenTargetGroupId] = useState<string>(shoppingGroupId ?? groups[0]?.id ?? '');
+
   /** 이번 주 월요일 날짜를 YYYY-MM-DD 형식으로 반환 */
   function getWeekStartDate(): string {
     const now = new Date();
-    const day = now.getDay(); // 0=일, 1=월, ..., 6=토
-    const diff = day === 0 ? -6 : 1 - day; // 일요일이면 -6, 아니면 이번 주 월요일로
+    const day = now.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
     const monday = new Date(now);
     monday.setDate(now.getDate() + diff);
     return monday.toISOString().split('T')[0];
   }
 
-  /** 이번 주 식단 기반 자동 생성 */
+  /** 자동 생성 모달 열기 */
+  const handleOpenGenerateModal = () => {
+    const defaultId = shoppingGroupId ?? groups[0]?.id ?? '';
+    setGenSourceGroupId(defaultId);
+    setGenTargetGroupId(defaultId);
+    setGenerateModalVisible(true);
+  };
+
+  /** 자동 생성 실행 */
   const handleGenerate = async () => {
-    Alert.alert(
-      '이번 주 식단으로 생성',
-      '이번 주 식단(월~일)의 메뉴를 쇼핑 목록에 추가합니다.\n냉장고에 이미 있는 재료는 제외됩니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '생성',
-          onPress: async () => {
-            try {
-              const result = await generateShoppingItems({
-                groupId: currentGroupId ?? '',
-                weekStartDate: getWeekStartDate(),
-              });
-              if (result.created === 0) {
-                Alert.alert('알림', result.message ?? '추가할 항목이 없습니다.');
-              } else {
-                Alert.alert('완료', `${result.created}개 항목이 추가되었습니다.`);
-              }
-            } catch {
-              Alert.alert('오류', '자동 생성에 실패했습니다.');
-            }
-          },
-        },
-      ],
-    );
+    setGenerateModalVisible(false);
+    try {
+      const result = await generateShoppingItems({
+        groupId: genTargetGroupId,
+        weekStartDate: getWeekStartDate(),
+        mealPlanGroupId: genSourceGroupId !== genTargetGroupId ? genSourceGroupId : undefined,
+      });
+      // 생성 후 해당 그룹으로 뷰 전환
+      setShoppingGroupId(genTargetGroupId);
+      if (result.created === 0) {
+        Alert.alert('알림', result.message ?? '추가할 항목이 없습니다.');
+      } else {
+        Alert.alert('완료', `${result.created}개 항목이 추가되었습니다.`);
+      }
+    } catch {
+      Alert.alert('오류', '자동 생성에 실패했습니다.');
+    }
   };
 
   // 그룹이 없으면 안내 화면 표시
-  if (!currentGroupId) return <NoGroupView />;
+  if (groups.length === 0) return <NoGroupView />;
   if (isLoading) return <LoadingSpinner />;
 
   const allItems = items ?? [];
@@ -108,14 +122,14 @@ export default function ShoppingScreen() {
   /** 항목 빠른 추가 */
   const handleAdd = async () => {
     const name = inputText.trim();
-    if (!name) return;
+    if (!name || !shoppingGroupId) return;
     const quantity = inputQty.trim() ? parseFloat(inputQty.trim()) : undefined;
     const unit = inputUnit.trim() || undefined;
     setInputText('');
     setInputQty('');
     setInputUnit('');
     try {
-      await createShoppingItem({ groupId: currentGroupId, name, quantity, unit });
+      await createShoppingItem({ groupId: shoppingGroupId, name, quantity, unit });
     } catch {
       Alert.alert('오류', '항목 추가에 실패했습니다.');
     }
@@ -125,11 +139,7 @@ export default function ShoppingScreen() {
   const handleDelete = (item: ShoppingItem) => {
     Alert.alert('삭제', `"${item.name}"을(를) 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
-      {
-        text: '삭제',
-        style: 'destructive',
-        onPress: () => removeShoppingItem(item.id),
-      },
+      { text: '삭제', style: 'destructive', onPress: () => removeShoppingItem(item.id) },
     ]);
   };
 
@@ -143,23 +153,20 @@ export default function ShoppingScreen() {
       const qty = item.quantity != null ? ` ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '';
       return `☐ ${item.name}${qty}`;
     });
+    const groupName = currentGroup?.name ?? '';
     try {
       await Share.share({
-        message: `[MealPlan] 쇼핑 리스트\n\n${lines.join('\n')}`,
+        message: `[MealPlan] ${groupName ? `${groupName} ` : ''}쇼핑 리스트\n\n${lines.join('\n')}`,
       });
     } catch { /* 공유 취소 시 무시 */ }
   };
 
   /** 완료 항목 일괄 삭제 */
   const handleClearChecked = () => {
-    if (checkedItems.length === 0) return;
+    if (checkedItems.length === 0 || !shoppingGroupId) return;
     Alert.alert('완료 항목 지우기', `${checkedItems.length}개 항목을 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
-      {
-        text: '삭제',
-        style: 'destructive',
-        onPress: () => clearCheckedItems(currentGroupId ?? ''),
-      },
+      { text: '삭제', style: 'destructive', onPress: () => clearCheckedItems(shoppingGroupId) },
     ]);
   };
 
@@ -182,7 +189,6 @@ export default function ShoppingScreen() {
       onLongPress={() => handleDelete(item)}
       activeOpacity={0.7}
     >
-      {/* 체크 아이콘 (선택 모드에서는 선택 표시) */}
       {selectMode ? (
         <Ionicons
           name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
@@ -196,7 +202,6 @@ export default function ShoppingScreen() {
         </View>
       )}
 
-      {/* 항목명 + 수량 */}
       <View style={styles.itemContent}>
         <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]} numberOfLines={1}>
           {item.name}
@@ -208,7 +213,6 @@ export default function ShoppingScreen() {
         )}
       </View>
 
-      {/* 삭제 버튼 */}
       <TouchableOpacity
         onPress={() => handleDelete(item)}
         style={styles.deleteBtn}
@@ -243,6 +247,47 @@ export default function ShoppingScreen() {
             )}
           </View>
         </View>
+
+        {/* 그룹 드롭다운 */}
+        {groups.length >= 1 && (
+          <View style={styles.groupDropdownWrapper}>
+            <TouchableOpacity
+              style={styles.groupDropdownBtn}
+              onPress={() => setShowGroupDropdown(!showGroupDropdown)}
+            >
+              {currentGroup ? (
+                <View style={[styles.groupDropdownDot, { backgroundColor: currentGroup.color ?? colors.primary }]} />
+              ) : (
+                <Ionicons name="cart-outline" size={14} color={colors.text} />
+              )}
+              <Text style={styles.groupDropdownBtnText} numberOfLines={1}>
+                {currentGroup?.name ?? '그룹 선택'}
+              </Text>
+              <Ionicons name={showGroupDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {showGroupDropdown && (
+              <View style={styles.groupDropdownList}>
+                {groups.map((g) => {
+                  const isSelected = g.id === shoppingGroupId;
+                  return (
+                    <TouchableOpacity
+                      key={g.id}
+                      style={[styles.groupDropdownItem, isSelected && styles.groupDropdownItemActive]}
+                      onPress={() => { setShoppingGroupId(g.id); setShowGroupDropdown(false); }}
+                    >
+                      <View style={[styles.groupDropdownDot, { backgroundColor: g.color ?? colors.primary }]} />
+                      <Text style={[styles.groupDropdownItemText, isSelected && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                        {g.name}
+                      </Text>
+                      {isSelected && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* 선택 모드 액션 바 */}
         {selectMode && (
@@ -289,7 +334,7 @@ export default function ShoppingScreen() {
         {/* 이번 주 식단으로 자동 생성 배너 */}
         <TouchableOpacity
           style={[styles.generateBanner, isGenerating && styles.generateBannerDisabled]}
-          onPress={handleGenerate}
+          onPress={handleOpenGenerateModal}
           disabled={isGenerating}
           activeOpacity={0.8}
         >
@@ -304,7 +349,9 @@ export default function ShoppingScreen() {
         </TouchableOpacity>
 
         {/* 항목 목록 */}
-        {allItems.length === 0 ? (
+        {!shoppingGroupId ? (
+          <EmptyState icon="cart-outline" message="그룹을 선택하면\n쇼핑 목록이 표시됩니다." />
+        ) : allItems.length === 0 ? (
           <EmptyState
             icon="cart-outline"
             message={'쇼핑 목록이 비어있습니다.\n아래 입력창에서 항목을 추가해보세요!'}
@@ -342,10 +389,11 @@ export default function ShoppingScreen() {
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
-            placeholder="항목명"
+            placeholder={shoppingGroupId ? '항목명' : '그룹을 먼저 선택하세요'}
             placeholderTextColor={colors.textSecondary}
             returnKeyType="next"
             maxLength={50}
+            editable={!!shoppingGroupId}
           />
           <TextInput
             style={styles.inputQty}
@@ -355,6 +403,7 @@ export default function ShoppingScreen() {
             placeholderTextColor={colors.textSecondary}
             keyboardType="numeric"
             maxLength={6}
+            editable={!!shoppingGroupId}
           />
           <TextInput
             style={styles.inputUnit}
@@ -365,16 +414,84 @@ export default function ShoppingScreen() {
             returnKeyType="done"
             onSubmitEditing={handleAdd}
             maxLength={5}
+            editable={!!shoppingGroupId}
           />
           <TouchableOpacity
-            style={[styles.addBtn, (!inputText.trim() || isCreating) && styles.addBtnDisabled]}
+            style={[styles.addBtn, (!inputText.trim() || isCreating || !shoppingGroupId) && styles.addBtnDisabled]}
             onPress={handleAdd}
-            disabled={!inputText.trim() || isCreating}
+            disabled={!inputText.trim() || isCreating || !shoppingGroupId}
           >
             <Ionicons name="add" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* ── 자동 생성 모달 ── */}
+      <Modal
+        visible={generateModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setGenerateModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalDialog}>
+            <Text style={styles.modalTitle}>이번 주 식단으로 자동 생성</Text>
+            <Text style={styles.modalDesc}>
+              이번 주(월~일) 식단 메뉴를 쇼핑 목록에 추가합니다.{'\n'}
+              냉장고에 이미 있는 재료는 제외됩니다.
+            </Text>
+
+            {/* 식단 소스 그룹 선택 */}
+            <Text style={styles.modalLabel}>식단 가져올 그룹</Text>
+            <View style={styles.groupRadioList}>
+              {groups.map((g) => (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[styles.groupRadioItem, genSourceGroupId === g.id && styles.groupRadioItemSelected]}
+                  onPress={() => setGenSourceGroupId(g.id)}
+                >
+                  <View style={[styles.groupRadioDot, { backgroundColor: g.color ?? colors.primary }]} />
+                  <Text style={[styles.groupRadioText, genSourceGroupId === g.id && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                    {g.name}
+                  </Text>
+                  {genSourceGroupId === g.id && <Ionicons name="checkmark-circle" size={18} color={colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* 쇼핑 목록 추가 대상 그룹 선택 */}
+            <Text style={styles.modalLabel}>쇼핑 목록에 추가할 그룹</Text>
+            <View style={styles.groupRadioList}>
+              {groups.map((g) => (
+                <TouchableOpacity
+                  key={g.id}
+                  style={[styles.groupRadioItem, genTargetGroupId === g.id && styles.groupRadioItemSelected]}
+                  onPress={() => setGenTargetGroupId(g.id)}
+                >
+                  <View style={[styles.groupRadioDot, { backgroundColor: g.color ?? colors.primary }]} />
+                  <Text style={[styles.groupRadioText, genTargetGroupId === g.id && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                    {g.name}
+                  </Text>
+                  {genTargetGroupId === g.id && <Ionicons name="checkmark-circle" size={18} color={colors.primary} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setGenerateModalVisible(false)}>
+                <Text style={styles.modalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirmBtn, isGenerating && { opacity: 0.5 }]}
+                onPress={handleGenerate}
+                disabled={isGenerating}
+              >
+                <Text style={styles.modalConfirmText}>{isGenerating ? '생성 중...' : '생성'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -402,6 +519,66 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerActionBtn: {},
+  // ── 그룹 드롭다운 ───────────────────────────────────────
+  groupDropdownWrapper: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+    zIndex: 10,
+  },
+  groupDropdownBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  groupDropdownBtnText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  groupDropdownDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  groupDropdownList: {
+    position: 'absolute',
+    top: 46,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  groupDropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  groupDropdownItemActive: {
+    backgroundColor: colors.primaryLight,
+  },
+  groupDropdownItemText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+  },
+  // ── 선택 모드 ────────────────────────────────────────────
   selectBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -585,5 +762,97 @@ const styles = StyleSheet.create({
   },
   addBtnDisabled: {
     backgroundColor: colors.border,
+  },
+  // ── 자동 생성 모달 ────────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalDialog: {
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 360,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  modalDesc: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 8,
+  },
+  groupRadioList: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  groupRadioItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  groupRadioItemSelected: {
+    backgroundColor: colors.primaryLight,
+  },
+  groupRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  groupRadioText: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  modalConfirmBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '600',
   },
 });

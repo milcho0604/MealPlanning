@@ -8,12 +8,13 @@ import { useQuery } from '@tanstack/react-query';
 import { useGroupStore } from '../../stores/group.store';
 import { shoppingService } from '../../services/shopping.service';
 
-export function useShopping() {
+export function useShopping(groupId?: string | null) {
   const { currentGroupId } = useGroupStore();
+  const targetGroupId = groupId ?? currentGroupId;
 
   return useQuery({
-    queryKey: ['shopping', currentGroupId],
-    queryFn: () => shoppingService.getList(currentGroupId ?? ''),
-    enabled: !!currentGroupId,
+    queryKey: ['shopping', targetGroupId],
+    queryFn: () => shoppingService.getList(targetGroupId ?? ''),
+    enabled: !!targetGroupId,
   });
 }

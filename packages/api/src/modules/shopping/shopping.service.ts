@@ -117,10 +117,13 @@ export class ShoppingService {
     end.setDate(end.getDate() + 6);
     end.setHours(23, 59, 59, 999);
 
+    // 식단을 가져올 그룹 (mealPlanGroupId 지정 시 해당 그룹, 없으면 대상 그룹과 동일)
+    const mealPlanGroupId = dto.mealPlanGroupId ?? dto.groupId;
+
     // 해당 주간의 식단 menuName 목록 수집
     const mealPlans = await this.prisma.mealPlan.findMany({
       where: {
-        groupId: dto.groupId,
+        groupId: mealPlanGroupId,
         date: { gte: start, lte: end },
       },
       select: { menuName: true },
@@ -130,7 +133,7 @@ export class ShoppingService {
       return { created: 0, message: '해당 주간에 등록된 식단이 없습니다.' };
     }
 
-    // 냉장고에 이미 있는 재료명 수집 (소진 안 된 것)
+    // 냉장고에 이미 있는 재료명 수집 (대상 그룹 기준, 소진 안 된 것)
     const existingIngredients = await this.prisma.ingredient.findMany({
       where: { groupId: dto.groupId, isConsumed: false },
       select: { name: true },

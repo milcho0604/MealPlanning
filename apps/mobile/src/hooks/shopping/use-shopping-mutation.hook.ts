@@ -8,12 +8,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { shoppingService } from '../../services/shopping.service';
 import { useGroupStore } from '../../stores/group.store';
 
-export function useShoppingMutation() {
+export function useShoppingMutation(groupId?: string | null) {
   const queryClient = useQueryClient();
   const { currentGroupId } = useGroupStore();
+  const targetGroupId = groupId ?? currentGroupId;
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['shopping', currentGroupId] });
+    queryClient.invalidateQueries({ queryKey: ['shopping', targetGroupId] });
   };
 
   /** 항목 추가 */
@@ -50,8 +51,8 @@ export function useShoppingMutation() {
 
   /** 주간 식단 기반 자동 생성 */
   const generateMutation = useMutation({
-    mutationFn: ({ groupId, weekStartDate }: { groupId: string; weekStartDate: string }) =>
-      shoppingService.generate(groupId, weekStartDate),
+    mutationFn: ({ groupId, weekStartDate, mealPlanGroupId }: { groupId: string; weekStartDate: string; mealPlanGroupId?: string }) =>
+      shoppingService.generate(groupId, weekStartDate, mealPlanGroupId),
     onSuccess: invalidate,
   });
 
