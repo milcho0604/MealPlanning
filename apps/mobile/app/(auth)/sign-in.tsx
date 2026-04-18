@@ -10,13 +10,14 @@
  * - Apple:  별도 설정 없음 (iOS 전용, 자동 활성화)
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -39,11 +40,33 @@ export default function SignInScreen() {
   const { form, setField, handleSignIn, isLoading, error } = useSignIn();
   const { handleSocialSignIn, loadingProvider } = useSocialSignIn();
 
+  /** 비밀번호 찾기 모달 (Android 대응) */
+  const [forgotModalVisible, setForgotModalVisible] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
   useEffect(() => {
     if (GOOGLE_WEB_CLIENT_ID) {
       initGoogleSignIn(GOOGLE_WEB_CLIENT_ID);
     }
   }, []);
+
+  /** 비밀번호 재설정 이메일 발송 */
+  async function handleForgotPassword() {
+    if (!forgotEmail.trim()) return;
+    setForgotLoading(true);
+    try {
+      const { authService: svc } = await import('../../src/services/auth.service');
+      await svc.forgotPassword(forgotEmail.trim());
+      setForgotModalVisible(false);
+      setForgotEmail('');
+      Alert.alert('발송 완료', '비밀번호 재설정 링크를 이메일로 발송했습니다.');
+    } catch {
+      Alert.alert('오류', '이메일 발송에 실패했습니다.');
+    } finally {
+      setForgotLoading(false);
+    }
+  }
 
   const isAnyLoading = isLoading || loadingProvider !== null;
 
@@ -90,16 +113,21 @@ export default function SignInScreen() {
         <TouchableOpacity
           style={styles.forgotPassword}
           onPress={() => {
-            Alert.prompt
-              ? Alert.prompt('비밀번호 찾기', '가입한 이메일을 입력하세요', async (email) => {
-                  if (!email?.trim()) return;
-                  try {
-                    const { authService: svc } = await import('../../src/services/auth.service');
-                    await svc.forgotPassword(email.trim());
-                    Alert.alert('발송 완료', '비밀번호 재설정 링크를 이메일로 발송했습니다.');
-                  } catch { Alert.alert('오류', '이메일 발송에 실패했습니다.'); }
-                }, 'plain-text', form.email)
-              : Alert.alert('비밀번호 찾기', '이메일로 비밀번호 재설정 링크가 발송됩니다.\n설정 > 비밀번호 변경에서 변경할 수 있습니다.');
+            if (Alert.prompt) {
+              // iOS: 네이티브 prompt 사용
+              Alert.prompt('비밀번호 찾기', '가입한 이메일을 입력하세요', async (email) => {
+                if (!email?.trim()) return;
+                try {
+                  const { authService: svc } = await import('../../src/services/auth.service');
+                  await svc.forgotPassword(email.trim());
+                  Alert.alert('발송 완료', '비밀번호 재설정 링크를 이메일로 발송했습니다.');
+                } catch { Alert.alert('오류', '이메일 발송에 실패했습니다.'); }
+              }, 'plain-text', form.email);
+            } else {
+              // Android: 커스텀 모달 사용
+              setForgotEmail(form.email);
+              setForgotModalVisible(true);
+            }
           }}
         >
           <Text style={styles.forgotPasswordText}>비밀번호를 잊으셨나요?</Text>
@@ -174,6 +202,49 @@ export default function SignInScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* 비밀번호 찾기 모달 (Android) */}
+      <Modal
+        visible={forgotModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setForgotModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>비밀번호 찾기</Text>
+            <Text style={styles.modalDesc}>가입한 이메일을 입력하세요</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={forgotEmail}
+              onChangeText={setForgotEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoFocus
+              placeholder="이메일"
+              placeholderTextColor={colors.textSecondary}
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => { setForgotModalVisible(false); setForgotEmail(''); }}
+              >
+                <Text style={styles.modalCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirmBtn, forgotLoading && styles.buttonDisabled]}
+                onPress={handleForgotPassword}
+                disabled={forgotLoading}
+              >
+                {forgotLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.modalConfirmText}>발송</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* 회원가입 링크 */}
       <View style={styles.footer}>
@@ -294,4 +365,61 @@ const styles = StyleSheet.create({
   },
   footerText: { color: colors.textSecondary, fontSize: 14 },
   linkText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+  // ── 비밀번호 찾기 모달 ────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalBox: {
+    width: '100%',
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    padding: 24,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 6,
+  },
+  modalDesc: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 16,
+  },
+  modalInput: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.text,
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalCancelText: { fontSize: 15, color: colors.textSecondary },
+  modalConfirmBtn: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  modalConfirmText: { fontSize: 15, fontWeight: '600', color: '#fff' },
 });

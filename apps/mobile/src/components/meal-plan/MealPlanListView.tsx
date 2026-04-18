@@ -263,6 +263,7 @@ export function MealPlanListView({
                 styles.periodBtnText,
                 period === opt.value && styles.periodBtnTextActive,
               ]}
+              numberOfLines={1}
             >
               {opt.label}
             </Text>
@@ -517,16 +518,20 @@ const styles = StyleSheet.create({
   // ── 기간 필터 ──────────────────────────────────────────
   periodRow: {
     marginBottom: 8,
+    flexGrow: 0,
+    flexShrink: 0,
   },
   periodRowContent: {
     flexDirection: 'row',
     gap: 6,
     paddingHorizontal: 16,
+    alignItems: 'center',
   },
   periodBtn: {
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 20,
+    alignSelf: 'flex-start',
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,

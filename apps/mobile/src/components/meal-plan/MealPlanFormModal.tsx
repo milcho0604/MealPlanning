@@ -112,6 +112,9 @@ export function MealPlanFormModal({
 
   // 템플릿 관련 상태
   const [isTemplatePickerVisible, setIsTemplatePickerVisible] = useState(false);
+  /** 템플릿 이름 입력 모달 (Android 대응) */
+  const [templateNameModalVisible, setTemplateNameModalVisible] = useState(false);
+  const [templateNameInput, setTemplateNameInput] = useState('');
 
   useEffect(() => {
     if (visible) {
@@ -209,6 +212,24 @@ export function MealPlanFormModal({
     setRecipeUrl(template.recipeUrl ?? '');
   };
 
+  /** 템플릿 이름을 받아 실제 저장하는 함수 (iOS prompt / Android 모달 공통 사용) */
+  const doSaveTemplate = async (templateName: string) => {
+    if (!templateName?.trim()) return;
+    try {
+      await saveTemplate({
+        groupId: currentGroupId ?? '',
+        name: templateName.trim(),
+        mealType,
+        menuName: menuName.trim(),
+        memo: memo.trim() || undefined,
+        recipeUrl: recipeUrl.trim() || undefined,
+      });
+      Alert.alert('저장 완료', `"${templateName.trim()}" 템플릿이 저장되었습니다.`);
+    } catch {
+      Alert.alert('오류', '템플릿 저장에 실패했습니다.');
+    }
+  };
+
   /** 현재 입력 내용을 템플릿으로 저장 */
   const handleSaveAsTemplate = () => {
     if (!menuName.trim()) {
@@ -216,29 +237,12 @@ export function MealPlanFormModal({
       return;
     }
 
-    const doSave = async (templateName: string) => {
-      if (!templateName?.trim()) return;
-      try {
-        await saveTemplate({
-          groupId: currentGroupId ?? '',
-          name: templateName.trim(),
-          mealType,
-          menuName: menuName.trim(),
-          memo: memo.trim() || undefined,
-          recipeUrl: recipeUrl.trim() || undefined,
-        });
-        Alert.alert('저장 완료', `"${templateName.trim()}" 템플릿이 저장되었습니다.`);
-      } catch {
-        Alert.alert('오류', '템플릿 저장에 실패했습니다.');
-      }
-    };
-
-    // Alert.prompt는 iOS 전용 — 웹에서는 브라우저 prompt 사용
+    // Alert.prompt는 iOS 전용 — Android/웹에서는 커스텀 모달 사용
     if (typeof Alert.prompt === 'function') {
-      Alert.prompt('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?', doSave, 'plain-text', menuName.trim());
+      Alert.prompt('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?', doSaveTemplate, 'plain-text', menuName.trim());
     } else {
-      const name = window.prompt('템플릿 이름을 입력하세요', menuName.trim());
-      if (name) doSave(name);
+      setTemplateNameInput(menuName.trim());
+      setTemplateNameModalVisible(true);
     }
   };
 
@@ -546,6 +550,48 @@ export function MealPlanFormModal({
         onClose={() => setIsTemplatePickerVisible(false)}
         onSelect={handleTemplateSelect}
       />
+
+      {/* 템플릿 이름 입력 모달 (Android/웹 대응) */}
+      <Modal
+        visible={templateNameModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setTemplateNameModalVisible(false)}
+      >
+        <View style={styles.tplOverlay}>
+          <View style={styles.tplBox}>
+            <Text style={styles.tplTitle}>템플릿 이름</Text>
+            <Text style={styles.tplDesc}>이 메뉴를 어떤 이름으로 저장할까요?</Text>
+            <TextInput
+              style={styles.tplInput}
+              value={templateNameInput}
+              onChangeText={setTemplateNameInput}
+              autoFocus
+              placeholder="템플릿 이름"
+              placeholderTextColor={colors.textSecondary}
+            />
+            <View style={styles.tplButtons}>
+              <TouchableOpacity
+                style={styles.tplCancelBtn}
+                onPress={() => { setTemplateNameModalVisible(false); setTemplateNameInput(''); }}
+              >
+                <Text style={styles.tplCancelText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.tplConfirmBtn}
+                onPress={() => {
+                  if (!templateNameInput.trim()) return;
+                  setTemplateNameModalVisible(false);
+                  doSaveTemplate(templateNameInput.trim());
+                  setTemplateNameInput('');
+                }}
+              >
+                <Text style={styles.tplConfirmText}>저장</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </Modal>
   );
 }
@@ -842,4 +888,49 @@ const styles = StyleSheet.create({
   },
   templateBtnDisabled: { opacity: 0.5 },
   templateBtnText: { fontSize: 13, fontWeight: '600', color: colors.primary },
+  // ── 템플릿 이름 입력 모달 (Android) ──────────────────────
+  tplOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  tplBox: {
+    width: '100%',
+    backgroundColor: colors.background,
+    borderRadius: 16,
+    padding: 24,
+  },
+  tplTitle: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: 6 },
+  tplDesc: { fontSize: 14, color: colors.textSecondary, marginBottom: 16 },
+  tplInput: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.text,
+    marginBottom: 20,
+  },
+  tplButtons: { flexDirection: 'row', gap: 10 },
+  tplCancelBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tplCancelText: { fontSize: 15, color: colors.textSecondary },
+  tplConfirmBtn: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tplConfirmText: { fontSize: 15, fontWeight: '600', color: '#fff' },
 });
