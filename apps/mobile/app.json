@@ -25,7 +25,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.mealplan.app",
+      "package": "com.mealplanning.app",
       "versionCode": 5,
       "softwareKeyboardLayoutMode": "pan",
       "permissions": []
