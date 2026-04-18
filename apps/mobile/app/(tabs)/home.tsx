@@ -319,6 +319,7 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.weekScrollContent}
           style={styles.weekScrollView}
+          scrollEnabled={false}
         >
           {weekDates.map((date) => {
             const dateStr = toDateString(date);
@@ -513,15 +514,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   weekScrollContent: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: 4,
     paddingVertical: 8,
-    gap: 4,
   },
   dayTab: {
-    width: 44,
+    flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 6,
+    paddingHorizontal: 2,
     borderRadius: 12,
     gap: 4,
   },
