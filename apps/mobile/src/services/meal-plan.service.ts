@@ -37,14 +37,14 @@ export const mealPlanService = {
     return data.data;
   },
 
-  /** 식단 통계 */
-  getStats: async (groupId: string): Promise<{
+  /** 식단 통계 (groupId 없으면 전체 그룹 합산) */
+  getStats: async (groupId?: string): Promise<{
     topMenus: { menuName: string; count: number }[];
     monthlyDistribution: Record<string, Record<string, number>>;
   }> => {
     const { data } = await apiClient.get<{ success: true; data: any }>(
       '/meal-plans/stats',
-      { params: { groupId } },
+      { params: groupId ? { groupId } : {} },
     );
     return data.data;
   },

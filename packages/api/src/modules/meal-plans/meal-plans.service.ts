@@ -70,16 +70,28 @@ export class MealPlansService {
   /**
    * 식단 통계: 자주 먹는 메뉴 TOP N + 월별 식사 유형 분포
    */
-  async getStats(userId: string, groupId: string, months: number = 3) {
-    await this.validateGroupMember(userId, groupId);
-
+  async getStats(userId: string, groupId: string | undefined, months: number = 3) {
     const since = new Date();
     since.setMonth(since.getMonth() - months);
+
+    // groupId 없으면 유저가 속한 모든 그룹 대상으로 집계
+    let groupFilter: { groupId: string } | { groupId: { in: string[] } };
+    if (groupId) {
+      await this.validateGroupMember(userId, groupId);
+      groupFilter = { groupId };
+    } else {
+      const memberships = await this.prisma.groupMember.findMany({
+        where: { userId },
+        select: { groupId: true },
+      });
+      const groupIds = memberships.map((m) => m.groupId);
+      groupFilter = { groupId: { in: groupIds } };
+    }
 
     // 자주 먹는 메뉴 TOP 5
     const topMenus = await this.prisma.mealPlan.groupBy({
       by: ['menuName'],
-      where: { groupId, date: { gte: since } },
+      where: { ...groupFilter, date: { gte: since } },
       _count: { menuName: true },
       orderBy: { _count: { menuName: 'desc' } },
       take: 5,
@@ -87,7 +99,7 @@ export class MealPlansService {
 
     // 월별 식사 유형 분포 + 칼로리 통계
     const allPlans = await this.prisma.mealPlan.findMany({
-      where: { groupId, date: { gte: since } },
+      where: { ...groupFilter, date: { gte: since } },
       select: { date: true, mealType: true, calories: true },
       orderBy: { date: 'asc' },
     });

@@ -175,9 +175,9 @@ export default function HomeScreen() {
   } | null>(null);
 
   useEffect(() => {
-    if (currentGroupId && showStats) {
-      mealPlanService.getStats(currentGroupId).then(setStats).catch(() => {
-        // 통계 로딩 실패 시 null 유지 (통계 섹션 미표시)
+    if (showStats) {
+      // currentGroupId가 null이면 전체 그룹 합산 통계
+      mealPlanService.getStats(currentGroupId ?? undefined).then(setStats).catch(() => {
         setStats(null);
       });
     }

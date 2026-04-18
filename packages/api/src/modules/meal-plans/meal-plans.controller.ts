@@ -54,12 +54,12 @@ export class MealPlansController {
     return this.mealPlansService.findByDateRange(user.id, query);
   }
 
-  /** 식단 통계 (자주 먹는 메뉴 + 월별 분포) */
+  /** 식단 통계 (자주 먹는 메뉴 + 월별 분포) - groupId 없으면 전체 그룹 합산 */
   @Get('stats')
   @ApiOperation({ summary: '식단 통계' })
   getStats(
     @CurrentUser() user: RequestUser,
-    @Query('groupId') groupId: string,
+    @Query('groupId') groupId?: string,
   ) {
     return this.mealPlansService.getStats(user.id, groupId);
   }
