@@ -17,10 +17,12 @@ import { storage } from '../utils/storage';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
 interface GroupState {
-  /** 내가 속한 그룹 목록 */
+  /** 내가 속한 그룹 목록 (기본 그룹이 항상 첫 번째) */
   groups: MyGroup[];
   /** 현재 선택된 그룹 ID */
   currentGroupId: string | null;
+  /** 기본(즐겨찾기) 그룹 ID */
+  defaultGroupId: string | null;
   /** 그룹 목록 로딩 여부 */
   isLoading: boolean;
 
@@ -39,9 +41,20 @@ interface GroupState {
   reset: () => void;
 }
 
+/** 기본 그룹이 맨 앞에 오도록 정렬 */
+function sortGroupsWithDefault(groups: MyGroup[], defaultGroupId: string | null): MyGroup[] {
+  if (!defaultGroupId) return groups;
+  return [...groups].sort((a, b) => {
+    if (a.id === defaultGroupId) return -1;
+    if (b.id === defaultGroupId) return 1;
+    return 0;
+  });
+}
+
 export const useGroupStore = create<GroupState>((set, get) => ({
   groups: [],
   currentGroupId: null,
+  defaultGroupId: null,
   isLoading: false,
 
   /**
@@ -53,17 +66,23 @@ export const useGroupStore = create<GroupState>((set, get) => ({
       const groups = await groupService.getMyGroups();
       const currentId = get().currentGroupId;
 
+      // 기본 그룹 ID 조회
+      const savedDefaultId = await storage.getItem(STORAGE_KEYS.DEFAULT_GROUP_ID);
+      const validDefaultId = savedDefaultId && groups.some((g) => g.id === savedDefaultId)
+        ? savedDefaultId
+        : null;
+
       // 현재 선택 그룹이 목록에 없으면 기본 그룹 또는 첫 번째 그룹으로 초기화
       const isCurrentValid = groups.some((g) => g.id === currentId);
-      let nextGroupId = isCurrentValid ? currentId : null;
+      const nextGroupId = isCurrentValid
+        ? currentId
+        : validDefaultId ?? groups[0]?.id ?? null;
 
-      if (!nextGroupId) {
-        const defaultId = await storage.getItem(STORAGE_KEYS.DEFAULT_GROUP_ID);
-        const hasDefault = defaultId && groups.some((g) => g.id === defaultId);
-        nextGroupId = hasDefault ? defaultId : (groups[0]?.id ?? null);
-      }
-
-      set({ groups, currentGroupId: nextGroupId });
+      set({
+        groups: sortGroupsWithDefault(groups, validDefaultId),
+        defaultGroupId: validDefaultId,
+        currentGroupId: nextGroupId,
+      });
     } catch {
       // 에러 시 기존 상태 유지
     } finally {
@@ -78,12 +97,16 @@ export const useGroupStore = create<GroupState>((set, get) => ({
    */
   setDefaultGroupId: (groupId) => {
     storage.setItem(STORAGE_KEYS.DEFAULT_GROUP_ID, groupId);
+    set((state) => ({
+      defaultGroupId: groupId,
+      groups: sortGroupsWithDefault(state.groups, groupId),
+    }));
   },
 
   createGroup: async (name, color) => {
     const newGroup = await groupService.create(name, color);
     set((state) => ({
-      groups: [...state.groups, newGroup],
+      groups: sortGroupsWithDefault([...state.groups, newGroup], state.defaultGroupId),
       currentGroupId: newGroup.id,
     }));
     return newGroup;
@@ -95,11 +118,11 @@ export const useGroupStore = create<GroupState>((set, get) => ({
   joinGroup: async (inviteCode) => {
     const group = await groupService.join(inviteCode);
     set((state) => ({
-      groups: [...state.groups, group],
+      groups: sortGroupsWithDefault([...state.groups, group], state.defaultGroupId),
       currentGroupId: group.id,
     }));
     return group;
   },
 
-  reset: () => set({ groups: [], currentGroupId: null, isLoading: false }),
+  reset: () => set({ groups: [], currentGroupId: null, defaultGroupId: null, isLoading: false }),
 }));
