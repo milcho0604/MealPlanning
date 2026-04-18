@@ -10,7 +10,7 @@
  * - "이번 주 식단으로 생성" 버튼: 식단 소스 그룹과 추가 대상 그룹을 선택하여 자동 생성
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -42,6 +42,13 @@ export default function ShoppingScreen() {
 
   // 쇼핑 화면에서 볼 그룹 (전체 없음 — 항목 추가 시 그룹이 명확해야 함)
   const [shoppingGroupId, setShoppingGroupId] = useState<string | null>(currentGroupId);
+
+  // loadGroups() 완료 후 currentGroupId가 채워지면 동기화 (최초 1회만)
+  useEffect(() => {
+    if (currentGroupId && !shoppingGroupId) {
+      setShoppingGroupId(currentGroupId);
+    }
+  }, [currentGroupId]);
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
   const currentGroup = groups.find((g) => g.id === shoppingGroupId);
 
