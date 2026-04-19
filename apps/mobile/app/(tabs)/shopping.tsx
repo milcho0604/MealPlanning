@@ -40,12 +40,13 @@ import { colors } from '../../src/constants/colors';
 export default function ShoppingScreen() {
   const { groups, currentGroupId } = useGroupStore();
 
-  // 쇼핑 화면에서 볼 그룹 (전체 없음 — 항목 추가 시 그룹이 명확해야 함)
-  const [shoppingGroupId, setShoppingGroupId] = useState<string | null>(currentGroupId);
+  // 쇼핑 화면에서 볼 그룹 (undefined = 미초기화, null = 전체 그룹, string = 특정 그룹)
+  const [shoppingGroupId, setShoppingGroupId] = useState<string | null | undefined>(undefined);
+  const isAllGroups = shoppingGroupId === null;
 
-  // loadGroups() 완료 후 currentGroupId가 채워지면 동기화 (최초 1회만)
+  // loadGroups() 완료 후 동기화 (미초기화 상태일 때만)
   useEffect(() => {
-    if (currentGroupId && !shoppingGroupId) {
+    if (currentGroupId && shoppingGroupId === undefined) {
       setShoppingGroupId(currentGroupId);
     }
   }, [currentGroupId]);
@@ -158,12 +159,16 @@ export default function ShoppingScreen() {
     }
     const lines = uncheckedItems.map((item) => {
       const qty = item.quantity != null ? ` ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '';
-      return `☐ ${item.name}${qty}`;
+      // 전체 그룹 모드에서는 그룹명 접두어 추가
+      const groupPrefix = isAllGroups
+        ? `[${groups.find((g) => g.id === item.groupId)?.name ?? ''}] `
+        : '';
+      return `☐ ${groupPrefix}${item.name}${qty}`;
     });
-    const groupName = currentGroup?.name ?? '';
+    const title = isAllGroups ? '전체 그룹' : (currentGroup?.name ?? '');
     try {
       await Share.share({
-        message: `[MealPlan] ${groupName ? `${groupName} ` : ''}쇼핑 리스트\n\n${lines.join('\n')}`,
+        message: `[MealPlan] ${title ? `${title} ` : ''}쇼핑 리스트\n\n${lines.join('\n')}`,
       });
     } catch { /* 공유 취소 시 무시 */ }
   };
@@ -178,57 +183,67 @@ export default function ShoppingScreen() {
   };
 
   /** 쇼핑 항목 렌더링 */
-  const renderItem = ({ item }: { item: ShoppingItem }) => (
-    <TouchableOpacity
-      style={[styles.item, item.isChecked && styles.itemChecked]}
-      onPress={() => {
-        if (selectMode) {
-          setSelectedIds((prev) => {
-            const next = new Set(prev);
-            if (next.has(item.id)) next.delete(item.id);
-            else next.add(item.id);
-            return next;
-          });
-        } else {
-          toggleShoppingItem(item.id);
-        }
-      }}
-      onLongPress={() => handleDelete(item)}
-      activeOpacity={0.7}
-    >
-      {selectMode ? (
-        <Ionicons
-          name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
-          size={22}
-          color={selectedIds.has(item.id) ? colors.primary : colors.border}
-          style={{ marginRight: 10 }}
-        />
-      ) : (
-        <View style={[styles.checkboxIcon, item.isChecked && styles.checkboxChecked]}>
-          {item.isChecked && <Ionicons name="checkmark" size={14} color="#fff" />}
-        </View>
-      )}
-
-      <View style={styles.itemContent}>
-        <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]} numberOfLines={1}>
-          {item.name}
-        </Text>
-        {item.quantity != null && (
-          <Text style={styles.itemQuantity}>
-            {item.quantity}{item.unit ? ` ${item.unit}` : ''}
-          </Text>
-        )}
-      </View>
-
+  const renderItem = ({ item }: { item: ShoppingItem }) => {
+    // 전체 그룹 모드: 각 항목의 그룹 색상 표시
+    const itemGroup = isAllGroups ? groups.find((g) => g.id === item.groupId) : undefined;
+    return (
       <TouchableOpacity
-        onPress={() => handleDelete(item)}
-        style={styles.deleteBtn}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        style={[styles.item, item.isChecked && styles.itemChecked]}
+        onPress={() => {
+          if (selectMode) {
+            setSelectedIds((prev) => {
+              const next = new Set(prev);
+              if (next.has(item.id)) next.delete(item.id);
+              else next.add(item.id);
+              return next;
+            });
+          } else {
+            toggleShoppingItem(item.id);
+          }
+        }}
+        onLongPress={() => handleDelete(item)}
+        activeOpacity={0.7}
       >
-        <Ionicons name="close" size={16} color={colors.textSecondary} />
+        {selectMode ? (
+          <Ionicons
+            name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
+            size={22}
+            color={selectedIds.has(item.id) ? colors.primary : colors.border}
+            style={{ marginRight: 10 }}
+          />
+        ) : (
+          <View style={[styles.checkboxIcon, item.isChecked && styles.checkboxChecked]}>
+            {item.isChecked && <Ionicons name="checkmark" size={14} color="#fff" />}
+          </View>
+        )}
+
+        <View style={styles.itemContent}>
+          {itemGroup && (
+            <View style={styles.groupIndicatorRow}>
+              <View style={[styles.groupIndicatorDot, { backgroundColor: itemGroup.color ?? colors.primary }]} />
+              <Text style={styles.groupIndicatorText}>{itemGroup.name}</Text>
+            </View>
+          )}
+          <Text style={[styles.itemName, item.isChecked && styles.itemNameChecked]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          {item.quantity != null && (
+            <Text style={styles.itemQuantity}>
+              {item.quantity}{item.unit ? ` ${item.unit}` : ''}
+            </Text>
+          )}
+        </View>
+
+        <TouchableOpacity
+          onPress={() => handleDelete(item)}
+          style={styles.deleteBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="close" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
       </TouchableOpacity>
-    </TouchableOpacity>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -247,7 +262,7 @@ export default function ShoppingScreen() {
             <TouchableOpacity onPress={handleShareList} style={styles.headerActionBtn}>
               <Ionicons name="share-outline" size={16} color={colors.primary} />
             </TouchableOpacity>
-            {checkedItems.length > 0 && (
+            {checkedItems.length > 0 && !isAllGroups && (
               <TouchableOpacity onPress={handleClearChecked} style={styles.headerActionBtn}>
                 <Text style={styles.clearBtn}>완료 지우기 ({checkedItems.length})</Text>
               </TouchableOpacity>
@@ -262,19 +277,32 @@ export default function ShoppingScreen() {
               style={styles.groupDropdownBtn}
               onPress={() => setShowGroupDropdown(!showGroupDropdown)}
             >
-              {currentGroup ? (
+              {isAllGroups ? (
+                <Ionicons name="apps-outline" size={14} color={colors.text} />
+              ) : currentGroup ? (
                 <View style={[styles.groupDropdownDot, { backgroundColor: currentGroup.color ?? colors.primary }]} />
               ) : (
                 <Ionicons name="cart-outline" size={14} color={colors.text} />
               )}
               <Text style={styles.groupDropdownBtnText} numberOfLines={1}>
-                {currentGroup?.name ?? '그룹 선택'}
+                {isAllGroups ? '전체 그룹' : (currentGroup?.name ?? '그룹 선택')}
               </Text>
               <Ionicons name={showGroupDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
             </TouchableOpacity>
 
             {showGroupDropdown && (
               <View style={styles.groupDropdownList}>
+                {/* 전체 그룹 옵션 */}
+                <TouchableOpacity
+                  style={[styles.groupDropdownItem, isAllGroups && styles.groupDropdownItemActive]}
+                  onPress={() => { setShoppingGroupId(null); setShowGroupDropdown(false); }}
+                >
+                  <Ionicons name="apps-outline" size={14} color={isAllGroups ? colors.primary : colors.textSecondary} />
+                  <Text style={[styles.groupDropdownItemText, isAllGroups && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                    전체 그룹
+                  </Text>
+                  {isAllGroups && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+                </TouchableOpacity>
                 {groups.map((g) => {
                   const isSelected = g.id === shoppingGroupId;
                   return (
@@ -356,12 +384,16 @@ export default function ShoppingScreen() {
         </TouchableOpacity>
 
         {/* 항목 목록 */}
-        {!shoppingGroupId ? (
+        {shoppingGroupId === undefined ? (
           <EmptyState icon="cart-outline" message="그룹을 선택하면\n쇼핑 목록이 표시됩니다." />
         ) : allItems.length === 0 ? (
           <EmptyState
             icon="cart-outline"
-            message={'쇼핑 목록이 비어있습니다.\n아래 입력창에서 항목을 추가해보세요!'}
+            message={
+              isAllGroups
+                ? '모든 그룹의 쇼핑 목록이 비어있습니다.'
+                : '쇼핑 목록이 비어있습니다.\n아래 입력창에서 항목을 추가해보세요!'
+            }
           />
         ) : (
           <FlatList
@@ -390,47 +422,54 @@ export default function ShoppingScreen() {
           />
         )}
 
-        {/* 하단 입력바 */}
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.input}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder={shoppingGroupId ? '항목명' : '그룹을 먼저 선택하세요'}
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="next"
-            maxLength={50}
-            editable={!!shoppingGroupId}
-          />
-          <TextInput
-            style={styles.inputQty}
-            value={inputQty}
-            onChangeText={(t) => setInputQty(t.replace(/[^0-9.]/g, ''))}
-            placeholder="수량"
-            placeholderTextColor={colors.textSecondary}
-            keyboardType="numeric"
-            maxLength={6}
-            editable={!!shoppingGroupId}
-          />
-          <TextInput
-            style={styles.inputUnit}
-            value={inputUnit}
-            onChangeText={setInputUnit}
-            placeholder="단위"
-            placeholderTextColor={colors.textSecondary}
-            returnKeyType="done"
-            onSubmitEditing={handleAdd}
-            maxLength={5}
-            editable={!!shoppingGroupId}
-          />
-          <TouchableOpacity
-            style={[styles.addBtn, (!inputText.trim() || isCreating || !shoppingGroupId) && styles.addBtnDisabled]}
-            onPress={handleAdd}
-            disabled={!inputText.trim() || isCreating || !shoppingGroupId}
-          >
-            <Ionicons name="add" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        {/* 하단 입력바 — 전체 그룹 모드에서는 비활성 */}
+        {isAllGroups ? (
+          <View style={[styles.inputBar, styles.inputBarDisabled]}>
+            <Ionicons name="apps-outline" size={16} color={colors.textSecondary} style={{ marginRight: 4 }} />
+            <Text style={styles.inputBarDisabledText}>전체 그룹 보기 중 — 특정 그룹을 선택하면 항목을 추가할 수 있습니다</Text>
+          </View>
+        ) : (
+          <View style={styles.inputBar}>
+            <TextInput
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder={shoppingGroupId ? '항목명' : '그룹을 먼저 선택하세요'}
+              placeholderTextColor={colors.textSecondary}
+              returnKeyType="next"
+              maxLength={50}
+              editable={!!shoppingGroupId}
+            />
+            <TextInput
+              style={styles.inputQty}
+              value={inputQty}
+              onChangeText={(t) => setInputQty(t.replace(/[^0-9.]/g, ''))}
+              placeholder="수량"
+              placeholderTextColor={colors.textSecondary}
+              keyboardType="numeric"
+              maxLength={6}
+              editable={!!shoppingGroupId}
+            />
+            <TextInput
+              style={styles.inputUnit}
+              value={inputUnit}
+              onChangeText={setInputUnit}
+              placeholder="단위"
+              placeholderTextColor={colors.textSecondary}
+              returnKeyType="done"
+              onSubmitEditing={handleAdd}
+              maxLength={5}
+              editable={!!shoppingGroupId}
+            />
+            <TouchableOpacity
+              style={[styles.addBtn, (!inputText.trim() || isCreating || !shoppingGroupId) && styles.addBtnDisabled]}
+              onPress={handleAdd}
+              disabled={!inputText.trim() || isCreating || !shoppingGroupId}
+            >
+              <Ionicons name="add" size={22} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        )}
       </KeyboardAvoidingView>
 
       {/* ── 자동 생성 모달 ── */}
@@ -710,6 +749,23 @@ const styles = StyleSheet.create({
     padding: 4,
     marginLeft: 8,
   },
+  // ── 전체 그룹 모드 항목 그룹 인디케이터 ─────────────────────
+  groupIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
+  },
+  groupIndicatorDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  groupIndicatorText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
   // ── 하단 입력바 ─────────────────────────────────────────
   inputBar: {
     flexDirection: 'row',
@@ -769,6 +825,17 @@ const styles = StyleSheet.create({
   },
   addBtnDisabled: {
     backgroundColor: colors.border,
+  },
+  inputBarDisabled: {
+    opacity: 0.7,
+    backgroundColor: colors.background,
+    justifyContent: 'center',
+  },
+  inputBarDisabledText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   // ── 자동 생성 모달 ────────────────────────────────────────
   modalOverlay: {

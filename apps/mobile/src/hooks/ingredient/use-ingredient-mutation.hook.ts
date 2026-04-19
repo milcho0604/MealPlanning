@@ -13,11 +13,16 @@ import { useGroupStore } from '../../stores/group.store';
 export function useIngredientMutation(groupId?: string | null) {
   const queryClient = useQueryClient();
   const { currentGroupId } = useGroupStore();
-  const targetGroupId = groupId ?? currentGroupId;
+  // undefined → currentGroupId 사용 / null → 전체 그룹 모드
+  const targetGroupId = groupId === undefined ? currentGroupId : groupId;
 
-  /** 캐시 무효화 - 재료 데이터가 변경될 때마다 호출 */
+  /** 캐시 무효화 - 전체 그룹 모드이면 모든 재료 캐시 무효화 */
   const invalidateIngredients = () => {
-    queryClient.invalidateQueries({ queryKey: ['ingredients', targetGroupId] });
+    if (targetGroupId) {
+      queryClient.invalidateQueries({ queryKey: ['ingredients', targetGroupId] });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['ingredients'] });
+    }
   };
 
   /** 재료 추가 */

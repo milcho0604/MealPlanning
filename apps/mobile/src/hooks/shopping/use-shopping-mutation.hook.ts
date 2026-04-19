@@ -11,10 +11,16 @@ import { useGroupStore } from '../../stores/group.store';
 export function useShoppingMutation(groupId?: string | null) {
   const queryClient = useQueryClient();
   const { currentGroupId } = useGroupStore();
-  const targetGroupId = groupId ?? currentGroupId;
+  // undefined → currentGroupId 사용 / null → 전체 그룹 모드
+  const targetGroupId = groupId === undefined ? currentGroupId : groupId;
 
+  /** 전체 그룹 모드이면 모든 쇼핑 캐시 무효화 */
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['shopping', targetGroupId] });
+    if (targetGroupId) {
+      queryClient.invalidateQueries({ queryKey: ['shopping', targetGroupId] });
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['shopping'] });
+    }
   };
 
   /** 항목 추가 */

@@ -60,14 +60,15 @@ function isExpiringSoon(expiryDate: string | null): boolean {
 export default function FridgeScreen() {
   const { groups, currentGroupId } = useGroupStore();
 
-  // 냉장고에서 볼 그룹 (local state, 기본값 = currentGroupId)
-  const [fridgeGroupId, setFridgeGroupId] = useState<string | null>(currentGroupId);
+  // 냉장고에서 볼 그룹 (undefined = 미초기화, null = 전체 그룹, string = 특정 그룹)
+  const [fridgeGroupId, setFridgeGroupId] = useState<string | null | undefined>(undefined);
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
   const currentGroup = groups.find((g) => g.id === fridgeGroupId);
+  const isAllGroups = fridgeGroupId === null;
 
-  // loadGroups 완료 후 동기화 (최초 1회만)
+  // loadGroups 완료 후 동기화 (미초기화 상태일 때만)
   useEffect(() => {
-    if (currentGroupId && !fridgeGroupId) {
+    if (currentGroupId && fridgeGroupId === undefined) {
       setFridgeGroupId(currentGroupId);
     }
   }, [currentGroupId]);
@@ -85,7 +86,7 @@ export default function FridgeScreen() {
   const { data: ingredients, isLoading, refetch } = useIngredients(false, fridgeGroupId);
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
-  const { removeIngredient, consumeIngredient } = useIngredientMutation();
+  const { removeIngredient, consumeIngredient } = useIngredientMutation(fridgeGroupId);
 
   // 소진되지 않은 재료만 필터링
   const activeIngredients = (ingredients ?? []).filter((i) => !i.isConsumed);
@@ -111,6 +112,7 @@ export default function FridgeScreen() {
     await removeIngredient(id);
   };
   const handleAddPress = () => {
+    if (isAllGroups) return; // 전체 그룹 모드에서는 추가 불가
     setEditingIngredient(null);
     setIsModalVisible(true);
   };
@@ -180,19 +182,32 @@ export default function FridgeScreen() {
             style={styles.groupDropdownBtn}
             onPress={() => setShowGroupDropdown(!showGroupDropdown)}
           >
-            {currentGroup ? (
+            {isAllGroups ? (
+              <Ionicons name="apps-outline" size={14} color={colors.text} />
+            ) : currentGroup ? (
               <View style={[styles.groupDropdownDot, { backgroundColor: currentGroup.color ?? colors.primary }]} />
             ) : (
               <Ionicons name="nutrition-outline" size={14} color={colors.text} />
             )}
             <Text style={styles.groupDropdownBtnText} numberOfLines={1}>
-              {currentGroup?.name ?? '그룹 선택'}
+              {isAllGroups ? '전체 그룹' : (currentGroup?.name ?? '그룹 선택')}
             </Text>
             <Ionicons name={showGroupDropdown ? 'chevron-up' : 'chevron-down'} size={16} color={colors.textSecondary} />
           </TouchableOpacity>
 
           {showGroupDropdown && (
             <View style={styles.groupDropdownList}>
+              {/* 전체 그룹 옵션 */}
+              <TouchableOpacity
+                style={[styles.groupDropdownItem, isAllGroups && styles.groupDropdownItemActive]}
+                onPress={() => { setFridgeGroupId(null); setShowGroupDropdown(false); }}
+              >
+                <Ionicons name="apps-outline" size={14} color={isAllGroups ? colors.primary : colors.textSecondary} />
+                <Text style={[styles.groupDropdownItemText, isAllGroups && { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                  전체 그룹
+                </Text>
+                {isAllGroups && <Ionicons name="checkmark" size={16} color={colors.primary} />}
+              </TouchableOpacity>
               {groups.map((g) => {
                 const isSelected = g.id === fridgeGroupId;
                 return (
@@ -274,29 +289,39 @@ export default function FridgeScreen() {
       <FlatList
         data={filteredIngredients}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.selectRow}>
-            {selectMode && (
-              <TouchableOpacity onPress={() => toggleSelect(item.id)} style={styles.checkbox}>
-                <Ionicons
-                  name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
-                  size={22}
-                  color={selectedIds.has(item.id) ? colors.primary : colors.border}
-                />
-              </TouchableOpacity>
-            )}
-            <View style={styles.selectRowContent}>
-              <SwipeToDelete confirmMessage={`"${item.name}"을(를) 삭제할까요?`} onDelete={() => handleDelete(item.id)}>
-                <IngredientCard
-                  ingredient={item}
-                  onEdit={handleEdit}
-                  onConsume={handleConsume}
-                  onDelete={handleDelete}
-                />
-              </SwipeToDelete>
+        renderItem={({ item }) => {
+          // 전체 그룹 모드: 각 항목의 그룹 색상 표시
+          const itemGroup = isAllGroups ? groups.find((g) => g.id === item.groupId) : undefined;
+          return (
+            <View style={styles.selectRow}>
+              {selectMode && (
+                <TouchableOpacity onPress={() => toggleSelect(item.id)} style={styles.checkbox}>
+                  <Ionicons
+                    name={selectedIds.has(item.id) ? 'checkbox' : 'square-outline'}
+                    size={22}
+                    color={selectedIds.has(item.id) ? colors.primary : colors.border}
+                  />
+                </TouchableOpacity>
+              )}
+              <View style={styles.selectRowContent}>
+                {itemGroup && (
+                  <View style={styles.groupIndicatorRow}>
+                    <View style={[styles.groupIndicatorDot, { backgroundColor: itemGroup.color ?? colors.primary }]} />
+                    <Text style={styles.groupIndicatorText}>{itemGroup.name}</Text>
+                  </View>
+                )}
+                <SwipeToDelete confirmMessage={`"${item.name}"을(를) 삭제할까요?`} onDelete={() => handleDelete(item.id)}>
+                  <IngredientCard
+                    ingredient={item}
+                    onEdit={handleEdit}
+                    onConsume={handleConsume}
+                    onDelete={handleDelete}
+                  />
+                </SwipeToDelete>
+              </View>
             </View>
-          </View>
-        )}
+          );
+        }}
         contentContainerStyle={styles.listContent}
         removeClippedSubviews
         maxToRenderPerBatch={10}
@@ -314,17 +339,19 @@ export default function FridgeScreen() {
         }
       />
 
-      {/* 추가 FAB */}
-      <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
-        <Ionicons name="add" size={28} color="#fff" />
-      </TouchableOpacity>
+      {/* 추가 FAB (전체 그룹 모드에서는 숨김) */}
+      {!isAllGroups && (
+        <TouchableOpacity style={styles.fab} onPress={handleAddPress} activeOpacity={0.8}>
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      )}
 
-      {/* 재료 추가/수정 모달 */}
+      {/* 재료 추가/수정 모달 — 수정 시 해당 재료의 groupId 사용 */}
       <IngredientFormModal
         visible={isModalVisible}
         onClose={handleModalClose}
         ingredient={editingIngredient ?? undefined}
-        groupId={fridgeGroupId}
+        groupId={editingIngredient?.groupId ?? (isAllGroups ? null : fridgeGroupId)}
       />
     </SafeAreaView>
   );
@@ -520,6 +547,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
     flexGrow: 1,
+  },
+  // ── 전체 그룹 모드 항목 그룹 인디케이터 ─────────────────────
+  groupIndicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginLeft: 4,
+    marginBottom: 3,
+  },
+  groupIndicatorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  groupIndicatorText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   // ── FAB ─────────────────────────────────────────────────
   fab: {
