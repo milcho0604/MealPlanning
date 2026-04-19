@@ -291,12 +291,17 @@ export class AuthService {
         where: { email: providerUser.email },
       });
       if (emailUser) {
-        // 소셜 계정 정보 연동 + 소셜 인증이므로 이메일 인증도 완료 처리
+        // 이미 다른 소셜 provider로 가입된 계정이면 provider/providerId를 덮어쓰지 않음
+        // → 어떤 소셜로 로그인해도 동일 계정으로 접속 가능하게만 허용
+        const isEmailOnly = !emailUser.providerId;
         user = await this.prisma.user.update({
           where: { id: emailUser.id },
           data: {
-            provider,
-            providerId: providerUser.providerId,
+            // 이메일 전용 가입 계정만 소셜 연동 (provider가 없는 경우)
+            ...(isEmailOnly ? {
+              provider,
+              providerId: providerUser.providerId,
+            } : {}),
             isVerified: true,
             verifyToken: null,
             verifyTokenExpiry: null,
