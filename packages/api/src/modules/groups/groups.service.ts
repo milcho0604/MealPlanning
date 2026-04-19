@@ -257,6 +257,21 @@ export class GroupsService {
   }
 
   /**
+   * 그룹 삭제 (owner만 가능)
+   * 그룹에 속한 식단, 재료, 쇼핑 항목 등은 Prisma onDelete: Cascade로 자동 삭제됩니다.
+   */
+  async deleteGroup(groupId: string, userId: string) {
+    const member = await this.assertMember(groupId, userId);
+
+    if (member.role !== 'owner') {
+      throw new ForbiddenException('그룹 소유자만 그룹을 삭제할 수 있습니다.');
+    }
+
+    await this.prisma.group.delete({ where: { id: groupId } });
+    return { message: '그룹이 삭제되었습니다.' };
+  }
+
+  /**
    * 그룹 멤버 여부 확인 헬퍼
    * 멤버가 아니면 ForbiddenException 발생
    */

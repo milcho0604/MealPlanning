@@ -297,7 +297,7 @@ export default function SettingsScreen() {
                       {group.name}
                     </Text>
                     <Text style={styles.groupMeta}>
-                      {group.myRole === 'owner' ? '관리자 · 탭하여 수정' : '멤버'} · {group.memberCount}명
+                      {group.myRole === 'owner' ? '관리자' : '멤버'} · {group.memberCount}명
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -744,6 +744,41 @@ export default function SettingsScreen() {
                 <Text style={styles.dialogConfirmText}>{isSubmitting ? '저장 중...' : '저장'}</Text>
               </TouchableOpacity>
             </View>
+
+            {/* 그룹 삭제 버튼 */}
+            <TouchableOpacity
+              style={styles.deleteGroupBtn}
+              onPress={() => {
+                if (!selectedGroupId) return;
+                const groupName = groups.find(g => g.id === selectedGroupId)?.name ?? '이 그룹';
+                Alert.alert(
+                  '그룹 삭제',
+                  `"${groupName}"을(를) 삭제하면 그룹의 모든 식단, 재료, 쇼핑 목록이 함께 삭제됩니다.\n\n정말 삭제하시겠습니까?`,
+                  [
+                    { text: '취소', style: 'cancel' },
+                    {
+                      text: '삭제',
+                      style: 'destructive',
+                      onPress: async () => {
+                        setIsSubmitting(true);
+                        try {
+                          await groupService.deleteGroup(selectedGroupId);
+                          await loadGroups();
+                          setModalType(null);
+                          Alert.alert('완료', '그룹이 삭제되었습니다.');
+                        } catch (e: any) {
+                          Alert.alert('오류', e?.response?.data?.error?.message ?? '그룹 삭제에 실패했습니다.');
+                        } finally { setIsSubmitting(false); }
+                      },
+                    },
+                  ],
+                );
+              }}
+              disabled={isSubmitting}
+            >
+              <Ionicons name="trash-outline" size={15} color={colors.error} />
+              <Text style={styles.deleteGroupBtnText}>그룹 삭제</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -1145,6 +1180,19 @@ const styles = StyleSheet.create({
   },
   disabledBtn: {
     opacity: 0.5,
+  },
+  deleteGroupBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingVertical: 10,
+  },
+  deleteGroupBtnText: {
+    fontSize: 14,
+    color: colors.error,
+    fontWeight: '600',
   },
   // ── 멤버 관리 ────────────────────────────────────────────
   membersHeader: {

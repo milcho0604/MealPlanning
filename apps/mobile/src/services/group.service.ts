@@ -73,4 +73,9 @@ export const groupService = {
   removeMember: async (groupId: string, userId: string): Promise<void> => {
     await apiClient.delete(`/groups/${groupId}/members/${userId}`);
   },
+
+  /** 그룹 삭제 (owner만) */
+  deleteGroup: async (groupId: string): Promise<void> => {
+    await apiClient.delete(`/groups/${groupId}`);
+  },
 };

@@ -65,6 +65,12 @@ export class GroupsController {
     return this.groupsService.leave(groupId, user.id);
   }
 
+  @Delete(':id')
+  @ApiOperation({ summary: '그룹 삭제 (owner만)' })
+  deleteGroup(@Param('id') groupId: string, @CurrentUser() user: RequestUser) {
+    return this.groupsService.deleteGroup(groupId, user.id);
+  }
+
   @Patch(':id')
   @ApiOperation({ summary: '그룹 정보 수정 (이름/색상, owner만)' })
   updateGroup(
