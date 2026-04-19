@@ -44,11 +44,14 @@ interface IngredientFormModalProps {
   onClose: () => void;
   /** 수정 모드일 때 기존 재료 데이터 */
   ingredient?: Ingredient;
+  /** 재료를 추가할 그룹 ID (미지정 시 currentGroupId 사용) */
+  groupId?: string | null;
 }
 
-export function IngredientFormModal({ visible, onClose, ingredient }: IngredientFormModalProps) {
+export function IngredientFormModal({ visible, onClose, ingredient, groupId }: IngredientFormModalProps) {
   const { currentGroupId } = useGroupStore();
-  const { createIngredient, updateIngredient, isCreating, isUpdating } = useIngredientMutation();
+  const targetGroupId = groupId ?? currentGroupId;
+  const { createIngredient, updateIngredient, isCreating, isUpdating } = useIngredientMutation(targetGroupId);
 
   // ── 폼 상태 ─────────────────────────────────────────────
   const [name, setName] = useState('');
@@ -113,7 +116,7 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
       Alert.alert('입력 오류', '재료 이름을 입력해주세요.');
       return;
     }
-    if (!currentGroupId) {
+    if (!targetGroupId) {
       Alert.alert('오류', '그룹을 선택해주세요.');
       return;
     }
@@ -136,7 +139,7 @@ export function IngredientFormModal({ visible, onClose, ingredient }: Ingredient
       if (ingredient) {
         await updateIngredient({ id: ingredient.id, body });
       } else {
-        await createIngredient({ ...body, groupId: currentGroupId });
+        await createIngredient({ ...body, groupId: targetGroupId });
       }
       onClose();
     } catch {

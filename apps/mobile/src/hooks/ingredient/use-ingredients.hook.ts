@@ -11,14 +11,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useGroupStore } from '../../stores/group.store';
 import { ingredientService } from '../../services/ingredient.service';
 
-export function useIngredients(expiringOnly = false) {
+export function useIngredients(expiringOnly = false, groupId?: string | null) {
   const { currentGroupId } = useGroupStore();
+  const targetGroupId = groupId ?? currentGroupId;
 
   return useQuery({
-    // queryKey: 그룹 및 expiringOnly 파라미터가 바뀌면 자동으로 새 데이터 요청
-    queryKey: ['ingredients', currentGroupId, expiringOnly],
+    queryKey: ['ingredients', targetGroupId, expiringOnly],
     queryFn: () =>
-      ingredientService.getList({ groupId: currentGroupId ?? '', expiringOnly }),
-    enabled: !!currentGroupId,
+      ingredientService.getList({ groupId: targetGroupId ?? '', expiringOnly }),
+    enabled: !!targetGroupId,
   });
 }

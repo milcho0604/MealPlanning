@@ -10,13 +10,14 @@ import type { CreateIngredientRequest, UpdateIngredientRequest } from '@mealplan
 import { ingredientService } from '../../services/ingredient.service';
 import { useGroupStore } from '../../stores/group.store';
 
-export function useIngredientMutation() {
+export function useIngredientMutation(groupId?: string | null) {
   const queryClient = useQueryClient();
   const { currentGroupId } = useGroupStore();
+  const targetGroupId = groupId ?? currentGroupId;
 
   /** 캐시 무효화 - 재료 데이터가 변경될 때마다 호출 */
   const invalidateIngredients = () => {
-    queryClient.invalidateQueries({ queryKey: ['ingredients', currentGroupId] });
+    queryClient.invalidateQueries({ queryKey: ['ingredients', targetGroupId] });
   };
 
   /** 재료 추가 */
