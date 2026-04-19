@@ -68,9 +68,6 @@ export default function SettingsScreen() {
       if (savedTheme) setThemeModeState(savedTheme as ThemeMode);
       const savedNotif = await storage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
       if (savedNotif !== null) setNotificationsEnabled(savedNotif === 'true');
-      // 앱 소개 다시 보기를 이미 1회 시청했으면 버튼 숨김
-      const replayDone = await storage.getItem(STORAGE_KEYS.ONBOARDING_REPLAY_VIEWED);
-      if (replayDone === 'true') setReplayViewed(true);
     })();
   }, []);
 
@@ -96,7 +93,6 @@ export default function SettingsScreen() {
   const [editGroupColorValue, setEditGroupColorValue] = useState<string>(GROUP_COLORS[0]);
   /** 앱 소개 다시 보기 상태 */
   const [showOnboardingReplay, setShowOnboardingReplay] = useState(false);
-  const [replayViewed, setReplayViewed] = useState(false);
 
   /** 로그아웃 */
   const handleSignOut = () => {
@@ -420,17 +416,15 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {/* 앱 소개 다시 보기 — 1회 시청 후 자동 숨김 */}
-        {!replayViewed && (
-          <TouchableOpacity
-            style={styles.accountActionBtn}
-            onPress={() => setShowOnboardingReplay(true)}
-          >
-            <Ionicons name="information-circle-outline" size={18} color={colors.text} />
-            <Text style={styles.accountActionText}>앱 소개 다시 보기</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-        )}
+        {/* 앱 소개 다시 보기 */}
+        <TouchableOpacity
+          style={styles.accountActionBtn}
+          onPress={() => setShowOnboardingReplay(true)}
+        >
+          <Ionicons name="information-circle-outline" size={18} color={colors.text} />
+          <Text style={styles.accountActionText}>앱 소개 다시 보기</Text>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
           <Ionicons name="log-out-outline" size={18} color={colors.error} />
@@ -447,9 +441,6 @@ export default function SettingsScreen() {
       <Modal visible={showOnboardingReplay} animationType="slide">
         <OnboardingScreen
           onComplete={async () => {
-            // 1회 시청 완료 → 스토리지에 저장하고 버튼 숨김
-            await storage.setItem(STORAGE_KEYS.ONBOARDING_REPLAY_VIEWED, 'true');
-            setReplayViewed(true);
             setShowOnboardingReplay(false);
           }}
         />
