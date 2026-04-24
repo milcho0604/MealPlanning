@@ -479,8 +479,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.textSecondary,
   },
-  sundayLabel: { color: '#EF5350' },
-  saturdayLabel: { color: '#42A5F5' },
+  sundayLabel: { color: colors.sunday },
+  saturdayLabel: { color: colors.saturday },
   // ── 날짜 그리드 ─────────────────────────────────────────
   grid: {
     flexDirection: 'row',
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayCircleSelected: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: colors.selectedDate,
   },
   dayCircleToday: {
     borderWidth: 1.5,
@@ -520,8 +520,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
-  sundayText: { color: '#EF5350' },
-  saturdayText: { color: '#42A5F5' },
+  sundayText: { color: colors.sunday },
+  saturdayText: { color: colors.saturday },
   dot: {
     width: 5,
     height: 5,
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   panelCalorie: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FF6B35',
+    color: colors.calorie,
   },
   panelEmpty: {
     fontSize: 14,

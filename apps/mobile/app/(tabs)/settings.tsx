@@ -1236,7 +1236,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: colors.infoLight,
   },
-  roleBtnText: { fontSize: 12, fontWeight: '600', color: '#1976D2' },
+  roleBtnText: { fontSize: 12, fontWeight: '600', color: colors.info },
   kickBtn: {
     paddingHorizontal: 8,
     paddingVertical: 6,

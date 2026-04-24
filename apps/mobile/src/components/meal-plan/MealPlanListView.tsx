@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   calorieSummary: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: colors.calorie,
   },
   // ── 리스트 ─────────────────────────────────────────────
   listContent: {

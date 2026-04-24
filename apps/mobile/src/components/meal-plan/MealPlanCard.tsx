@@ -103,7 +103,7 @@ export function MealPlanCard({ mealPlan, onEdit, onDelete, onCopy, groupColor }:
       <View style={styles.footer}>
         {mealPlan.calories && (
           <View style={styles.calorieChip}>
-            <Ionicons name="flame-outline" size={13} color="#FF6B35" />
+            <Ionicons name="flame-outline" size={13} color={colors.calorie} />
             <Text style={styles.calorieText}>{mealPlan.calories}kcal</Text>
           </View>
         )}
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
   calorieText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FF6B35',
+    color: colors.calorie,
   },
   authorChip: {
     flexDirection: 'row',

@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   weekCalorieValue: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FF6B35',
+    color: colors.calorie,
   },
   weekCalorieLabel: {
     fontSize: 11,
@@ -710,7 +710,7 @@ const styles = StyleSheet.create({
   statsCalorieValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FF6B35',
+    color: colors.calorie,
   },
   statsCalorieLabel: {
     fontSize: 11,
