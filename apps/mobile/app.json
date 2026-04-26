@@ -26,7 +26,7 @@
         "backgroundColor": "#F5F5F5"
       },
       "package": "com.mealplanning.app",
-      "versionCode": 5,
+      "versionCode": 17,
       "softwareKeyboardLayoutMode": "pan",
       "permissions": []
     },
