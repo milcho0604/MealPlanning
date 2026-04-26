@@ -23,6 +23,12 @@ export const lightColors = {
   warningLight: '#FFF3E0',
   infoLight: '#E3F2FD',
   purpleLight: '#F3E5F5',
+  // ── 특수 색상 ─────────────────────────────────────────
+  calorie: '#FF6B35',
+  sunday: '#EF5350',
+  saturday: '#42A5F5',
+  selectedDate: '#2E7D32',
+  info: '#1976D2',
 } as const;
 
 /** 다크 테마 색상 */
@@ -42,6 +48,11 @@ export const darkColors = {
   warningLight: '#3E3020',
   infoLight: '#1E2A3E',
   purpleLight: '#2E1E3E',
+  calorie: '#FF6B35',
+  sunday: '#EF5350',
+  saturday: '#42A5F5',
+  selectedDate: '#2E7D32',
+  info: '#1976D2',
 } as const;
 
 /** 기본 내보내기 (라이트 테마 - 하위 호환성) */
