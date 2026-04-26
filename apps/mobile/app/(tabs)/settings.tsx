@@ -31,6 +31,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { MEMBER_ROLE_LABELS } from '@mealplan/shared';
+import type { GroupMember } from '@mealplan/shared';
 import { useAuthStore } from '../../src/stores/auth.store';
 import { useGroupStore } from '../../src/stores/group.store';
 import { useImageUpload } from '../../src/hooks/use-image-upload.hook';
@@ -46,6 +47,12 @@ import OnboardingScreen from '../onboarding';
 /** 테마 모드 */
 type ThemeMode = 'light' | 'dark' | 'system';
 
+const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
+  { value: 'light', label: '라이트' },
+  { value: 'dark', label: '다크' },
+  { value: 'system', label: '시스템' },
+];
+
 /** 모달 타입 */
 type GroupModalType = 'create' | 'join' | 'changePassword' | 'members' | 'editName' | 'editGroupColor' | 'editGroup' | null;
 
@@ -53,11 +60,6 @@ export default function SettingsScreen() {
   const { user, signOut, deleteAccount } = useAuthStore();
   const { imageUri: avatarUri, uploading: avatarUploading, pickImage: pickAvatar, takePhoto: takeAvatar } = useImageUpload({ folder: 'profile' });
   const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
-  const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
-    { value: 'light', label: '라이트' },
-    { value: 'dark', label: '다크' },
-    { value: 'system', label: '시스템' },
-  ];
   const { groups, currentGroupId, setCurrentGroupId, createGroup, joinGroup, loadGroups } =
     useGroupStore();
 
@@ -87,7 +89,7 @@ export default function SettingsScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [nameInput, setNameInput] = useState('');
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<GroupMember[]>([]);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedGroupRole, setSelectedGroupRole] = useState<string>('');
   const [editGroupColorValue, setEditGroupColorValue] = useState<string>(GROUP_COLORS[0]);

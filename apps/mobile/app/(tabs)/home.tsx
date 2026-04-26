@@ -22,9 +22,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMealPlans } from '../../src/hooks/meal-plan/use-meal-plans.hook';
 import { mealPlanService } from '../../src/services/meal-plan.service';
@@ -39,15 +39,14 @@ import { useGroupStore } from '../../src/stores/group.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 
-/** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
-function getTodayString(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
 /** Date → YYYY-MM-DD */
 function toDateString(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getTodayString(): string {
+  return toDateString(new Date());
 }
 
 /** offset 주 기준 월요일부터 7일치 날짜 배열 반환 (0 = 이번 주, -1 = 지난 주, +1 = 다음 주) */

@@ -123,22 +123,24 @@ graph TB
 - 유통기한 관리 (달력 선택 + 직접 입력)
 - 유통기한 임박 경고 (3일 이내) + 매일 9:00 KST 푸시 알림
 - 전체 선택 + 일괄 삭제 / 스와이프 삭제
+- **그룹 드롭다운**: 특정 그룹 또는 전체 그룹 보기 (항목별 그룹 색상 도트 표시)
 
 ### 🛒 쇼핑 리스트
 - 항목 추가/체크/삭제 + 수량/단위 입력
 - 완료 섹션 분리 (체크 해제로 복귀)
 - 전체 선택 + 일괄 삭제
-- 이번 주 식단 기반 자동 생성
+- **이번 주 식단 기반 자동 생성**: 식단 소스 그룹 + 쇼핑 타겟 그룹 각각 선택 가능
 - 카카오톡/문자 등으로 공유
+- **그룹 드롭다운**: 특정 그룹 또는 전체 그룹 보기 (항목별 그룹 색상 도트 표시)
 
 ### 👥 그룹
 - 그룹 생성 + 6자리 초대 코드 + 그룹 색상 선택 (10색 팔레트)
-- 그룹 이름/색상 수정 (관리자 전용)
+- 그룹 이름/색상 수정 + 그룹 삭제 (관리자 전용)
 - 초대 코드 복사/공유 (모든 멤버 가능) + 딥링크
 - 멤버 관리 (역할 변경, 강퇴) + 프로필 사진 표시
 - 역할: 관리자 / 편집자 / 뷰어
 - 그룹별 식단 필터 (드롭다운) + 전체 그룹 보기
-- 기본 그룹 설정 (앱 시작 시 자동 선택)
+- 기본 그룹 설정 (앱 시작 시 자동 선택, 최상단 정렬)
 - 캘린더 dot / 식단 카드에 그룹 색상 바 표시 (전체 그룹 뷰)
 
 ### 🔐 인증
@@ -152,7 +154,7 @@ graph TB
 - 프로필 수정 (이름 변경 커스텀 모달 + 사진 변경)
 - 알림 ON/OFF 토글 (SecureStore 영속화)
 - 기본 그룹 설정 (별 아이콘)
-- 앱 소개 다시 보기 (온보딩 리셋, 1회 시청 후 숨김)
+- 앱 소개 다시 보기 (온보딩 리셋, 항상 표시)
 
 ### 🔔 알림 (Cron)
 - 매일 7:30 KST: 오늘 식단 알림
@@ -276,6 +278,169 @@ MealPlanning/
 | PATCH | /:id/toggle | 체크 토글 | JWT |
 | DELETE | /:id | 삭제 | JWT |
 | DELETE | /clear-checked | 완료 항목 일괄 삭제 | JWT |
+
+---
+
+## 🗄 데이터베이스 스키마
+
+### ERD
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           MealPlan ERD                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+
+  ┌──────────────┐        ┌──────────────────┐        ┌──────────────┐
+  │    users     │        │  group_members   │        │    groups    │
+  ├──────────────┤        ├──────────────────┤        ├──────────────┤
+  │ id (PK)      │──┐  ┌──│ group_id (FK)    │──┐  ┌──│ id (PK)      │
+  │ email        │  └──┘  │ user_id  (FK)    │  └──┘  │ name         │
+  │ name         │  1:N   │ role             │  N:1   │ color        │
+  │ avatar_url   │        │ joined_at        │        │ owner_id(FK) │──┐
+  │ push_token   │        └──────────────────┘        │ invite_code  │  │
+  │ password_hash│                                    │ created_at   │  │
+  │ provider     │        ┌──────────────────┐        └──────────────┘  │
+  │ provider_id  │        │   meal_plans     │               │           │
+  │ status_yn    │        ├──────────────────┤               │  owner    │
+  │ deleted_at   │──┐  ┌──│ group_id (FK)    │               └───────────┘
+  │ is_verified  │  └──┘  │ created_by (FK)  │
+  │ verify_token │  1:N   │ date             │        ┌──────────────────┐
+  │ created_at   │        │ meal_type        │        │  meal_templates  │
+  └──────────────┘        │ menu_name        │        ├──────────────────┤
+                          │ memo             │     ┌──│ group_id (FK)    │
+                          │ recipe_url       │     │  │ id (PK)          │
+                          │ calories         │     │  │ name             │
+                          │ photo_url        │     │  │ meal_type        │
+                          │ is_recurring     │     │  │ menu_name        │
+                          │ recur_rule       │     │  │ memo             │
+                          │ created_at       │     │  │ recipe_url       │
+                          └──────────────────┘     │  │ created_at       │
+                                                   │  └──────────────────┘
+  ┌──────────────────┐     ┌──────────────────┐    │
+  │   ingredients    │     │  shopping_items  │    │  groups ──┤
+  ├──────────────────┤     ├──────────────────┤    │  (1:N 공통)│
+  │ id (PK)          │  ┌──│ group_id (FK)    │    └───────────┘
+  │ group_id (FK)    │──┘  │ id (PK)          │
+  │ added_by (FK)    │     │ name             │
+  │ name             │     │ quantity         │
+  │ quantity         │     │ unit             │
+  │ unit             │     │ is_checked       │
+  │ category         │     │ created_at       │
+  │ expiry_date      │     └──────────────────┘
+  │ is_consumed      │
+  │ created_at       │
+  └──────────────────┘
+```
+
+> 모든 외래키는 `ON DELETE CASCADE` (부모 삭제 시 연관 데이터 자동 삭제)
+
+---
+
+### 테이블 명세
+
+#### users
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | 사용자 고유 ID |
+| email | VARCHAR | UNIQUE, NOT NULL | 이메일 (소문자 정규화) |
+| name | VARCHAR | NOT NULL | 표시 이름 |
+| avatar_url | VARCHAR | NULL | 프로필 사진 S3 URL |
+| push_token | VARCHAR | NULL | Expo 푸시 알림 토큰 |
+| password_hash | VARCHAR | NULL | bcrypt 해시 (소셜 로그인은 null) |
+| provider | VARCHAR | NULL | 소셜 제공자: `google` \| `kakao` \| `apple` |
+| provider_id | VARCHAR | NULL | 소셜 제공자의 사용자 ID |
+| status_yn | CHAR(1) | DEFAULT 'Y' | 계정 상태: `Y`=정상, `N`=탈퇴 |
+| deleted_at | TIMESTAMP | NULL | 탈퇴 처리 시각 (90일 후 하드삭제) |
+| is_verified | BOOLEAN | DEFAULT false | 이메일 인증 여부 |
+| verify_token | VARCHAR | NULL | 이메일 인증 토큰 |
+| verify_token_expiry | TIMESTAMP | NULL | 인증 토큰 만료 시각 |
+| created_at | TIMESTAMP | DEFAULT now() | 가입 일시 |
+
+#### groups
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | 그룹 고유 ID |
+| name | VARCHAR | NOT NULL | 그룹 이름 |
+| color | VARCHAR | DEFAULT '#4CAF50' | 그룹 색상 (HEX) |
+| owner_id | UUID | FK → users.id | 그룹 생성자 |
+| invite_code | VARCHAR | UNIQUE, NOT NULL | 6자리 초대 코드 |
+| created_at | TIMESTAMP | DEFAULT now() | 생성 일시 |
+
+#### group_members
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| group_id | UUID | PK, FK → groups.id | 그룹 ID |
+| user_id | UUID | PK, FK → users.id | 사용자 ID |
+| role | VARCHAR | DEFAULT 'editor' | 역할: `owner` \| `editor` \| `viewer` |
+| joined_at | TIMESTAMP | DEFAULT now() | 참여 일시 |
+
+> 복합 PK `(group_id, user_id)` — 한 사용자는 같은 그룹에 한 번만 소속 가능
+
+#### meal_plans
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | 식단 고유 ID |
+| group_id | UUID | FK → groups.id | 소속 그룹 |
+| created_by | UUID | FK → users.id | 등록한 사용자 |
+| date | DATE | NOT NULL | 식단 날짜 |
+| meal_type | VARCHAR | NOT NULL | `breakfast` \| `lunch` \| `dinner` \| `snack` |
+| menu_name | VARCHAR | NOT NULL | 메뉴 이름 |
+| memo | TEXT | NULL | 메모 |
+| recipe_url | VARCHAR | NULL | 레시피 URL |
+| calories | INT | NULL | 칼로리 (kcal) |
+| photo_url | VARCHAR | NULL | 식단 사진 S3 URL |
+| is_recurring | BOOLEAN | DEFAULT false | 반복 식단 여부 |
+| recur_rule | VARCHAR | NULL | 반복 규칙: `weekly` \| `monthly` |
+| created_at | TIMESTAMP | DEFAULT now() | 등록 일시 |
+| updated_at | TIMESTAMP | AUTO | 수정 일시 |
+
+> 인덱스: `(group_id, date)` — 월간 캘린더 조회 최적화
+
+#### ingredients
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | 재료 고유 ID |
+| group_id | UUID | FK → groups.id | 소속 그룹 |
+| added_by | UUID | FK → users.id | 추가한 사용자 |
+| name | VARCHAR | NOT NULL | 재료 이름 |
+| quantity | DECIMAL(10,2) | NULL | 수량 |
+| unit | VARCHAR | NULL | 단위: `g` \| `kg` \| `ml` \| `L` \| `개` \| `봉` 등 |
+| category | VARCHAR | NULL | `meat` \| `vegetable` \| `dairy` \| `seafood` \| `grain` \| `sauce` \| `frozen` \| `other` |
+| expiry_date | DATE | NULL | 유통기한 |
+| is_consumed | BOOLEAN | DEFAULT false | 소진 여부 |
+| created_at | TIMESTAMP | DEFAULT now() | 등록 일시 |
+
+> 인덱스: `(group_id, expiry_date)` — 유통기한 임박 알림 최적화
+
+#### meal_templates
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | 템플릿 고유 ID |
+| group_id | UUID | FK → groups.id | 소속 그룹 |
+| name | VARCHAR | NOT NULL | 템플릿 이름 (사용자 지정) |
+| meal_type | VARCHAR | NOT NULL | `breakfast` \| `lunch` \| `dinner` \| `snack` |
+| menu_name | VARCHAR | NOT NULL | 메뉴 이름 |
+| memo | TEXT | NULL | 메모 |
+| recipe_url | VARCHAR | NULL | 레시피 URL |
+| created_at | TIMESTAMP | DEFAULT now() | 생성 일시 |
+
+#### shopping_items
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|------|------|------|------|
+| id | UUID | PK | 항목 고유 ID |
+| group_id | UUID | FK → groups.id | 소속 그룹 |
+| name | VARCHAR | NOT NULL | 항목 이름 |
+| quantity | DECIMAL(10,2) | NULL | 수량 |
+| unit | VARCHAR | NULL | 단위 |
+| is_checked | BOOLEAN | DEFAULT false | 체크(구매 완료) 여부 |
+| created_at | TIMESTAMP | DEFAULT now() | 등록 일시 |
 
 ---
 

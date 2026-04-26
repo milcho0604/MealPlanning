@@ -48,11 +48,11 @@ export const darkColors = {
   warningLight: '#3E3020',
   infoLight: '#1E2A3E',
   purpleLight: '#2E1E3E',
-  calorie: '#FF6B35',
+  calorie: '#FF8A65',
   sunday: '#EF5350',
-  saturday: '#42A5F5',
-  selectedDate: '#2E7D32',
-  info: '#1976D2',
+  saturday: '#64B5F6',
+  selectedDate: '#66BB6A',
+  info: '#42A5F5',
 } as const;
 
 /** 기본 내보내기 (라이트 테마 - 하위 호환성) */
