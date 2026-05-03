@@ -11,6 +11,12 @@ import { colors } from '../../constants/colors';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+/** 타임존 영향 없이 로컬 날짜로 파싱 */
+function parseLocalDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 interface MealPlanDatePickerProps {
   selectedDate: string;
   onDateChange: (date: string) => void;
@@ -18,18 +24,18 @@ interface MealPlanDatePickerProps {
 
 export function MealPlanDatePicker({ selectedDate, onDateChange }: MealPlanDatePickerProps) {
   const [showPicker, setShowPicker] = useState(false);
-  const [dpYear, setDpYear] = useState(() => new Date(selectedDate + 'T00:00:00').getFullYear());
-  const [dpMonth, setDpMonth] = useState(() => new Date(selectedDate + 'T00:00:00').getMonth() + 1);
+  const [dpYear, setDpYear] = useState(() => parseLocalDate(selectedDate).getFullYear());
+  const [dpMonth, setDpMonth] = useState(() => parseLocalDate(selectedDate).getMonth() + 1);
 
   const openPicker = () => {
-    const d = new Date(selectedDate + 'T00:00:00');
+    const d = parseLocalDate(selectedDate);
     setDpYear(d.getFullYear());
     setDpMonth(d.getMonth() + 1);
     setShowPicker((v) => !v);
   };
 
   const dateLabel = (() => {
-    const d = new Date(selectedDate + 'T00:00:00');
+    const d = parseLocalDate(selectedDate);
     return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`;
   })();
 

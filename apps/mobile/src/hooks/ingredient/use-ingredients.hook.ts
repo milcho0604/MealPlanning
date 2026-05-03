@@ -43,9 +43,12 @@ export function useIngredients(expiringOnly = false, groupId?: string | null) {
       data: allGroupQueries.flatMap((q) => q.data ?? []) as Ingredient[],
       isLoading:
         allGroupQueries.length > 0 && allGroupQueries.some((q) => q.isLoading),
-      refetch: () => Promise.all(allGroupQueries.map((q) => q.refetch())),
+      refetch: async () => { await Promise.all(allGroupQueries.map((q) => q.refetch())); },
     };
   }
 
-  return singleQuery;
+  return {
+    ...singleQuery,
+    refetch: async () => { await singleQuery.refetch(); },
+  };
 }

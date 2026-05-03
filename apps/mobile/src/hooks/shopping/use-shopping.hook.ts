@@ -39,9 +39,12 @@ export function useShopping(groupId?: string | null) {
       data: allGroupQueries.flatMap((q) => q.data ?? []) as ShoppingItem[],
       isLoading:
         allGroupQueries.length > 0 && allGroupQueries.some((q) => q.isLoading),
-      refetch: () => Promise.all(allGroupQueries.map((q) => q.refetch())),
+      refetch: async () => { await Promise.all(allGroupQueries.map((q) => q.refetch())); },
     };
   }
 
-  return singleQuery;
+  return {
+    ...singleQuery,
+    refetch: async () => { await singleQuery.refetch(); },
+  };
 }

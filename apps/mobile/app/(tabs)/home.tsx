@@ -174,12 +174,13 @@ export default function HomeScreen() {
   } | null>(null);
 
   useEffect(() => {
-    if (showStats) {
-      setStats(null); // 그룹 변경 즉시 이전 데이터 제거
-      mealPlanService.getStats(currentGroupId ?? undefined).then(setStats).catch(() => {
-        setStats(null);
-      });
-    }
+    if (!showStats) return;
+    let cancelled = false;
+    setStats(null);
+    mealPlanService.getStats(currentGroupId ?? undefined)
+      .then((result) => { if (!cancelled) setStats(result); })
+      .catch(() => { if (!cancelled) setStats(null); });
+    return () => { cancelled = true; };
   }, [currentGroupId, showStats]);
 
   // ── 검색 ──────────────────────────────────────────────

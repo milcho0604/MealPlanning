@@ -4,7 +4,7 @@
  * MealPlanFormModal의 모든 폼 상태, 유효성 검사, submit/template 로직을 담당합니다.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 import type { MealTemplate, MealType, RecurRule } from '@mealplan/shared';
 import type { MealPlanWithUser } from '../../services/meal-plan.service';
@@ -34,6 +34,7 @@ export function useMealPlanForm({
   const { createMealPlan, updateMealPlan, isCreating, isUpdating } = useMealPlanMutation();
   const { saveTemplate, isSaving } = useTemplateMutation();
   const imageUpload = useImageUpload({ folder: 'meal-photos' });
+  const isSubmittingRef = useRef(false);
 
   // ── 폼 상태 ───────────────────────────────────────────────
   const [mealType, setMealType] = useState<MealType>(initialMealType);
@@ -88,6 +89,7 @@ export function useMealPlanForm({
 
   /** 저장 */
   const handleSubmit = async () => {
+    if (isSubmittingRef.current) return;
     if (!menuName.trim()) {
       Alert.alert('입력 오류', '메뉴 이름을 입력해주세요.');
       return;
@@ -97,6 +99,7 @@ export function useMealPlanForm({
       Alert.alert('오류', '그룹을 먼저 생성해주세요.');
       return;
     }
+    isSubmittingRef.current = true;
     try {
       const photoUrl = imageUpload.imageUrl ?? undefined;
       const calories = caloriesText.trim() ? parseInt(caloriesText.trim(), 10) : undefined;
@@ -132,6 +135,8 @@ export function useMealPlanForm({
       onClose();
     } catch {
       Alert.alert('오류', '저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -168,7 +173,9 @@ export function useMealPlanForm({
       return;
     }
     if (Platform.OS === 'ios') {
-      Alert.prompt!('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?', doSaveTemplate, 'plain-text', menuName.trim());
+      Alert.prompt!('템플릿 이름', '이 메뉴를 어떤 이름으로 저장할까요?',
+        (name) => { if (name?.trim()) doSaveTemplate(name.trim()); },
+        'plain-text', menuName.trim());
     } else {
       setTemplateNameInput(menuName.trim());
       setTemplateNameModalVisible(true);

@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -176,6 +177,12 @@ export default function FridgeScreen() {
       </View>
 
       {/* 그룹 드롭다운 */}
+      {showGroupDropdown && (
+        <Pressable
+          style={[StyleSheet.absoluteFillObject, { zIndex: 9 }]}
+          onPress={() => setShowGroupDropdown(false)}
+        />
+      )}
       {groups.length >= 1 && (
         <View style={styles.groupDropdownWrapper}>
           <TouchableOpacity
