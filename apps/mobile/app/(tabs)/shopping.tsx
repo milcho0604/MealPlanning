@@ -10,7 +10,7 @@
  * - "이번 주 식단으로 생성" 버튼: 식단 소스 그룹과 추가 대상 그룹을 선택하여 자동 생성
  */
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -40,6 +40,7 @@ import { EmptyState } from '../../src/components/common/EmptyState';
 import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useGroupStore } from '../../src/stores/group.store';
 import { colors } from '../../src/constants/colors';
+import { useRefresh } from '../../src/hooks/use-refresh.hook';
 
 export default function ShoppingScreen() {
   const { groups, currentGroupId } = useGroupStore();
@@ -58,8 +59,7 @@ export default function ShoppingScreen() {
   const currentGroup = groups.find((g) => g.id === shoppingGroupId);
 
   const { data: items, isLoading, refetch } = useShopping(shoppingGroupId);
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
+  const { refreshing, onRefresh } = useRefresh(refetch);
   const {
     createShoppingItem,
     toggleShoppingItem,
@@ -135,7 +135,8 @@ export default function ShoppingScreen() {
   const handleAdd = async () => {
     const name = inputText.trim();
     if (!name || !shoppingGroupId) return;
-    const quantity = inputQty.trim() ? parseFloat(inputQty.trim()) : undefined;
+    const parsedQty = parseFloat(inputQty.trim());
+    const quantity = inputQty.trim() && !isNaN(parsedQty) ? parsedQty : undefined;
     const unit = inputUnit.trim() || undefined;
     setInputText('');
     setInputQty('');
@@ -186,8 +187,15 @@ export default function ShoppingScreen() {
     ]);
   };
 
-  /** 쇼핑 항목 렌더링 */
-  const renderItem = ({ item }: { item: ShoppingItem }) => {
+  /** 쇼핑 항목 렌더링 (useCallback으로 FlatList 리렌더 방지) */
+  const renderItem = useCallback(({ item }: { item: ShoppingListItem }) => {
+    if ('isSection' in item) {
+      return (
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionHeaderText}>완료됨 ({checkedItems.length})</Text>
+        </View>
+      );
+    }
     // 전체 그룹 모드: 각 항목의 그룹 색상 표시
     const itemGroup = isAllGroups ? groups.find((g) => g.id === item.groupId) : undefined;
     return (
@@ -247,7 +255,7 @@ export default function ShoppingScreen() {
         </TouchableOpacity>
       </TouchableOpacity>
     );
-  };
+  }, [selectMode, selectedIds, isAllGroups, groups, checkedItems.length, toggleShoppingItem, handleDelete]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -418,16 +426,7 @@ export default function ShoppingScreen() {
               ...checkedItems,
             ]}
             keyExtractor={(item) => item.id}
-            renderItem={({ item }) => {
-              if ('isSection' in item) {
-                return (
-                  <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionHeaderText}>완료됨 ({checkedItems.length})</Text>
-                  </View>
-                );
-              }
-              return renderItem({ item });
-            }}
+            renderItem={renderItem}
             contentContainerStyle={styles.listContent}
             removeClippedSubviews
             maxToRenderPerBatch={10}

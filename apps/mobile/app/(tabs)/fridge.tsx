@@ -8,7 +8,7 @@
  * - FAB: 재료 추가
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   FlatList,
@@ -34,6 +34,7 @@ import { EmptyState } from '../../src/components/common/EmptyState';
 import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useGroupStore } from '../../src/stores/group.store';
 import { colors } from '../../src/constants/colors';
+import { useRefresh } from '../../src/hooks/use-refresh.hook';
 
 /** 필터 탭 타입: 'all' 또는 카테고리 */
 type FilterTab = 'all' | IngredientCategory;
@@ -85,21 +86,26 @@ export default function FridgeScreen() {
 
   // ── 데이터 ─────────────────────────────────────────────
   const { data: ingredients, isLoading, refetch } = useIngredients(false, fridgeGroupId);
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
+  const { refreshing, onRefresh } = useRefresh(refetch);
   const { removeIngredient, consumeIngredient } = useIngredientMutation(fridgeGroupId);
 
   // 소진되지 않은 재료만 필터링
-  const activeIngredients = (ingredients ?? []).filter((i) => !i.isConsumed);
+  const activeIngredients = useMemo(
+    () => (ingredients ?? []).filter((i) => !i.isConsumed),
+    [ingredients],
+  );
 
   // 유통기한 임박 재료 수
-  const expiringCount = activeIngredients.filter((i) => isExpiringSoon(i.expiryDate)).length;
+  const expiringCount = useMemo(
+    () => activeIngredients.filter((i) => isExpiringSoon(i.expiryDate)).length,
+    [activeIngredients],
+  );
 
   // 선택된 카테고리 탭으로 필터링
-  const filteredIngredients =
-    activeTab === 'all'
-      ? activeIngredients
-      : activeIngredients.filter((i) => i.category === activeTab);
+  const filteredIngredients = useMemo(
+    () => activeTab === 'all' ? activeIngredients : activeIngredients.filter((i) => i.category === activeTab),
+    [activeTab, activeIngredients],
+  );
 
   // ── 핸들러 ─────────────────────────────────────────────
   const handleEdit = (ingredient: Ingredient) => {

@@ -8,7 +8,7 @@
  * - Phase 2: 반복 식단, 레시피 URL 지원 (MealPlanFormModal에서 처리)
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -39,6 +39,7 @@ import { useGroupStore } from '../../src/stores/group.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 import { WEEKDAYS, toDateString } from '../../src/utils/date';
+import { useRefresh } from '../../src/hooks/use-refresh.hook';
 
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
 function getTodayString(): string {
@@ -153,8 +154,7 @@ export default function HomeScreen() {
 
   // 선택된 날짜가 속한 월의 식단을 조회
   const { data: allMealPlans, isLoading, refetch } = useMealPlans(year, month);
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
+  const { refreshing, onRefresh } = useRefresh(refetch);
   const { removeMealPlan } = useMealPlanMutation();
 
   // ── 모달 상태 ──────────────────────────────────────────
@@ -192,21 +192,33 @@ export default function HomeScreen() {
     };
   }, []);
 
+  // 이번 주 날짜 문자열 목록 (메모이제이션)
+  const weekDateStrings = useMemo(() => weekDates.map((d) => toDateString(d)), [weekDates]);
+
+  // 선택된 날짜의 식단 + 칼로리 (메모이제이션)
+  const selectedMealPlans = useMemo(
+    () => (allMealPlans ?? []).filter((mp) => mp.date === selectedDate),
+    [allMealPlans, selectedDate],
+  );
+  const totalCalories = useMemo(
+    () => selectedMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0),
+    [selectedMealPlans],
+  );
+
+  // 이번 주 칼로리 요약 (메모이제이션)
+  const weekMealPlans = useMemo(
+    () => (allMealPlans ?? []).filter((mp) => weekDateStrings.includes(mp.date)),
+    [allMealPlans, weekDateStrings],
+  );
+  const weekCalorieSummary = useMemo(() => {
+    const total = weekMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0);
+    const daysWithCalories = new Set(weekMealPlans.filter((mp) => mp.calories).map((mp) => mp.date)).size;
+    return { weekTotalCalories: total, weekAvgCalories: daysWithCalories > 0 ? Math.round(total / daysWithCalories) : 0 };
+  }, [weekMealPlans]);
+  const { weekTotalCalories, weekAvgCalories } = weekCalorieSummary;
+
   // 그룹이 하나도 없으면 안내 화면 표시
   if (groups.length === 0) return <NoGroupView />;
-
-  // 선택된 날짜의 식단만 필터링
-  const selectedMealPlans = (allMealPlans ?? []).filter((mp) => mp.date === selectedDate);
-
-  // 선택된 날짜의 총 칼로리
-  const totalCalories = selectedMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0);
-
-  // 이번 주 칼로리 요약
-  const weekDateStrings = weekDates.map((d) => toDateString(d));
-  const weekMealPlans = (allMealPlans ?? []).filter((mp) => weekDateStrings.includes(mp.date));
-  const weekTotalCalories = weekMealPlans.reduce((sum, mp) => sum + (mp.calories ?? 0), 0);
-  const weekDaysWithCalories = new Set(weekMealPlans.filter((mp) => mp.calories).map((mp) => mp.date)).size;
-  const weekAvgCalories = weekDaysWithCalories > 0 ? Math.round(weekTotalCalories / weekDaysWithCalories) : 0;
 
   /** 수정 버튼 핸들러 */
   const handleEdit = (mealPlan: MealPlanWithUser) => {
@@ -240,7 +252,7 @@ export default function HomeScreen() {
     setCopyingMealPlan(null);
   };
 
-  const handleSearch = (text: string) => {
+  const handleSearch = useCallback((text: string) => {
     setSearchQuery(text);
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     if (!text.trim()) { setSearchResults([]); return; }
@@ -251,7 +263,7 @@ export default function HomeScreen() {
         setSearchResults(results);
       } catch { setSearchResults([]); }
     }, 300);
-  };
+  }, [currentGroupId]);
 
   // ── 렌더링 ────────────────────────────────────────────
   if (isLoading) return <SkeletonLoader rows={4} />;

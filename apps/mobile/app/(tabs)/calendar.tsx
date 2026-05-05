@@ -9,6 +9,7 @@
  */
 
 import { useMemo, useRef, useState } from 'react';
+
 import {
   FlatList,
   PanResponder,
@@ -35,6 +36,7 @@ import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 import type { MyGroup } from '../../src/services/group.service';
 import { WEEKDAYS } from '../../src/utils/date';
+import { useRefresh } from '../../src/hooks/use-refresh.hook';
 
 /** 날짜를 YYYY-MM-DD 형식 문자열로 변환 */
 function toDateString(year: number, month: number, day: number): string {
@@ -69,8 +71,7 @@ export default function CalendarScreen() {
 
   // ── 데이터 ─────────────────────────────────────────────
   const { data: mealPlans, isLoading, refetch } = useMealPlans(year, month);
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = async () => { setRefreshing(true); await refetch(); setRefreshing(false); };
+  const { refreshing, onRefresh } = useRefresh(refetch);
   const { removeMealPlan } = useMealPlanMutation();
 
   // 날짜별 식단 맵 생성: { 'YYYY-MM-DD': MealPlanWithUser[] }
