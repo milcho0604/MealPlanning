@@ -6,13 +6,13 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CreateIngredientRequest, UpdateIngredientRequest } from '@mealplan/shared';
+import type { CreateIngredientRequest, Ingredient, UpdateIngredientRequest } from '@mealplan/shared';
 import { ingredientService } from '../../services/ingredient.service';
 import { useGroupStore } from '../../stores/group.store';
 
 export function useIngredientMutation(groupId?: string | null) {
   const queryClient = useQueryClient();
-  const { currentGroupId } = useGroupStore();
+  const { currentGroupId, groups } = useGroupStore();
   // undefined → currentGroupId 사용 / null → 전체 그룹 모드
   const targetGroupId = groupId === undefined ? currentGroupId : groupId;
 
@@ -44,10 +44,37 @@ export function useIngredientMutation(groupId?: string | null) {
     onSuccess: invalidateIngredients,
   });
 
-  /** 재료 소진 처리 */
+  /** 재료 소진 처리 — Optimistic Update로 즉시 UI 반영 */
   const consumeMutation = useMutation({
     mutationFn: (id: string) => ingredientService.consume(id),
-    onSuccess: invalidateIngredients,
+    onMutate: async (id: string) => {
+      if (targetGroupId) {
+        const qk = ['ingredients', targetGroupId] as const;
+        await queryClient.cancelQueries({ queryKey: qk });
+        const previous = queryClient.getQueryData<Ingredient[]>(qk);
+        queryClient.setQueryData<Ingredient[]>(qk, (old) =>
+          (old ?? []).map((item) => item.id === id ? { ...item, isConsumed: true } : item),
+        );
+        return { qk, previous };
+      }
+      for (const g of groups) {
+        const qk = ['ingredients', g.id] as const;
+        const cached = queryClient.getQueryData<Ingredient[]>(qk);
+        if (cached?.some((i) => i.id === id)) {
+          await queryClient.cancelQueries({ queryKey: qk });
+          queryClient.setQueryData<Ingredient[]>(qk, (old) =>
+            (old ?? []).map((item) => item.id === id ? { ...item, isConsumed: true } : item),
+          );
+          return { qk, previous: cached };
+        }
+      }
+    },
+    onError: (_err, _id, context) => {
+      if (context?.qk && context?.previous) {
+        queryClient.setQueryData(context.qk, context.previous);
+      }
+    },
+    onSettled: invalidateIngredients,
   });
 
   return {
