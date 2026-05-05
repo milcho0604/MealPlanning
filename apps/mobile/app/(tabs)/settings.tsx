@@ -791,7 +791,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {members.map((m: any) => (
+            {members.map((m) => (
               <View key={m.userId} style={styles.memberItem}>
                 <View style={styles.memberInfo}>
                   <View style={styles.memberAvatar}>
@@ -804,7 +804,7 @@ export default function SettingsScreen() {
                   <View>
                     <Text style={styles.memberName} numberOfLines={1}>{m.user?.name ?? '알 수 없음'}</Text>
                     <Text style={styles.memberRole}>
-                      {(MEMBER_ROLE_LABELS as any)[m.role] ?? m.role}
+                      {MEMBER_ROLE_LABELS[m.role] ?? m.role}
                     </Text>
                   </View>
                 </View>

@@ -38,11 +38,7 @@ import { useMealPlanMutation } from '../../src/hooks/meal-plan/use-meal-plan-mut
 import { useGroupStore } from '../../src/stores/group.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
-
-/** Date → YYYY-MM-DD */
-function toDateString(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+import { WEEKDAYS, toDateString } from '../../src/utils/date';
 
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
 function getTodayString(): string {
@@ -375,8 +371,7 @@ export default function HomeScreen() {
             const isSelected = dateStr === selectedDate;
             const isToday = dateStr === today;
             const dayNum = date.getDate();
-            const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-            const weekday = weekdays[date.getDay()];
+            const weekday = WEEKDAYS[date.getDay()];
 
             return (
               <TouchableOpacity

@@ -34,9 +34,7 @@ import { useViewModeStore } from '../../src/stores/view-mode.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 import type { MyGroup } from '../../src/services/group.service';
-
-/** 요일 헤더 레이블 (일요일 시작) */
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+import { WEEKDAYS } from '../../src/utils/date';
 
 /** 날짜를 YYYY-MM-DD 형식 문자열로 변환 */
 function toDateString(year: number, month: number, day: number): string {
@@ -245,7 +243,7 @@ export default function CalendarScreen() {
 
         {/* ── 요일 헤더 ── */}
         <View style={styles.weekdayRow}>
-          {WEEKDAY_LABELS.map((label, idx) => (
+          {WEEKDAYS.map((label, idx) => (
             <Text
               key={label}
               style={[
@@ -293,7 +291,7 @@ export default function CalendarScreen() {
                 </View>
                 {/* 식단 등록 여부 점 표시 */}
                 {hasMeals && (
-                  <View style={[styles.dot, { backgroundColor: currentGroup?.color ?? groups[0]?.color ?? '#66BB6A' }, isSelected && styles.dotSelected]} />
+                  <View style={[styles.dot, { backgroundColor: currentGroup?.color ?? groups[0]?.color ?? colors.primary }, isSelected && styles.dotSelected]} />
                 )}
               </TouchableOpacity>
             );
@@ -526,7 +524,7 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 2.5,
-    backgroundColor: '#66BB6A',
+    backgroundColor: colors.primary,
     marginTop: 3,
   },
   dotSelected: {

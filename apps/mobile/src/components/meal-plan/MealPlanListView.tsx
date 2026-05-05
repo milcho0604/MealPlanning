@@ -30,6 +30,7 @@ import { groupService } from '../../services/group.service';
 import { MealPlanCard } from './MealPlanCard';
 import { SwipeToDelete } from '../common/SwipeToDelete';
 import { colors } from '../../constants/colors';
+import { WEEKDAYS, toDateString } from '../../utils/date';
 
 /** 기간 필터 옵션 */
 type PeriodFilter = 'thisMonth' | '1m' | '3m' | '6m' | 'all' | 'custom';
@@ -45,17 +46,9 @@ const PERIOD_OPTIONS: { value: PeriodFilter; label: string }[] = [
 
 /** 날짜를 "M월 D일 (요일)" 형식으로 포맷 */
 function formatDateLabel(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const m = d.getMonth() + 1;
-  const day = d.getDate();
-  const wd = weekdays[d.getDay()];
-  return `${m}월 ${day}일 (${wd})`;
-}
-
-/** YYYY-MM-DD 형식으로 Date를 변환 */
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
+  return `${month}월 ${day}일 (${WEEKDAYS[d.getDay()]})`;
 }
 
 /** 기간 필터에 따른 시작 날짜 계산 */
@@ -68,7 +61,7 @@ function getStartDate(period: PeriodFilter): string | null {
   if (period === '1m') d.setMonth(d.getMonth() - 1);
   else if (period === '3m') d.setMonth(d.getMonth() - 3);
   else if (period === '6m') d.setMonth(d.getMonth() - 6);
-  return toDateStr(d);
+  return toDateString(d);
 }
 
 interface MealPlanListViewProps {
@@ -97,12 +90,14 @@ export function MealPlanListView({
   // 그룹 멤버 목록 로드
   useEffect(() => {
     if (!currentGroupId) return;
+    let cancelled = false;
     groupService.getMembers(currentGroupId).then((m) => {
-      setMembers(m.map((mem: any) => ({ userId: mem.userId ?? mem.user?.id, name: mem.user?.name ?? '알 수 없음' })));
+      if (cancelled) return;
+      setMembers(m.map((mem) => ({ userId: mem.userId ?? mem.user?.id, name: mem.user?.name ?? '알 수 없음' })));
     }).catch(() => {
-      // 멤버 목록 로딩 실패 시 필터 비활성 (빈 배열 유지)
-      setMembers([]);
+      if (!cancelled) setMembers([]);
     });
+    return () => { cancelled = true; };
   }, [currentGroupId]);
   const [customFrom, setCustomFrom] = useState('');
   const [customTo, setCustomTo] = useState('');
@@ -110,7 +105,7 @@ export function MealPlanListView({
   /** 기간 필터에 따른 API 조회 범위 계산 */
   const queryFrom = period === 'custom' ? (customFrom || null) : getStartDate(period);
   const queryTo = period === 'custom' ? (customTo || null)
-    : period === 'thisMonth' ? toDateStr(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0))
+    : period === 'thisMonth' ? toDateString(new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0))
     : null;
 
   const { data: mealPlans = [], isLoading, refetch } = useMealPlansRange(queryFrom, queryTo);
@@ -169,7 +164,7 @@ export function MealPlanListView({
   const renderItem = useCallback(
     ({ item }: { item: ListItem }) => {
       if (item.type === 'header') {
-        const today = toDateStr(new Date());
+        const today = toDateString(new Date());
         const isToday = item.date === today;
         return (
           <View style={styles.dateHeader}>

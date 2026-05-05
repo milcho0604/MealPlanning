@@ -30,6 +30,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import type { ShoppingItem } from '@mealplan/shared';
+
+/** FlatList 데이터 아이템 타입 (쇼핑 항목 또는 완료 섹션 구분선) */
+type ShoppingListItem = ShoppingItem | { id: string; isSection: true };
 import { useShopping } from '../../src/hooks/shopping/use-shopping.hook';
 import { useShoppingMutation } from '../../src/hooks/shopping/use-shopping-mutation.hook';
 import { LoadingSpinner } from '../../src/components/common/LoadingSpinner';
@@ -358,9 +361,14 @@ export default function ShoppingScreen() {
                     text: '삭제',
                     style: 'destructive',
                     onPress: async () => {
-                      await Promise.all([...selectedIds].map((id) => removeShoppingItem(id)));
-                      setSelectMode(false);
-                      setSelectedIds(new Set());
+                      try {
+                        await Promise.all([...selectedIds].map((id) => removeShoppingItem(id)));
+                      } catch {
+                        Alert.alert('오류', '일부 항목 삭제에 실패했습니다.');
+                      } finally {
+                        setSelectMode(false);
+                        setSelectedIds(new Set());
+                      }
                     },
                   },
                 ]);
@@ -403,15 +411,15 @@ export default function ShoppingScreen() {
             }
           />
         ) : (
-          <FlatList
+          <FlatList<ShoppingListItem>
             data={[
               ...uncheckedItems,
-              ...(checkedItems.length > 0 ? [{ id: '__section_header__', isSection: true } as any] : []),
+              ...(checkedItems.length > 0 ? [{ id: '__section_header__', isSection: true } as const] : []),
               ...checkedItems,
             ]}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => {
-              if (item.isSection) {
+              if ('isSection' in item) {
                 return (
                   <View style={styles.sectionHeader}>
                     <Text style={styles.sectionHeaderText}>완료됨 ({checkedItems.length})</Text>

@@ -20,6 +20,7 @@ export interface Group {
 /** 그룹 멤버 (유저 정보 포함) */
 export interface GroupMember {
   groupId: string;
+  userId: string;
   user: User;
   role: MemberRole;
   joinedAt: string;

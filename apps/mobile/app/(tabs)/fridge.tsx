@@ -152,9 +152,14 @@ export default function FridgeScreen() {
         text: '삭제',
         style: 'destructive',
         onPress: async () => {
-          await Promise.all([...selectedIds].map((id) => removeIngredient(id)));
-          setSelectMode(false);
-          setSelectedIds(new Set());
+          try {
+            await Promise.all([...selectedIds].map((id) => removeIngredient(id)));
+          } catch {
+            Alert.alert('오류', '일부 항목 삭제에 실패했습니다.');
+          } finally {
+            setSelectMode(false);
+            setSelectedIds(new Set());
+          }
         },
       },
     ]);

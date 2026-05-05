@@ -7,8 +7,7 @@
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors';
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+import { WEEKDAYS } from '../../utils/date';
 
 function formatShortDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');

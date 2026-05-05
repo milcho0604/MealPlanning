@@ -8,8 +8,7 @@ import { useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/colors';
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+import { WEEKDAYS } from '../../utils/date';
 
 /** 타임존 영향 없이 로컬 날짜로 파싱 */
 function parseLocalDate(dateStr: string): Date {
