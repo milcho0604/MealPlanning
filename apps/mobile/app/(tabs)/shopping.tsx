@@ -123,71 +123,20 @@ export default function ShoppingScreen() {
     }
   };
 
-  // 그룹이 없으면 안내 화면 표시
-  if (groups.length === 0) return <NoGroupView />;
-  if (isLoading) return <LoadingSpinner />;
-
+  // useCallback/useMemo는 조건부 return 이전에 위치해야 함 (Rules of Hooks)
   const allItems = items ?? [];
   const uncheckedItems = allItems.filter((i) => !i.isChecked);
   const checkedItems = allItems.filter((i) => i.isChecked);
 
-  /** 항목 빠른 추가 */
-  const handleAdd = async () => {
-    const name = inputText.trim();
-    if (!name || !shoppingGroupId) return;
-    const parsedQty = parseFloat(inputQty.trim());
-    const quantity = inputQty.trim() && !isNaN(parsedQty) ? parsedQty : undefined;
-    const unit = inputUnit.trim() || undefined;
-    setInputText('');
-    setInputQty('');
-    setInputUnit('');
-    try {
-      await createShoppingItem({ groupId: shoppingGroupId, name, quantity, unit });
-    } catch {
-      Alert.alert('오류', '항목 추가에 실패했습니다.');
-    }
-  };
-
-  /** 항목 삭제 확인 */
-  const handleDelete = (item: ShoppingItem) => {
+  /** 항목 삭제 확인 — renderItem deps에 포함되므로 useCallback으로 안정화 */
+  const handleDelete = useCallback((item: ShoppingItem) => {
     Alert.alert('삭제', `"${item.name}"을(를) 삭제할까요?`, [
       { text: '취소', style: 'cancel' },
       { text: '삭제', style: 'destructive', onPress: () => removeShoppingItem(item.id) },
     ]);
-  };
+  }, [removeShoppingItem]);
 
-  /** 쇼핑 리스트 공유 */
-  const handleShareList = async () => {
-    if (uncheckedItems.length === 0) {
-      Alert.alert('공유', '공유할 쇼핑 항목이 없습니다.');
-      return;
-    }
-    const lines = uncheckedItems.map((item) => {
-      const qty = item.quantity != null ? ` ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '';
-      // 전체 그룹 모드에서는 그룹명 접두어 추가
-      const groupPrefix = isAllGroups
-        ? `[${groups.find((g) => g.id === item.groupId)?.name ?? ''}] `
-        : '';
-      return `☐ ${groupPrefix}${item.name}${qty}`;
-    });
-    const title = isAllGroups ? '전체 그룹' : (currentGroup?.name ?? '');
-    try {
-      await Share.share({
-        message: `[MealPlan] ${title ? `${title} ` : ''}쇼핑 리스트\n\n${lines.join('\n')}`,
-      });
-    } catch { /* 공유 취소 시 무시 */ }
-  };
-
-  /** 완료 항목 일괄 삭제 */
-  const handleClearChecked = () => {
-    if (checkedItems.length === 0 || !shoppingGroupId) return;
-    Alert.alert('완료 항목 지우기', `${checkedItems.length}개 항목을 삭제할까요?`, [
-      { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => clearCheckedItems(shoppingGroupId) },
-    ]);
-  };
-
-  /** 쇼핑 항목 렌더링 (useCallback으로 FlatList 리렌더 방지) */
+  /** 쇼핑 항목 렌더링 */
   const renderItem = useCallback(({ item }: { item: ShoppingListItem }) => {
     if ('isSection' in item) {
       return (
@@ -196,7 +145,6 @@ export default function ShoppingScreen() {
         </View>
       );
     }
-    // 전체 그룹 모드: 각 항목의 그룹 색상 표시
     const itemGroup = isAllGroups ? groups.find((g) => g.id === item.groupId) : undefined;
     return (
       <TouchableOpacity
@@ -256,6 +204,58 @@ export default function ShoppingScreen() {
       </TouchableOpacity>
     );
   }, [selectMode, selectedIds, isAllGroups, groups, checkedItems.length, toggleShoppingItem, handleDelete]);
+
+  // 그룹이 없으면 안내 화면 표시
+  if (groups.length === 0) return <NoGroupView />;
+  if (isLoading) return <LoadingSpinner />;
+
+  /** 항목 빠른 추가 */
+  const handleAdd = async () => {
+    const name = inputText.trim();
+    if (!name || !shoppingGroupId) return;
+    const parsedQty = parseFloat(inputQty.trim());
+    const quantity = inputQty.trim() && !isNaN(parsedQty) ? parsedQty : undefined;
+    const unit = inputUnit.trim() || undefined;
+    setInputText('');
+    setInputQty('');
+    setInputUnit('');
+    try {
+      await createShoppingItem({ groupId: shoppingGroupId, name, quantity, unit });
+    } catch {
+      Alert.alert('오류', '항목 추가에 실패했습니다.');
+    }
+  };
+
+  /** 쇼핑 리스트 공유 */
+  const handleShareList = async () => {
+    if (uncheckedItems.length === 0) {
+      Alert.alert('공유', '공유할 쇼핑 항목이 없습니다.');
+      return;
+    }
+    const lines = uncheckedItems.map((item) => {
+      const qty = item.quantity != null ? ` ${item.quantity}${item.unit ? ` ${item.unit}` : ''}` : '';
+      // 전체 그룹 모드에서는 그룹명 접두어 추가
+      const groupPrefix = isAllGroups
+        ? `[${groups.find((g) => g.id === item.groupId)?.name ?? ''}] `
+        : '';
+      return `☐ ${groupPrefix}${item.name}${qty}`;
+    });
+    const title = isAllGroups ? '전체 그룹' : (currentGroup?.name ?? '');
+    try {
+      await Share.share({
+        message: `[MealPlan] ${title ? `${title} ` : ''}쇼핑 리스트\n\n${lines.join('\n')}`,
+      });
+    } catch { /* 공유 취소 시 무시 */ }
+  };
+
+  /** 완료 항목 일괄 삭제 */
+  const handleClearChecked = () => {
+    if (checkedItems.length === 0 || !shoppingGroupId) return;
+    Alert.alert('완료 항목 지우기', `${checkedItems.length}개 항목을 삭제할까요?`, [
+      { text: '취소', style: 'cancel' },
+      { text: '삭제', style: 'destructive', onPress: () => clearCheckedItems(shoppingGroupId) },
+    ]);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
