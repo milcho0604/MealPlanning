@@ -217,6 +217,20 @@ export default function HomeScreen() {
   }, [weekMealPlans]);
   const { weekTotalCalories, weekAvgCalories } = weekCalorieSummary;
 
+  // useCallback은 조건부 return 이전에 위치해야 함 (Rules of Hooks)
+  const handleSearch = useCallback((text: string) => {
+    setSearchQuery(text);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (!text.trim()) { setSearchResults([]); return; }
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        if (!currentGroupId) return;
+        const results = await mealPlanService.search(currentGroupId, text.trim());
+        setSearchResults(results);
+      } catch { setSearchResults([]); }
+    }, 300);
+  }, [currentGroupId]);
+
   // 그룹이 하나도 없으면 안내 화면 표시
   if (groups.length === 0) return <NoGroupView />;
 
@@ -251,19 +265,6 @@ export default function HomeScreen() {
     setEditingMealPlan(null);
     setCopyingMealPlan(null);
   };
-
-  const handleSearch = useCallback((text: string) => {
-    setSearchQuery(text);
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    if (!text.trim()) { setSearchResults([]); return; }
-    searchTimeout.current = setTimeout(async () => {
-      try {
-        if (!currentGroupId) return;
-        const results = await mealPlanService.search(currentGroupId, text.trim());
-        setSearchResults(results);
-      } catch { setSearchResults([]); }
-    }, 300);
-  }, [currentGroupId]);
 
   // ── 렌더링 ────────────────────────────────────────────
   if (isLoading) return <SkeletonLoader rows={4} />;
