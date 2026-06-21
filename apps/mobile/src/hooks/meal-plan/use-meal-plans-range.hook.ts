@@ -11,11 +11,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useGroupStore } from '../../stores/group.store';
 import { mealPlanService } from '../../services/meal-plan.service';
-
-/** 날짜를 YYYY-MM-DD 형식 문자열로 변환 */
-function toDateString(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
+import { toDateString } from '../../utils/date';
 
 export function useMealPlansRange(from: string | null, to: string | null) {
   const { currentGroupId, groups } = useGroupStore();

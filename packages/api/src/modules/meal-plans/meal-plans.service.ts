@@ -70,7 +70,11 @@ export class MealPlansService {
   /**
    * 식단 통계: 자주 먹는 메뉴 TOP N + 월별 식사 유형 분포
    */
-  async getStats(userId: string, groupId: string | undefined, months: number = 3) {
+  async getStats(
+    userId: string,
+    groupId: string | undefined,
+    months: number = 3,
+  ) {
     const since = new Date();
     since.setMonth(since.getMonth() - months);
 

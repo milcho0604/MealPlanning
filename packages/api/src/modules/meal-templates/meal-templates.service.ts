@@ -33,7 +33,7 @@ export class MealTemplatesService {
    * 템플릿 저장
    */
   async create(userId: string, dto: CreateMealTemplateDto) {
-    await this.assertMember(dto.groupId, userId);
+    await this.assertEditor(dto.groupId, userId);
 
     return this.prisma.mealTemplate.create({
       data: {
@@ -52,7 +52,7 @@ export class MealTemplatesService {
    */
   async remove(id: string, userId: string) {
     const template = await this.findOneOrThrow(id);
-    await this.assertMember(template.groupId, userId);
+    await this.assertEditor(template.groupId, userId);
 
     await this.prisma.mealTemplate.delete({ where: { id } });
   }
@@ -73,6 +73,15 @@ export class MealTemplatesService {
     });
     if (!member)
       throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
+    return member;
+  }
+
+  /** 그룹 편집 권한 확인 헬퍼 */
+  private async assertEditor(groupId: string, userId: string) {
+    const member = await this.assertMember(groupId, userId);
+    if (member.role === 'viewer') {
+      throw new ForbiddenException('편집 권한이 없습니다.');
+    }
     return member;
   }
 }

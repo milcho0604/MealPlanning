@@ -39,7 +39,7 @@ export class ShoppingService {
    * 쇼핑 항목 추가
    */
   async create(userId: string, dto: CreateShoppingItemDto) {
-    await this.assertMember(dto.groupId, userId);
+    await this.assertEditor(dto.groupId, userId);
 
     return this.prisma.shoppingItem.create({
       data: {
@@ -56,7 +56,7 @@ export class ShoppingService {
    */
   async update(id: string, userId: string, dto: UpdateShoppingItemDto) {
     const item = await this.findOneOrThrow(id);
-    await this.assertMember(item.groupId, userId);
+    await this.assertEditor(item.groupId, userId);
 
     return this.prisma.shoppingItem.update({
       where: { id },
@@ -69,7 +69,7 @@ export class ShoppingService {
    */
   async toggleCheck(id: string, userId: string) {
     const item = await this.findOneOrThrow(id);
-    await this.assertMember(item.groupId, userId);
+    await this.assertEditor(item.groupId, userId);
 
     return this.prisma.shoppingItem.update({
       where: { id },
@@ -82,7 +82,7 @@ export class ShoppingService {
    */
   async remove(id: string, userId: string) {
     const item = await this.findOneOrThrow(id);
-    await this.assertMember(item.groupId, userId);
+    await this.assertEditor(item.groupId, userId);
 
     await this.prisma.shoppingItem.delete({ where: { id } });
     return { message: '쇼핑 항목이 삭제되었습니다.' };
@@ -92,7 +92,7 @@ export class ShoppingService {
    * 완료된(isChecked=true) 항목 일괄 삭제
    */
   async clearChecked(groupId: string, userId: string) {
-    await this.assertMember(groupId, userId);
+    await this.assertEditor(groupId, userId);
 
     const { count } = await this.prisma.shoppingItem.deleteMany({
       where: { groupId, isChecked: true },
@@ -109,8 +109,6 @@ export class ShoppingService {
    * 냉장고에 이미 있는 재료(소진 안 된 것)는 제외합니다.
    */
   async generateFromMealPlan(userId: string, dto: GenerateShoppingDto) {
-    await this.assertMember(dto.groupId, userId);
-
     const start = new Date(dto.weekStartDate);
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
@@ -119,6 +117,8 @@ export class ShoppingService {
 
     // 식단을 가져올 그룹 (mealPlanGroupId 지정 시 해당 그룹, 없으면 대상 그룹과 동일)
     const mealPlanGroupId = dto.mealPlanGroupId ?? dto.groupId;
+    await this.assertEditor(dto.groupId, userId);
+    await this.assertMember(mealPlanGroupId, userId);
 
     // 해당 주간의 식단 menuName 목록 수집
     const mealPlans = await this.prisma.mealPlan.findMany({
@@ -180,6 +180,15 @@ export class ShoppingService {
     });
     if (!member)
       throw new ForbiddenException('해당 그룹에 접근 권한이 없습니다.');
+    return member;
+  }
+
+  /** 그룹 편집 권한 확인 헬퍼 */
+  private async assertEditor(groupId: string, userId: string) {
+    const member = await this.assertMember(groupId, userId);
+    if (member.role === 'viewer') {
+      throw new ForbiddenException('편집 권한이 없습니다.');
+    }
     return member;
   }
 }

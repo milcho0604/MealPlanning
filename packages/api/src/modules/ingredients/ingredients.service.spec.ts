@@ -5,6 +5,8 @@
  * PrismaService를 mock으로 대체합니다.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -53,14 +55,6 @@ const mockExpiringIngredient = {
   id: 'ingredient-uuid-2',
   name: '우유',
   expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2일 후 만료
-};
-
-/** 테스트용 여유 재료 (30일 후 만료) */
-const mockFreshIngredient = {
-  ...mockIngredient,
-  id: 'ingredient-uuid-3',
-  name: '치즈',
-  expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30일 후 만료
 };
 
 // ── Mock 서비스 설정 ──────────────────────────────────────────────────────────

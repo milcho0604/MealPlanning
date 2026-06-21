@@ -31,6 +31,8 @@ export interface JwtPayload {
     /** Supabase User UUID */
     sub: string;
     email: string;
+    /** 토큰 용도. 과거 액세스 토큰에는 없을 수 있음 */
+    type?: 'access' | 'refresh';
     /** 토큰 발급 시각 (Unix timestamp) */
     iat: number;
     /** 토큰 만료 시각 (Unix timestamp) */

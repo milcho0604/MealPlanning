@@ -93,7 +93,7 @@ export function MealPlanListView({
     let cancelled = false;
     groupService.getMembers(currentGroupId).then((m) => {
       if (cancelled) return;
-      setMembers(m.map((mem) => ({ userId: mem.userId ?? mem.user?.id, name: mem.user?.name ?? '알 수 없음' })));
+      setMembers(m.map((mem) => ({ userId: mem.user.id, name: mem.user.name ?? '알 수 없음' })));
     }).catch(() => {
       if (!cancelled) setMembers([]);
     });

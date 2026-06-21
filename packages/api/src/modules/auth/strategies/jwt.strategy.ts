@@ -46,15 +46,27 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * @throws UnauthorizedException - DB에 사용자가 없을 경우
    */
   async validate(payload: JwtPayload): Promise<RequestUser> {
+    if (payload.type === 'refresh') {
+      throw new UnauthorizedException(
+        '리프레시 토큰은 API 접근에 사용할 수 없습니다.',
+      );
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
-      select: { id: true, email: true, name: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        statusYn: true,
+        isVerified: true,
+      },
     });
 
-    if (!user) {
+    if (!user || user.statusYn === 'N' || !user.isVerified) {
       throw new UnauthorizedException('유효하지 않은 토큰입니다.');
     }
 
-    return user;
+    return { id: user.id, email: user.email, name: user.name };
   }
 }

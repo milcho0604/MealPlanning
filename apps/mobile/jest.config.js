@@ -3,7 +3,7 @@
  *
  * jest-expo 프리셋을 기반으로 모노레포 환경에서 테스트를 실행하기 위한
  * 추가 설정을 포함합니다.
- * - react/react-test-renderer: apps/mobile/node_modules에서 resolve
+ * - react/react-test-renderer: workspace root node_modules에서 resolve
  * - Expo 런타임 모듈 scope 오류 방지
  */
 
@@ -18,14 +18,13 @@ module.exports = {
   // 테스트 실행 전 셋업 파일
   setupFilesAfterEnv: ['@testing-library/jest-native/extend-expect'],
 
-  // 모노레포: react는 apps/mobile/node_modules에서, 나머지는 루트에서
+// 모노레포: react와 react-test-renderer는 같은 workspace root 버전으로 고정
   moduleNameMapper: {
-    // react와 react-test-renderer는 react 버전이 일치해야 하므로 로컬 버전 사용
-    '^react$': path.join(mobileNodeModules, 'react', 'index.js'),
-    '^react/jsx-runtime$': path.join(mobileNodeModules, 'react', 'jsx-runtime.js'),
-    '^react/jsx-dev-runtime$': path.join(mobileNodeModules, 'react', 'jsx-dev-runtime.js'),
-    '^react-test-renderer$': path.join(mobileNodeModules, 'react-test-renderer', 'index.js'),
-    '^react-test-renderer/(.*)$': path.join(mobileNodeModules, 'react-test-renderer', '$1'),
+    '^react$': path.join(rootNodeModules, 'react', 'index.js'),
+    '^react/jsx-runtime$': path.join(rootNodeModules, 'react', 'jsx-runtime.js'),
+    '^react/jsx-dev-runtime$': path.join(rootNodeModules, 'react', 'jsx-dev-runtime.js'),
+    '^react-test-renderer$': path.join(rootNodeModules, 'react-test-renderer', 'index.js'),
+    '^react-test-renderer/(.*)$': path.join(rootNodeModules, 'react-test-renderer', '$1'),
     // expo-router와 벡터 아이콘 mock
     '^react-native-vector-icons$': '@expo/vector-icons',
     '^react-native-vector-icons/(.*)': '@expo/vector-icons/$1',

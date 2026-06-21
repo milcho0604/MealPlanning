@@ -236,7 +236,7 @@ export class AuthService {
   async refreshToken(refreshToken: string): Promise<AuthTokens> {
     try {
       // 리프레시 토큰 서명 검증
-      const payload: { sub: string; type: string } = this.jwtService.verify(
+      const payload: { sub: string; type?: string } = this.jwtService.verify(
         refreshToken,
         { secret: this.configService.getOrThrow<string>('JWT_SECRET') },
       );
@@ -251,7 +251,7 @@ export class AuthService {
         where: { id: payload.sub },
       });
 
-      if (!user) {
+      if (!user || user.statusYn === 'N' || !user.isVerified) {
         throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
       }
 
@@ -298,10 +298,12 @@ export class AuthService {
           where: { id: emailUser.id },
           data: {
             // 이메일 전용 가입 계정만 소셜 연동 (provider가 없는 경우)
-            ...(isEmailOnly ? {
-              provider,
-              providerId: providerUser.providerId,
-            } : {}),
+            ...(isEmailOnly
+              ? {
+                  provider,
+                  providerId: providerUser.providerId,
+                }
+              : {}),
             isVerified: true,
             verifyToken: null,
             verifyTokenExpiry: null,
@@ -647,7 +649,7 @@ export class AuthService {
 
     // 액세스 토큰 (API 요청 시 사용)
     const accessToken: string = this.jwtService.sign(
-      { sub: userId, email },
+      { sub: userId, email, type: 'access' },
       { secret, expiresIn: expiresIn as import('ms').StringValue },
     );
 

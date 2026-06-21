@@ -791,64 +791,68 @@ export default function SettingsScreen() {
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            {members.map((m) => (
-              <View key={m.userId} style={styles.memberItem}>
-                <View style={styles.memberInfo}>
-                  <View style={styles.memberAvatar}>
-                    {m.user?.avatarUrl ? (
-                      <Image source={{ uri: m.user.avatarUrl }} style={styles.memberAvatarImage} />
-                    ) : (
-                      <Text style={styles.memberAvatarText}>{m.user?.name?.[0]?.toUpperCase() ?? '?'}</Text>
-                    )}
+            {members.map((m) => {
+              const memberUserId = m.user.id;
+
+              return (
+                <View key={memberUserId} style={styles.memberItem}>
+                  <View style={styles.memberInfo}>
+                    <View style={styles.memberAvatar}>
+                      {m.user?.avatarUrl ? (
+                        <Image source={{ uri: m.user.avatarUrl }} style={styles.memberAvatarImage} />
+                      ) : (
+                        <Text style={styles.memberAvatarText}>{m.user?.name?.[0]?.toUpperCase() ?? '?'}</Text>
+                      )}
+                    </View>
+                    <View>
+                      <Text style={styles.memberName} numberOfLines={1}>{m.user?.name ?? '알 수 없음'}</Text>
+                      <Text style={styles.memberRole}>
+                        {MEMBER_ROLE_LABELS[m.role] ?? m.role}
+                      </Text>
+                    </View>
                   </View>
-                  <View>
-                    <Text style={styles.memberName} numberOfLines={1}>{m.user?.name ?? '알 수 없음'}</Text>
-                    <Text style={styles.memberRole}>
-                      {MEMBER_ROLE_LABELS[m.role] ?? m.role}
-                    </Text>
-                  </View>
+                  {/* owner만 다른 멤버의 역할 변경/강퇴 가능 */}
+                  {selectedGroupRole === 'owner' && m.role !== 'owner' && (
+                    <View style={styles.memberActions}>
+                      <TouchableOpacity
+                        style={styles.roleBtn}
+                        onPress={() => {
+                          const nextRole = m.role === 'editor' ? 'viewer' : 'editor';
+                          Alert.alert('역할 변경', `${m.user?.name}의 역할을 ${(MEMBER_ROLE_LABELS as any)[nextRole]}(으)로 변경할까요?`, [
+                            { text: '취소', style: 'cancel' },
+                            { text: '변경', onPress: async () => {
+                              try {
+                                await groupService.changeRole(selectedGroupId ?? '', memberUserId, nextRole);
+                                setMembers(prev => prev.map(x => x.user.id === memberUserId ? { ...x, role: nextRole } : x));
+                              } catch { Alert.alert('오류', '역할 변경에 실패했습니다.'); }
+                            }},
+                          ]);
+                        }}
+                      >
+                        <Text style={styles.roleBtnText}>{m.role === 'editor' ? '뷰어로' : '편집자로'}</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.kickBtn}
+                        onPress={() => {
+                          Alert.alert('멤버 내보내기', `${m.user?.name}을(를) 내보낼까요?`, [
+                            { text: '취소', style: 'cancel' },
+                            { text: '내보내기', style: 'destructive', onPress: async () => {
+                              try {
+                                await groupService.removeMember(selectedGroupId ?? '', memberUserId);
+                                setMembers(prev => prev.filter(x => x.user.id !== memberUserId));
+                                loadGroups();
+                              } catch { Alert.alert('오류', '멤버 내보내기에 실패했습니다.'); }
+                            }},
+                          ]);
+                        }}
+                      >
+                        <Ionicons name="person-remove-outline" size={14} color={colors.error} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
-                {/* owner만 다른 멤버의 역할 변경/강퇴 가능 */}
-                {selectedGroupRole === 'owner' && m.role !== 'owner' && (
-                  <View style={styles.memberActions}>
-                    <TouchableOpacity
-                      style={styles.roleBtn}
-                      onPress={() => {
-                        const nextRole = m.role === 'editor' ? 'viewer' : 'editor';
-                        Alert.alert('역할 변경', `${m.user?.name}의 역할을 ${(MEMBER_ROLE_LABELS as any)[nextRole]}(으)로 변경할까요?`, [
-                          { text: '취소', style: 'cancel' },
-                          { text: '변경', onPress: async () => {
-                            try {
-                              await groupService.changeRole(selectedGroupId ?? '', m.userId, nextRole);
-                              setMembers(prev => prev.map(x => x.userId === m.userId ? { ...x, role: nextRole } : x));
-                            } catch { Alert.alert('오류', '역할 변경에 실패했습니다.'); }
-                          }},
-                        ]);
-                      }}
-                    >
-                      <Text style={styles.roleBtnText}>{m.role === 'editor' ? '뷰어로' : '편집자로'}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.kickBtn}
-                      onPress={() => {
-                        Alert.alert('멤버 내보내기', `${m.user?.name}을(를) 내보낼까요?`, [
-                          { text: '취소', style: 'cancel' },
-                          { text: '내보내기', style: 'destructive', onPress: async () => {
-                            try {
-                              await groupService.removeMember(selectedGroupId ?? '', m.userId);
-                              setMembers(prev => prev.filter(x => x.userId !== m.userId));
-                              loadGroups();
-                            } catch { Alert.alert('오류', '멤버 내보내기에 실패했습니다.'); }
-                          }},
-                        ]);
-                      }}
-                    >
-                      <Ionicons name="person-remove-outline" size={14} color={colors.error} />
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
         </SafeAreaView>
       </Modal>

@@ -5,10 +5,13 @@
  * PrismaService를 mock으로 대체합니다.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { MealPlansService } from './meal-plans.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UploadService } from '../upload/upload.service';
 
 // ── Mock 데이터 ────────────────────────────────────────────────────────────────
 
@@ -72,6 +75,11 @@ const mockPrismaService = {
   },
 };
 
+/** UploadService Mock */
+const mockUploadService = {
+  deleteFile: jest.fn().mockResolvedValue(undefined),
+};
+
 // ── 테스트 스위트 ──────────────────────────────────────────────────────────────
 
 describe('MealPlansService', () => {
@@ -82,6 +90,7 @@ describe('MealPlansService', () => {
       providers: [
         MealPlansService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: UploadService, useValue: mockUploadService },
       ],
     }).compile();
 

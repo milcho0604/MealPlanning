@@ -41,6 +41,7 @@ import { NoGroupView } from '../../src/components/group/NoGroupView';
 import { useGroupStore } from '../../src/stores/group.store';
 import { colors } from '../../src/constants/colors';
 import { useRefresh } from '../../src/hooks/use-refresh.hook';
+import { toDateString } from '../../src/utils/date';
 
 export default function ShoppingScreen() {
   const { groups, currentGroupId } = useGroupStore();
@@ -91,7 +92,7 @@ export default function ShoppingScreen() {
     const diff = day === 0 ? -6 : 1 - day;
     const monday = new Date(now);
     monday.setDate(now.getDate() + diff);
-    return monday.toISOString().split('T')[0];
+    return toDateString(monday);
   }
 
   /** 자동 생성 모달 열기 */

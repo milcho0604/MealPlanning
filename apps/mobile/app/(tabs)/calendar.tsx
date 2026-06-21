@@ -35,7 +35,7 @@ import { useViewModeStore } from '../../src/stores/view-mode.store';
 import type { MealPlanWithUser } from '../../src/services/meal-plan.service';
 import { colors } from '../../src/constants/colors';
 import type { MyGroup } from '../../src/services/group.service';
-import { WEEKDAYS } from '../../src/utils/date';
+import { WEEKDAYS, toDateString as toLocalDateString } from '../../src/utils/date';
 import { useRefresh } from '../../src/hooks/use-refresh.hook';
 
 /** 날짜를 YYYY-MM-DD 형식 문자열로 변환 */
@@ -46,7 +46,7 @@ function toDateString(year: number, month: number, day: number): string {
 }
 
 /** 오늘 날짜 문자열 */
-const TODAY = new Date().toISOString().split('T')[0];
+const TODAY = toLocalDateString(new Date());
 
 export default function CalendarScreen() {
   const now = new Date();

@@ -5,12 +5,10 @@
  * PrismaService, JwtService, ConfigService, MailService를 mock으로 대체합니다.
  */
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  ConflictException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
@@ -53,22 +51,6 @@ const mockDeletedUser = {
   email: 'deleted@example.com',
   statusYn: 'N',
   deletedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), // 10일 전 탈퇴
-};
-
-/** 테스트용 만료된 탈퇴 사용자 (90일 초과) */
-const mockExpiredDeletedUser = {
-  ...mockUser,
-  id: 'user-uuid-4',
-  email: 'expired@example.com',
-  statusYn: 'N',
-  deletedAt: new Date(Date.now() - 100 * 24 * 60 * 60 * 1000), // 100일 전 탈퇴
-};
-
-/** 테스트용 JWT 토큰 응답 */
-const mockTokens = {
-  accessToken: 'mock-access-token',
-  refreshToken: 'mock-refresh-token',
-  expiresAt: new Date().toISOString(),
 };
 
 // ── Mock 서비스 설정 ──────────────────────────────────────────────────────────
@@ -343,14 +325,16 @@ describe('AuthService', () => {
       );
     });
 
-    it('만료된 인증 토큰으로 인증 시도 시 NotFoundException이 발생해야 한다', async () => {
+    it('만료된 인증 토큰으로 인증 시도 시 만료 안내 HTML을 반환해야 한다', async () => {
       // given: 만료된 토큰이라 findFirst가 null 반환
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
-      // when & then
-      await expect(service.verifyEmail('expired-verify-token')).rejects.toThrow(
-        NotFoundException,
-      );
+      // when
+      const result = await service.verifyEmail('expired-verify-token');
+
+      // then
+      expect(result).toContain('인증 링크 만료');
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
     });
   });
 

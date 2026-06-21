@@ -8,15 +8,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { CreateMealPlanRequest, UpdateMealPlanRequest } from '@mealplan/shared';
 import { mealPlanService } from '../../services/meal-plan.service';
-import { useGroupStore } from '../../stores/group.store';
 
 export function useMealPlanMutation() {
   const queryClient = useQueryClient();
-  const { currentGroupId } = useGroupStore();
 
   /** 캐시 무효화 - 식단 데이터가 변경될 때마다 호출 */
   const invalidateMealPlans = () => {
-    queryClient.invalidateQueries({ queryKey: ['meal-plans', currentGroupId] });
+    queryClient.invalidateQueries({ queryKey: ['meal-plans'] });
+    queryClient.invalidateQueries({ queryKey: ['meal-plans-range'] });
   };
 
   /** 식단 생성 */

@@ -12,6 +12,7 @@ import { storage } from '../utils/storage';
 import type { AuthTokens, User } from '@mealplan/shared';
 import type { SignInRequest, SignUpRequest } from '@mealplan/shared';
 import { authService } from '../services/auth.service';
+import { setCachedToken } from '../services/api.client';
 import { STORAGE_KEYS } from '../constants/storage-keys';
 
 /** 순환 참조 방지를 위해 useGroupStore를 지연 import합니다. */
@@ -60,12 +61,16 @@ export const useAuthStore = create<AuthState>((set) => ({
       const accessToken = await storage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 
       if (accessToken) {
+        setCachedToken(accessToken);
         // 토큰이 있으면 서버에서 현재 사용자 정보 조회 (토큰 유효성도 함께 검증)
         const user = await authService.getMe();
         set({ user, isAuthenticated: true });
+      } else {
+        setCachedToken(null);
       }
     } catch {
       // 토큰이 만료되거나 유효하지 않은 경우 → 저장된 인증 정보 삭제
+      setCachedToken(null);
       await storage.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
       await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
       set({ user: null, isAuthenticated: false });
@@ -91,6 +96,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     await storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
     await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    setCachedToken(tokens.accessToken);
 
     set({ user, isAuthenticated: true });
   },
@@ -102,6 +108,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setAuth: async (tokens, user) => {
     await storage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.accessToken);
     await storage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refreshToken);
+    setCachedToken(tokens.accessToken);
     set({ user, isAuthenticated: true });
   },
 
@@ -114,6 +121,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       // 서버 에러가 있어도 클라이언트 측은 로그아웃 진행
     } finally {
+      setCachedToken(null);
       await storage.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
       await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
       resetGroupStore();
@@ -126,6 +134,7 @@ export const useAuthStore = create<AuthState>((set) => ({
    */
   deleteAccount: async () => {
     await authService.deleteAccount();
+    setCachedToken(null);
     await storage.deleteItem(STORAGE_KEYS.ACCESS_TOKEN);
     await storage.deleteItem(STORAGE_KEYS.REFRESH_TOKEN);
     resetGroupStore();

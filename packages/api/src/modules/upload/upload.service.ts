@@ -20,7 +20,7 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { v4 as uuid } from 'uuid';
+import { randomUUID } from 'crypto';
 
 /** Presigned URL 발급 요청 DTO */
 interface PresignedUrlRequest {
@@ -122,7 +122,7 @@ export class UploadService {
     const ext = this.getExtensionFromContentType(contentType);
 
     // S3 키 생성: {folder}/{userId}/{uuid}.{ext}
-    const key = `${folder}/${userId}/${uuid()}.${ext}`;
+    const key = `${folder}/${userId}/${randomUUID()}.${ext}`;
 
     // Presigned PUT URL 생성
     const command = new PutObjectCommand({

@@ -129,7 +129,7 @@ describe('MealPlanCard 컴포넌트', () => {
     );
 
     // then
-    expect(getByText('테스트 유저 등록')).toBeTruthy();
+    expect(getByText('테스트 유저')).toBeTruthy();
   });
 
   // ── 상호작용 테스트 ───────────────────────────────────────────────────────────
